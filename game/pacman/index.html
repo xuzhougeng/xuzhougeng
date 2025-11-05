@@ -177,7 +177,7 @@
             </div>
         </div>
 
-        <canvas id="gameCanvas" width="420" height="460"></canvas>
+        <canvas id="gameCanvas" width="420" height="420"></canvas>
 
         <div class="controls">
             <p>使用方向键 ⬆️ ⬇️ ⬅️ ➡️ 控制吃豆人移动</p>
@@ -210,7 +210,7 @@
 
         // 游戏配置
         const tileSize = 20;
-        const rows = 23;
+        const rows = 21;
         const cols = 21;
 
         // 迷宫地图 (1=墙, 0=路径, 2=豆子, 3=能量豆)
@@ -351,8 +351,23 @@
                 }
 
                 if (possibleDirs.length > 0) {
-                    // 30%概率追踪吃豆人
-                    if (Math.random() < 0.3 && !powerMode) {
+                    // 在能量模式下逃离吃豆人，否则60%概率追踪吃豆人
+                    if (powerMode) {
+                        // 逃离模式：远离吃豆人
+                        const dx = ghost.x - pacman.x;
+                        const dy = ghost.y - pacman.y;
+
+                        if (Math.abs(dx) > Math.abs(dy)) {
+                            ghost.dir = dx > 0 ? 0 : 2;
+                        } else {
+                            ghost.dir = dy > 0 ? 1 : 3;
+                        }
+
+                        if (!possibleDirs.includes(ghost.dir)) {
+                            ghost.dir = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
+                        }
+                    } else if (Math.random() < 0.6) {
+                        // 追踪模式：朝向吃豆人
                         const dx = pacman.x - ghost.x;
                         const dy = pacman.y - ghost.y;
 
@@ -366,6 +381,7 @@
                             ghost.dir = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
                         }
                     } else {
+                        // 随机移动
                         ghost.dir = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
                     }
                 }
@@ -515,13 +531,17 @@
         }
 
         // 游戏循环
+        let ghostMoveCounter = 0;
         function gameLoop() {
             if (!gameRunning) return;
 
             movePacman();
 
-            if (Math.random() < 0.3) { // 降低幽灵速度
+            // 每2帧移动一次幽灵（让幽灵速度稍慢于吃豆人）
+            ghostMoveCounter++;
+            if (ghostMoveCounter >= 2) {
                 moveGhosts();
+                ghostMoveCounter = 0;
             }
 
             checkCollisions();
@@ -576,6 +596,7 @@
             powerModeTimer = 0;
             gameRunning = true;
             mouthTimer = 0;
+            ghostMoveCounter = 0;
 
             livesElement.textContent = lives;
             scoreElement.textContent = score;
