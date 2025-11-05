@@ -106,10 +106,10 @@
             系统将在 <span class="countdown" id="countdown">5</span> 秒后自动跳转到首页。
         </p>
         <div>
-            <a href="/xuzhougeng/" class="btn">
+            <a href="/" class="btn">
                 <span class="icon">🏠</span>返回首页
             </a>
-            <a href="https://xuzhougeng.com" class="btn">
+            <a href="https://xuzhougeng.com" class="btn" target="_blank">
                 <span class="icon">📝</span>访问博客
             </a>
         </div>
@@ -126,7 +126,7 @@
 
             if (countdown <= 0) {
                 clearInterval(timer);
-                window.location.href = '/xuzhougeng/';
+                window.location.href = '/';
             }
         }, 1000);
     </script>
