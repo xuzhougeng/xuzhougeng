@@ -3,9 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>Hello World - 欢迎</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .game-list {
+            list-style: none;
+        }
+
+        .game-item {
+            margin: 15px 0;
+        }
+
+        .game-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .game-icon {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+
+        .game-info {
+            flex: 1;
+        }
+
+        .game-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .game-desc {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+    </style>
 </head>
 <body>
-    <h1>hello world!</h1>
+    <div class="container">
+        <h1>hello world!</h1>
+
+        <div class="section">
+            <h2 class="section-title">🎮 游戏导航</h2>
+            <ul class="game-list">
+                <li class="game-item">
+                    <a href="game/snake/index.html" class="game-link">
+                        <span class="game-icon">🐍</span>
+                        <div class="game-info">
+                            <div class="game-name">贪吃蛇</div>
+                            <div class="game-desc">经典的贪吃蛇游戏，使用方向键控制</div>
+                        </div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
 </body>
 </html>
