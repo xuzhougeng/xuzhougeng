@@ -394,10 +394,10 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js" integrity="sha512-CQ0lky2K8THrZCO4bZt8p1w7Eyj1tEZCa/pacTV9n/vtjLeE/PD6Ad0H5gjMG94LN4DB3tQn0Hmahr07Coj3xQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
         }
 
         class TypingGame {
@@ -423,14 +423,6 @@
                 this.timerInterval = null;
 
                 this.initElements();
-                this.pdfSupported = typeof window.pdfjsLib !== 'undefined';
-                if (!this.pdfSupported) {
-                    this.elements.uploadStatus.textContent = 'PDF.js 库加载失败，无法解析 PDF，使用内置单词库';
-                    this.elements.pdfInput.disabled = true;
-                } else {
-                    this.elements.uploadStatus.textContent = '支持上传 PDF 生成自定义单词库';
-                }
-
                 this.bindEvents();
                 this.updateCursor();
             }
@@ -491,17 +483,10 @@
                     });
                 });
 
-                if (this.pdfSupported) {
-                    this.elements.pdfInput.addEventListener('change', (event) => this.loadPdf(event));
-                }
+                this.elements.pdfInput.addEventListener('change', (event) => this.loadPdf(event));
             }
 
             async loadPdf(event) {
-                if (!this.pdfSupported || !window.pdfjsLib) {
-                    this.resetToDefaultWords('PDF.js 未加载，无法解析 PDF');
-                    return;
-                }
-
                 const file = event.target.files?.[0];
                 if (!file) {
                     this.resetToDefaultWords('未选择文件，使用内置单词库');
