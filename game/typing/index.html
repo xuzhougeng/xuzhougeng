@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PDF 单词库终端打字游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0a0f0a;
+            color: #00ff00;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(0, 255, 0, 0.03) 50%,
+                rgba(0, 0, 0, 0.15) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 16px;
+        }
+
+        .header {
+            text-align: center;
+            border: 2px solid #00ff00;
+            padding: 15px;
+            background-color: rgba(0, 255, 0, 0.1);
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 6px;
+            letter-spacing: 3px;
+        }
+
+        .upload-area {
+            border: 2px dashed #00ff00;
+            padding: 15px;
+            background-color: rgba(0, 255, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .upload-area label {
+            cursor: pointer;
+            padding: 10px 20px;
+            border: 1px solid #00ff00;
+            background-color: rgba(0, 255, 0, 0.1);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+        }
+
+        .upload-area label:hover {
+            background-color: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+        }
+
+        #pdfInput {
+            display: none;
+        }
+
+        .upload-status {
+            font-size: 0.9em;
+            color: #a0ffa0;
+            min-height: 1.2em;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-btn {
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-btn.active {
+            background-color: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.6);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #00ff00;
+            min-width: 100px;
+            background-color: rgba(0, 255, 0, 0.05);
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            border: 1px solid #00ff00;
+            background-color: rgba(0, 255, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+            transition: width 0.3s ease;
+        }
+
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            background-color: rgba(0, 255, 0, 0.05);
+            gap: 20px;
+        }
+
+        .word-display {
+            text-align: center;
+        }
+
+        .current-word {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 0 0 15px #00ff00;
+            letter-spacing: 2px;
+            min-height: 1.2em;
+            word-break: break-word;
+        }
+
+        .typed-char {
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .remaining-char {
+            color: #00aa00;
+            opacity: 0.7;
+        }
+
+        .input-area {
+            text-align: center;
+        }
+
+        #textInput {
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 15px;
+            font-size: 1.5em;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            width: 100%;
+            max-width: 420px;
+            text-shadow: 0 0 5px #00ff00;
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        #textInput:focus {
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+            background-color: rgba(0, 255, 0, 0.15);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .btn:hover, .btn:active {
+            background-color: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+            transform: scale(1.05);
+        }
+
+        .game-over {
+            text-align: center;
+            padding: 30px;
+            border: 2px solid #00ff00;
+            background-color: rgba(0, 255, 0, 0.1);
+            display: none;
+        }
+
+        .game-over h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #00ff00;
+        }
+
+        .final-stats {
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background-color: #00ff00;
+            animation: blink 1s infinite;
+            vertical-align: text-bottom;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .correct-feedback {
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00;
+            animation: pulse 0.3s ease;
+        }
+
+        .error-feedback {
+            color: #ff0000;
+            text-shadow: 0 0 20px #ff0000;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .header h1 { font-size: 1.5em; }
+            .current-word { font-size: 2em; }
+            #textInput { font-size: 1.2em; padding: 12px; }
+            .btn { padding: 12px 20px; font-size: 1em; }
+            .stat-item { min-width: 80px; padding: 8px; }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .btn { min-height: 44px; min-width: 44px; }
+            #textInput { min-height: 44px; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🟢 PDF 单词终端打字训练 🟢</h1>
+            <div>UPLOAD PDF TO LOAD CUSTOM WORDS...</div>
+        </div>
+
+        <div class="upload-area">
+            <label for="pdfInput">选择 PDF 文件</label>
+            <input type="file" id="pdfInput" accept="application/pdf">
+            <div class="upload-status" id="uploadStatus">当前使用内置单词库</div>
+        </div>
+
+        <div class="difficulty-selector">
+            <button class="difficulty-btn active" data-level="easy">简单</button>
+            <button class="difficulty-btn" data-level="medium">中等</button>
+            <button class="difficulty-btn" data-level="hard">困难</button>
+            <button class="difficulty-btn" data-level="extreme">极限</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">时间</div>
+                <div class="stat-value" id="timer">60</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">WPM</div>
+                <div class="stat-value" id="wpm">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">准确率</div>
+                <div class="stat-value" id="accuracy">100%</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">得分</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+
+        <div class="game-area">
+            <div class="word-display">
+                <div class="current-word" id="currentWord">
+                    <span class="cursor"></span>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="textInput" placeholder="输入显示的文字..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" disabled>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="startBtn">开始游戏</button>
+                <button class="btn" id="pauseBtn" style="display: none;">暂停</button>
+                <button class="btn" id="resetBtn">重置</button>
+            </div>
+        </div>
+
+        <div class="game-over" id="gameOver">
+            <h2>游戏结束!</h2>
+            <div class="final-stats">
+                <div>最终得分: <span id="finalScore">0</span></div>
+                <div>平均 WPM: <span id="finalWpm">0</span></div>
+                <div>准确率: <span id="finalAccuracy">0%</span></div>
+                <div>完成单词: <span id="totalWords">0</span></div>
+            </div>
+            <button class="btn" id="restartBtn">再玩一次</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js" referrerpolicy="no-referrer"></script>
+    <script>
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
+        }
+
+        class TypingGame {
+            constructor() {
+                this.defaultWords = {
+                    easy: ['cat', 'dog', 'run', 'jump', 'play', 'book', 'tree', 'house', 'car', 'sun', 'moon', 'star', 'fish', 'bird', 'hand', 'foot', 'head', 'face', 'door', 'window'],
+                    medium: ['computer', 'keyboard', 'program', 'function', 'variable', 'console', 'terminal', 'command', 'system', 'network', 'server', 'client', 'database', 'security', 'algorithm', 'interface', 'protocol', 'framework', 'library', 'module'],
+                    hard: ['asynchronous', 'authentication', 'authorization', 'encapsulation', 'polymorphism', 'inheritance', 'abstraction', 'depreciation', 'optimization', 'architecture', 'infrastructure', 'implementation', 'specification', 'configuration', 'documentation', 'development', 'deployment', 'maintenance', 'performance', 'scalability'],
+                    extreme: ['supercalifragilisticexpialidocious', 'pneumonoultramicroscopicsilicovolcanoconiosis', 'antidisestablishmentarianism', 'floccinaucinihilipilification', 'incomprehensibilities', 'uncharacteristically', 'counterrevolutionaries', 'hyperconscientiousnesses', 'microspectrophotometrically', 'hydrochlorofluorocarbon']
+                };
+
+                this.words = this.cloneWords(this.defaultWords);
+                this.currentDifficulty = 'easy';
+                this.currentWord = '';
+                this.typedChars = 0;
+                this.correctChars = 0;
+                this.totalWords = 0;
+                this.startTime = null;
+                this.timeLeft = 60;
+                this.isPlaying = false;
+                this.isPaused = false;
+                this.score = 0;
+                this.timerInterval = null;
+
+                this.initElements();
+                this.pdfSupported = typeof window.pdfjsLib !== 'undefined';
+                if (!this.pdfSupported) {
+                    this.elements.uploadStatus.textContent = 'PDF.js 库加载失败，无法解析 PDF，使用内置单词库';
+                    this.elements.pdfInput.disabled = true;
+                } else {
+                    this.elements.uploadStatus.textContent = '支持上传 PDF 生成自定义单词库';
+                }
+
+                this.bindEvents();
+                this.updateCursor();
+            }
+
+            initElements() {
+                this.elements = {
+                    currentWord: document.getElementById('currentWord'),
+                    textInput: document.getElementById('textInput'),
+                    startBtn: document.getElementById('startBtn'),
+                    pauseBtn: document.getElementById('pauseBtn'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    restartBtn: document.getElementById('restartBtn'),
+                    timer: document.getElementById('timer'),
+                    wpm: document.getElementById('wpm'),
+                    accuracy: document.getElementById('accuracy'),
+                    score: document.getElementById('score'),
+                    gameOver: document.getElementById('gameOver'),
+                    finalScore: document.getElementById('finalScore'),
+                    finalWpm: document.getElementById('finalWpm'),
+                    finalAccuracy: document.getElementById('finalAccuracy'),
+                    totalWords: document.getElementById('totalWords'),
+                    progressFill: document.getElementById('progressFill'),
+                    difficultyBtns: document.querySelectorAll('.difficulty-btn'),
+                    uploadStatus: document.getElementById('uploadStatus'),
+                    pdfInput: document.getElementById('pdfInput')
+                };
+            }
+
+            bindEvents() {
+                this.elements.startBtn.addEventListener('click', () => this.startGame());
+                this.elements.pauseBtn.addEventListener('click', () => this.togglePause());
+                this.elements.resetBtn.addEventListener('click', () => this.resetGame());
+                this.elements.restartBtn.addEventListener('click', () => {
+                    this.elements.gameOver.style.display = 'none';
+                    this.startGame();
+                });
+
+                this.elements.textInput.addEventListener('input', (e) => this.handleInput(e));
+                this.elements.textInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && this.currentWord === this.elements.textInput.value) {
+                        this.nextWord();
+                    }
+                });
+
+                this.elements.textInput.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.elements.textInput.focus();
+                });
+
+                this.elements.difficultyBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (!this.isPlaying) {
+                            this.elements.difficultyBtns.forEach(b => b.classList.remove('active'));
+                            e.target.classList.add('active');
+                            this.currentDifficulty = e.target.dataset.level;
+                            this.updateCursor();
+                        }
+                    });
+                });
+
+                if (this.pdfSupported) {
+                    this.elements.pdfInput.addEventListener('change', (event) => this.loadPdf(event));
+                }
+            }
+
+            async loadPdf(event) {
+                if (!this.pdfSupported || !window.pdfjsLib) {
+                    this.resetToDefaultWords('PDF.js 未加载，无法解析 PDF');
+                    return;
+                }
+
+                const file = event.target.files?.[0];
+                if (!file) {
+                    this.resetToDefaultWords('未选择文件，使用内置单词库');
+                    return;
+                }
+
+                this.elements.uploadStatus.textContent = '正在解析 PDF...';
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    let textContent = '';
+
+                    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                        const page = await pdf.getPage(pageNumber);
+                        const content = await page.getTextContent();
+                        const pageText = content.items.map(item => item.str).join(' ');
+                        textContent += ' ' + pageText;
+                    }
+
+                    const wordMap = this.extractWords(textContent);
+                    if (wordMap.total === 0) {
+                        this.resetToDefaultWords('未提取到单词，恢复内置单词库');
+                        return;
+                    }
+
+                    this.words = this.cloneWords(wordMap.words);
+                    this.elements.uploadStatus.textContent = `已加载 ${wordMap.total} 个单词`;
+                    if (!this.isPlaying) {
+                        this.updateCursor();
+                    }
+                } catch (error) {
+                    console.error(error);
+                    this.resetToDefaultWords('解析失败，恢复内置单词库');
+                }
+            }
+
+            resetToDefaultWords(message) {
+                this.words = this.cloneWords(this.defaultWords);
+                this.elements.uploadStatus.textContent = message;
+            }
+
+            extractWords(text) {
+                const cleaned = text
+                    .replace(/[^\p{L}\p{N}\s'-]/gu, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .split(' ')
+                    .filter(word => word.length > 1 && word.length < 40);
+
+                const uniqueWords = Array.from(new Set(cleaned.map(w => w.toLowerCase())));
+
+                const wordsByDifficulty = {
+                    easy: [],
+                    medium: [],
+                    hard: [],
+                    extreme: []
+                };
+
+                uniqueWords.forEach(word => {
+                    if (/\d/.test(word)) return;
+
+                    if (word.length <= 4) {
+                        wordsByDifficulty.easy.push(word);
+                    } else if (word.length <= 7) {
+                        wordsByDifficulty.medium.push(word);
+                    } else if (word.length <= 12) {
+                        wordsByDifficulty.hard.push(word);
+                    } else {
+                        wordsByDifficulty.extreme.push(word);
+                    }
+                });
+
+                let total = 0;
+                Object.keys(wordsByDifficulty).forEach(key => {
+                    if (wordsByDifficulty[key].length === 0) {
+                        wordsByDifficulty[key] = [...this.defaultWords[key]];
+                    } else {
+                        total += wordsByDifficulty[key].length;
+                    }
+                });
+
+                return { words: wordsByDifficulty, total };
+            }
+
+            cloneWords(words) {
+                return {
+                    easy: [...words.easy],
+                    medium: [...words.medium],
+                    hard: [...words.hard],
+                    extreme: [...words.extreme]
+                };
+            }
+
+            startGame() {
+                const availableWords = this.words[this.currentDifficulty];
+                if (!availableWords || availableWords.length === 0) {
+                    this.elements.uploadStatus.textContent = '当前难度无单词，请上传 PDF 或切换难度';
+                    return;
+                }
+
+                this.isPlaying = true;
+                this.isPaused = false;
+                this.startTime = Date.now();
+                this.timeLeft = 60;
+                this.score = 0;
+                this.correctChars = 0;
+                this.typedChars = 0;
+                this.totalWords = 0;
+
+                this.elements.startBtn.style.display = 'none';
+                this.elements.pauseBtn.style.display = 'inline-block';
+                this.elements.gameOver.style.display = 'none';
+                this.elements.textInput.disabled = false;
+                this.elements.textInput.value = '';
+                this.elements.textInput.focus();
+
+                this.nextWord();
+                this.startTimer();
+                this.updateStats();
+            }
+
+            togglePause() {
+                if (this.isPaused) {
+                    this.resumeGame();
+                } else {
+                    this.pauseGame();
+                }
+            }
+
+            pauseGame() {
+                this.isPaused = true;
+                this.elements.pauseBtn.textContent = '继续';
+                clearInterval(this.timerInterval);
+                this.elements.textInput.disabled = true;
+            }
+
+            resumeGame() {
+                this.isPaused = false;
+                this.elements.pauseBtn.textContent = '暂停';
+                this.elements.textInput.disabled = false;
+                this.elements.textInput.focus();
+                this.startTimer();
+            }
+
+            resetGame() {
+                this.isPlaying = false;
+                this.isPaused = false;
+                clearInterval(this.timerInterval);
+
+                this.timeLeft = 60;
+                this.score = 0;
+                this.correctChars = 0;
+                this.typedChars = 0;
+                this.totalWords = 0;
+
+                this.elements.startBtn.style.display = 'inline-block';
+                this.elements.pauseBtn.style.display = 'none';
+                this.elements.pauseBtn.textContent = '暂停';
+                this.elements.gameOver.style.display = 'none';
+                this.elements.textInput.disabled = true;
+                this.elements.textInput.value = '';
+
+                this.elements.currentWord.innerHTML = '<span class="cursor"></span>';
+                this.updateStats();
+                this.elements.progressFill.style.width = '0%';
+            }
+
+            nextWord() {
+                const wordList = this.words[this.currentDifficulty];
+                this.currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+                this.elements.textInput.value = '';
+                this.elements.textInput.classList.remove('error-feedback', 'correct-feedback');
+                this.totalWords++;
+                this.updateWordDisplay();
+                this.updateProgress();
+            }
+
+            updateWordDisplay() {
+                const typedText = this.elements.textInput.value;
+                let displayHTML = '';
+
+                for (let i = 0; i < this.currentWord.length; i++) {
+                    if (i < typedText.length) {
+                        if (typedText[i] === this.currentWord[i]) {
+                            displayHTML += `<span class="typed-char correct-feedback">${this.currentWord[i]}</span>`;
+                        } else {
+                            displayHTML += `<span class="typed-char error-feedback">${this.currentWord[i]}</span>`;
+                        }
+                    } else {
+                        displayHTML += `<span class="remaining-char">${this.currentWord[i]}</span>`;
+                    }
+                }
+
+                if (typedText.length === this.currentWord.length) {
+                    displayHTML += '<span class="cursor"></span>';
+                } else {
+                    const correctPrefix = typedText.split('').every((char, i) => char === this.currentWord[i]);
+                    if (correctPrefix) {
+                        displayHTML += '<span class="cursor"></span>';
+                    }
+                }
+
+                this.elements.currentWord.innerHTML = displayHTML;
+            }
+
+            updateCursor() {
+                if (!this.isPlaying) {
+                    this.elements.currentWord.innerHTML = '<span class="cursor"></span>';
+                }
+            }
+
+            handleInput(e) {
+                if (!this.isPlaying || this.isPaused) return;
+
+                const typedText = e.target.value;
+                this.typedChars++;
+
+                if (typedText === this.currentWord) {
+                    this.correctChars += this.currentWord.length;
+                    this.score += this.currentWord.length * this.getDifficultyMultiplier();
+                    this.elements.textInput.classList.add('correct-feedback');
+                    setTimeout(() => {
+                        this.elements.textInput.classList.remove('correct-feedback');
+                        this.nextWord();
+                    }, 200);
+                } else {
+                    const correctSoFar = typedText.split('').every((char, i) => char === this.currentWord[i]);
+                    if (!correctSoFar && typedText.length > 0) {
+                        this.elements.textInput.classList.add('error-feedback');
+                    } else {
+                        this.elements.textInput.classList.remove('error-feedback');
+                    }
+                }
+
+                this.updateWordDisplay();
+                this.updateStats();
+            }
+
+            getDifficultyMultiplier() {
+                const multipliers = {
+                    easy: 1,
+                    medium: 2,
+                    hard: 3,
+                    extreme: 5
+                };
+                return multipliers[this.currentDifficulty];
+            }
+
+            startTimer() {
+                clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused) {
+                        this.timeLeft--;
+                        this.elements.timer.textContent = this.timeLeft;
+
+                        if (this.timeLeft <= 0) {
+                            this.endGame();
+                        }
+                    }
+                }, 1000);
+            }
+
+            updateStats() {
+                if (this.startTime && this.typedChars > 0) {
+                    const timeElapsed = (Date.now() - this.startTime) / 1000 / 60;
+                    const wordsTyped = this.correctChars / 5;
+                    const wpm = Math.round(wordsTyped / timeElapsed) || 0;
+                    this.elements.wpm.textContent = wpm;
+                }
+
+                const accuracy = this.typedChars > 0 ?
+                    Math.round((this.correctChars / this.typedChars) * 100) : 100;
+                this.elements.accuracy.textContent = accuracy + '%';
+
+                this.elements.score.textContent = this.score;
+            }
+
+            updateProgress() {
+                const progress = Math.min((this.totalWords / 20) * 100, 100);
+                this.elements.progressFill.style.width = progress + '%';
+            }
+
+            endGame() {
+                this.isPlaying = false;
+                clearInterval(this.timerInterval);
+
+                const timeElapsed = (Date.now() - this.startTime) / 1000 / 60;
+                const wordsTyped = this.correctChars / 5;
+                const finalWpm = Math.round(wordsTyped / timeElapsed) || 0;
+                const finalAccuracy = this.typedChars > 0 ?
+                    Math.round((this.correctChars / this.typedChars) * 100) : 0;
+
+                this.elements.finalScore.textContent = this.score;
+                this.elements.finalWpm.textContent = finalWpm;
+                this.elements.finalAccuracy.textContent = finalAccuracy + '%';
+                this.elements.totalWords.textContent = this.totalWords - 1;
+
+                this.elements.gameOver.style.display = 'block';
+                this.elements.textInput.disabled = true;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const game = new TypingGame();
+
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', (e) => {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            document.addEventListener('touchmove', (e) => {
+                if (e.target.tagName !== 'INPUT') {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        });
+    </script>
+</body>
+</html>
