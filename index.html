@@ -13,12 +13,73 @@
       color: #222;
       line-height: 1.6;
     }
-    .container {
-      max-width: 960px;
+    .page-wrapper {
+      max-width: 1200px;
       margin: 0 auto;
+      padding: 40px 20px 60px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .sidebar {
+      width: 200px;
+      background-color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 24px 16px;
+      position: sticky;
+      top: 40px;
+    }
+    .sidebar ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar li {
+      margin-bottom: 16px;
+    }
+    .sidebar a {
+      display: block;
+      font-weight: 600;
+      color: #1f4fbf;
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .sidebar a:hover {
+      background-color: rgba(42, 122, 226, 0.1);
+      color: #17408f;
+    }
+    .container {
+      flex: 1;
+      max-width: 960px;
+      margin: 0;
       padding: 40px 20px 60px;
       background-color: #fff;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+    }
+    @media (max-width: 768px) {
+      .page-wrapper {
+        flex-direction: column;
+        padding: 24px 16px 40px;
+      }
+      .sidebar {
+        width: 100%;
+        position: static;
+        padding: 16px;
+      }
+      .sidebar ul {
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+      .sidebar li {
+        margin-bottom: 0;
+      }
+      .sidebar a {
+        text-align: center;
+      }
     }
     header {
       border-bottom: 3px solid #2a7ae2;
@@ -84,7 +145,15 @@
   </style>
 </head>
 <body>
-  <main class="container">
+  <div class="page-wrapper">
+    <nav class="sidebar">
+      <ul>
+        <li><a href="blog/">Blog</a></li>
+        <li><a href="tools/">Tools</a></li>
+        <li><a href="game/">Game</a></li>
+      </ul>
+    </nav>
+    <main class="container">
     <header>
       <img src="https://avatars.githubusercontent.com/u/19432485?v=4" alt="徐洲更的头像" class="avatar">
       <div class="header-content">
@@ -202,6 +271,7 @@
         <img src="https://visitor-badge.laobi.icu/badge?page_id=xuzhougeng.xuzhougeng" alt="visitors"/>
       </p>
     </footer>
-  </main>
+    </main>
+  </div>
 </body>
 </html>
