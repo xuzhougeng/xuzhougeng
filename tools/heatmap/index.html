@@ -859,30 +859,88 @@
                 alert('请先生成热图！');
                 return;
             }
-            const plot = document.getElementById('heatmapPlot');
-            html2canvas(plot, {
-                backgroundColor: '#ffffff',
-                scale: 2
-            }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const width = canvas.width;
-                const height = canvas.height;
 
-                // 创建SVG
-                const svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-    <image width="${width}" height="${height}" xlink:href="${imgData}"/>
+            const { data, rowNames, colNames } = currentData;
+            const cellSize = parseInt(document.getElementById('cellSize').value);
+            const fontSize = parseInt(document.getElementById('fontSize').value);
+            const showValues = document.getElementById('showValues').checked;
+            const showGrid = document.getElementById('showGrid').checked;
+
+            const rowCount = data.length;
+            const colCount = data[0].length;
+
+            const labelWidth = 100;
+            const labelHeight = 60;
+            const width = labelWidth + colCount * cellSize;
+            const height = labelHeight + rowCount * cellSize;
+
+            // 计算数值范围
+            const allValues = data.flat();
+            const minVal = Math.min(...allValues);
+            const maxVal = Math.max(...allValues);
+
+            let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+    <!-- Background -->
+    <rect width="${width}" height="${height}" fill="white"/>
+
+    <!-- Heatmap cells -->`;
+
+            // 绘制单元格
+            for (let i = 0; i < rowCount; i++) {
+                for (let j = 0; j < colCount; j++) {
+                    const value = data[i][j];
+                    const x = labelWidth + j * cellSize;
+                    const y = labelHeight + i * cellSize;
+                    const color = getColor(value, minVal, maxVal);
+
+                    svgContent += `
+    <rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${color}"${showGrid ? ' stroke="#ddd" stroke-width="0.5"' : ''}/>`;
+
+                    if (showValues && cellSize >= 25) {
+                        const textFontSize = Math.min(fontSize, cellSize / 3);
+                        svgContent += `
+    <text x="${x + cellSize / 2}" y="${y + cellSize / 2}" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="${textFontSize}" fill="#000">${value.toFixed(1)}</text>`;
+                    }
+                }
+            }
+
+            svgContent += `
+
+    <!-- Row labels -->
+    <g font-family="Arial" font-size="${fontSize}" fill="#000">`;
+
+            // 绘制行标签
+            for (let i = 0; i < rowCount; i++) {
+                const y = labelHeight + i * cellSize + cellSize / 2;
+                svgContent += `
+        <text x="${labelWidth - 5}" y="${y}" text-anchor="end" dominant-baseline="middle">${rowNames[i]}</text>`;
+            }
+
+            svgContent += `
+    </g>
+
+    <!-- Column labels -->
+    <g font-family="Arial" font-size="${fontSize}" fill="#000">`;
+
+            // 绘制列标签（旋转45度）
+            for (let j = 0; j < colCount; j++) {
+                const x = labelWidth + j * cellSize + cellSize / 2;
+                svgContent += `
+        <text x="${x}" y="${labelHeight - 5}" text-anchor="start" transform="rotate(-45, ${x}, ${labelHeight - 5})">${colNames[j]}</text>`;
+            }
+
+            svgContent += `
+    </g>
 </svg>`;
 
-                // 下载SVG
-                const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'heatmap.svg';
-                link.click();
-                URL.revokeObjectURL(link.href);
-            });
+            // 下载SVG
+            const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'heatmap.svg';
+            link.click();
+            URL.revokeObjectURL(link.href);
         }
 
         function exportCSV() {
