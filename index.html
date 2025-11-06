@@ -24,6 +24,20 @@
       border-bottom: 3px solid #2a7ae2;
       margin-bottom: 32px;
       padding-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid #2a7ae2;
+      flex-shrink: 0;
+    }
+    .header-content {
+      flex: 1;
     }
     h1 {
       margin: 0;
@@ -72,15 +86,18 @@
 <body>
   <main class="container">
     <header>
-      <h1>徐洲更</h1>
-      <p class="summary">中国科学院分子植物科学卓越创新中心（CEMPS）博士后（王佳伟研究组）</p>
-      <p class="intro">
-        浙江农林大学农学学士学位，中国科学院大学博士学位。主要研究方向为植物单细胞测序与跨物种细胞图谱构建。研究成果发表于
-        <em>Cell</em>、<em>Science</em>、<em>Molecular Plant</em> 等国内外重要学术期刊，相关成果入选 2024 年度“中国生命科学十大进展”。
-      </p>
-      <p>
-        入选“中国科学院特别研究助理资助项目”和“国家资助博士后研究人员计划（B档）”，具备优秀的学习能力和协作沟通能力，乐于探索并能够主动提出和解决问题。
-      </p>
+      <img src="https://avatars.githubusercontent.com/u/19432485?v=4" alt="徐洲更的头像" class="avatar">
+      <div class="header-content">
+        <h1>徐洲更</h1>
+        <p class="summary">中国科学院分子植物科学卓越创新中心（CEMPS）博士后（王佳伟研究组）</p>
+        <p class="intro">
+          浙江农林大学农学学士学位，中国科学院大学博士学位。主要研究方向为植物单细胞测序与跨物种细胞图谱构建。研究成果发表于
+          <em>Cell</em>、<em>Science</em>、<em>Molecular Plant</em> 等国内外重要学术期刊，相关成果入选 2024 年度"中国生命科学十大进展"。
+        </p>
+        <p>
+          入选"中国科学院特别研究助理资助项目"和"国家资助博士后研究人员计划（B档）"，具备优秀的学习能力和协作沟通能力，乐于探索并能够主动提出和解决问题。
+        </p>
+      </div>
     </header>
 
     <section>
