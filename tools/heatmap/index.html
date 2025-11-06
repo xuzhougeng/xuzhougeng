@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>热图在线生成器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        .sidebar {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #fa709a;
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .input-group textarea {
+            min-height: 200px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            padding: 12px 20px;
+            background: #fa709a;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #e8608a;
+        }
+        button.secondary {
+            background: #48bb78;
+        }
+        button.secondary:hover {
+            background: #38a169;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        .file-input-label {
+            display: block;
+            padding: 12px 20px;
+            background: #ed8936;
+            color: white;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .file-input-label:hover {
+            background: #dd6b20;
+        }
+        .preview-area {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            overflow: auto;
+        }
+        #heatmapPlot {
+            background: white;
+            padding: 20px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .plot-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        #heatmapCanvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .color-scale {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-bar {
+            width: 300px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .color-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 300px;
+            font-size: 12px;
+            color: #666;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .example-data {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab {
+            padding: 8px 16px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .tab.active {
+            background: #fa709a;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #excelTable {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 10px;
+        }
+        #excelTable th, #excelTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            min-width: 80px;
+        }
+        #excelTable th {
+            background: #f0f0f0;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        #excelTable input {
+            width: 100%;
+            border: none;
+            padding: 4px;
+            font-size: 13px;
+        }
+        #excelTable input:focus {
+            outline: 2px solid #fa709a;
+            background: #fff5f8;
+        }
+        .table-wrapper {
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .paste-hint {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            border-left: 4px solid #2196f3;
+        }
+        .color-scheme-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .color-scheme-option {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .color-scheme-option:hover {
+            border-color: #fa709a;
+        }
+        .color-scheme-option.active {
+            border-color: #fa709a;
+            background: #fff5f8;
+        }
+        .color-preview {
+            height: 20px;
+            border-radius: 2px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 热图在线生成器</h1>
+            <p>基因表达、相关性分析可视化工具 - 支持Excel粘贴、在线编辑、导出高质量图片</p>
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <div class="section">
+                    <h3>📊 数据输入</h3>
+
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('excel')">📋 Excel表格</button>
+                        <button class="tab" onclick="switchTab('text')">📝 文本模式</button>
+                    </div>
+
+                    <div id="excelTab" class="tab-content active">
+                        <div class="paste-hint">
+                            💡 <strong>使用方法：</strong><br>
+                            1. 从Excel复制数据（含行列名）<br>
+                            2. 点击下方表格第一个单元格<br>
+                            3. 按 Ctrl+V (或 Cmd+V) 粘贴<br>
+                            4. 或直接在表格中输入数据
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="excelTable">
+                                <thead>
+                                    <tr id="excelTableHeader">
+                                        <th>Gene</th>
+                                        <th>Sample1</th>
+                                        <th>Sample2</th>
+                                        <th>Sample3</th>
+                                        <th>Sample4</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="excelTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="btn-group">
+                            <button onclick="addRow()">➕ 添加行</button>
+                            <button onclick="addColumn()">➕ 添加列</button>
+                            <button onclick="clearTable()">🗑️ 清空表格</button>
+                            <button onclick="generateRandomData()">🎲 随机数据</button>
+                        </div>
+                    </div>
+
+                    <div id="textTab" class="tab-content">
+                        <div class="example-data">
+                            示例格式（CSV）：<br>
+                            Gene,Sample1,Sample2,Sample3<br>
+                            Gene1,2.5,3.2,1.8<br>
+                            Gene2,1.2,2.1,2.8
+                        </div>
+                        <div class="input-group">
+                            <label>粘贴数据（CSV格式）：</label>
+                            <textarea id="dataInput" placeholder="Gene,Sample1,Sample2,Sample3&#10;Gene1,2.5,3.2,1.8&#10;Gene2,1.2,2.1,2.8"></textarea>
+                        </div>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="fileInput" accept=".csv,.txt">
+                            <label for="fileInput" class="file-input-label">📁 导入CSV文件</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🎨 配色方案</h3>
+                    <div class="color-scheme-selector">
+                        <div class="color-scheme-option active" onclick="selectColorScheme('redblue')">
+                            <div class="color-preview" style="background: linear-gradient(to right, #0000ff, #ffffff, #ff0000);"></div>
+                            <span>蓝-白-红</span>
+                        </div>
+                        <div class="color-scheme-option" onclick="selectColorScheme('greenred')">
+                            <div class="color-preview" style="background: linear-gradient(to right, #00ff00, #000000, #ff0000);"></div>
+                            <span>绿-黑-红</span>
+                        </div>
+                        <div class="color-scheme-option" onclick="selectColorScheme('viridis')">
+                            <div class="color-preview" style="background: linear-gradient(to right, #440154, #31688e, #35b779, #fde724);"></div>
+                            <span>Viridis</span>
+                        </div>
+                        <div class="color-scheme-option" onclick="selectColorScheme('yellowblue')">
+                            <div class="color-preview" style="background: linear-gradient(to right, #ffff00, #ffffff, #0000ff);"></div>
+                            <span>黄-白-蓝</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>⚙️ 图表设置</h3>
+                    <div class="input-group">
+                        <label>图表标题：</label>
+                        <input type="text" id="plotTitle" value="Gene Expression Heatmap">
+                    </div>
+                    <div class="input-group">
+                        <label>单元格大小（像素）：</label>
+                        <input type="range" id="cellSize" min="15" max="60" value="30" step="5">
+                        <span id="cellSizeValue">30</span>
+                    </div>
+                    <div class="input-group">
+                        <label>字体大小：</label>
+                        <input type="range" id="fontSize" min="8" max="16" value="11" step="1">
+                        <span id="fontSizeValue">11</span>
+                    </div>
+                    <div class="input-group">
+                        <label>
+                            <input type="checkbox" id="showValues"> 显示数值
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <label>
+                            <input type="checkbox" id="showGrid" checked> 显示网格线
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>💾 导出选项</h3>
+                    <div class="btn-group">
+                        <button onclick="generatePlot()">🔄 生成热图</button>
+                        <button onclick="exportPNG()" class="secondary">📷 导出PNG</button>
+                        <button onclick="exportPDF()">📄 导出PDF</button>
+                        <button onclick="exportCSV()">📑 导出CSV</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div id="heatmapPlot">
+                    <div class="plot-title">请输入数据并点击"生成热图"</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = null;
+        let currentTab = 'excel';
+        let colorScheme = 'redblue';
+
+        // 配色方案定义
+        const colorSchemes = {
+            redblue: [
+                [0, 0, 255],     // 蓝色
+                [255, 255, 255], // 白色
+                [255, 0, 0]      // 红色
+            ],
+            greenred: [
+                [0, 255, 0],     // 绿色
+                [0, 0, 0],       // 黑色
+                [255, 0, 0]      // 红色
+            ],
+            viridis: [
+                [68, 1, 84],
+                [49, 104, 142],
+                [53, 183, 121],
+                [253, 231, 36]
+            ],
+            yellowblue: [
+                [255, 255, 0],   // 黄色
+                [255, 255, 255], // 白色
+                [0, 0, 255]      // 蓝色
+            ]
+        };
+
+        // 更新滑块显示值
+        document.getElementById('cellSize').addEventListener('input', (e) => {
+            document.getElementById('cellSizeValue').textContent = e.target.value;
+        });
+        document.getElementById('fontSize').addEventListener('input', (e) => {
+            document.getElementById('fontSizeValue').textContent = e.target.value;
+        });
+
+        // 切换标签页
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            if (tab === 'excel') {
+                document.querySelector('.tab:nth-child(1)').classList.add('active');
+                document.getElementById('excelTab').classList.add('active');
+            } else {
+                document.querySelector('.tab:nth-child(2)').classList.add('active');
+                document.getElementById('textTab').classList.add('active');
+            }
+        }
+
+        // 选择配色方案
+        function selectColorScheme(scheme) {
+            colorScheme = scheme;
+            document.querySelectorAll('.color-scheme-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            event.target.closest('.color-scheme-option').classList.add('active');
+        }
+
+        // 初始化表格
+        function initTable() {
+            const tbody = document.getElementById('excelTableBody');
+            tbody.innerHTML = '';
+            for (let i = 0; i < 10; i++) {
+                addRow();
+            }
+        }
+
+        // 添加行
+        function addRow() {
+            const tbody = document.getElementById('excelTableBody');
+            const header = document.getElementById('excelTableHeader');
+            const colCount = header.cells.length;
+
+            const row = tbody.insertRow();
+            for (let i = 0; i < colCount; i++) {
+                const cell = row.insertCell();
+                const input = document.createElement('input');
+                input.type = 'text';
+                cell.appendChild(input);
+            }
+        }
+
+        // 添加列
+        function addColumn() {
+            const header = document.getElementById('excelTableHeader');
+            const tbody = document.getElementById('excelTableBody');
+
+            const th = document.createElement('th');
+            th.textContent = `Sample${header.cells.length}`;
+            header.appendChild(th);
+
+            for (let row of tbody.rows) {
+                const cell = row.insertCell();
+                const input = document.createElement('input');
+                input.type = 'text';
+                cell.appendChild(input);
+            }
+        }
+
+        // 清空表格
+        function clearTable() {
+            if (confirm('确定要清空表格吗？')) {
+                initTable();
+            }
+        }
+
+        // 生成随机数据
+        function generateRandomData() {
+            const geneCount = 20;
+            const sampleCount = 8;
+
+            const header = document.getElementById('excelTableHeader');
+            header.innerHTML = '<th>Gene</th>';
+            for (let i = 1; i <= sampleCount; i++) {
+                const th = document.createElement('th');
+                th.textContent = `Sample${i}`;
+                header.appendChild(th);
+            }
+
+            const tbody = document.getElementById('excelTableBody');
+            tbody.innerHTML = '';
+
+            for (let i = 0; i < geneCount; i++) {
+                const row = tbody.insertRow();
+
+                for (let j = 0; j <= sampleCount; j++) {
+                    const cell = row.insertCell();
+                    const input = document.createElement('input');
+                    input.type = 'text';
+
+                    if (j === 0) {
+                        input.value = `Gene${i + 1}`;
+                    } else {
+                        const value = (Math.random() * 10).toFixed(2);
+                        input.value = value;
+                    }
+
+                    cell.appendChild(input);
+                }
+            }
+
+            alert(`成功生成 ${geneCount} × ${sampleCount} 随机数据！\n点击"生成热图"查看可视化。`);
+        }
+
+        // 处理粘贴事件
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.getElementById('excelTable');
+
+            table.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text');
+                const rows = pastedData.split('\n').filter(row => row.trim());
+
+                let currentCell = e.target.closest('td') || e.target.closest('th');
+                if (!currentCell) return;
+
+                const tbody = document.getElementById('excelTableBody');
+                const header = document.getElementById('excelTableHeader');
+
+                if (currentCell.tagName === 'TH') {
+                    const firstRow = rows[0].split('\t');
+
+                    header.innerHTML = '';
+                    firstRow.forEach(value => {
+                        const th = document.createElement('th');
+                        th.textContent = value.trim() || 'Column';
+                        header.appendChild(th);
+                    });
+
+                    tbody.innerHTML = '';
+                    const dataRows = rows.slice(1);
+
+                    dataRows.forEach(rowData => {
+                        const cells = rowData.split('\t');
+                        const row = tbody.insertRow();
+
+                        cells.forEach(cellData => {
+                            const cell = row.insertCell();
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = cellData.trim();
+                            cell.appendChild(input);
+                        });
+                    });
+                } else {
+                    let currentRow = currentCell.parentElement;
+                    let startColIndex = Array.from(currentRow.cells).indexOf(currentCell);
+                    let rowIndex = Array.from(tbody.rows).indexOf(currentRow);
+
+                    while (tbody.rows.length < rowIndex + rows.length) {
+                        addRow();
+                    }
+
+                    rows.forEach((rowData, i) => {
+                        const cells = rowData.split('\t');
+                        const targetRow = tbody.rows[rowIndex + i];
+
+                        cells.forEach((cellData, j) => {
+                            const targetColIndex = startColIndex + j;
+                            if (targetColIndex < targetRow.cells.length) {
+                                const input = targetRow.cells[targetColIndex].querySelector('input');
+                                if (input) {
+                                    input.value = cellData.trim();
+                                }
+                            }
+                        });
+                    });
+                }
+
+                alert('数据粘贴成功！');
+            });
+        });
+
+        // 从表格获取数据
+        function getTableData() {
+            const header = document.getElementById('excelTableHeader');
+            const tbody = document.getElementById('excelTableBody');
+
+            const colNames = [];
+            for (let i = 1; i < header.cells.length; i++) {
+                colNames.push(header.cells[i].textContent.trim());
+            }
+
+            const data = [];
+            const rowNames = [];
+
+            for (let row of tbody.rows) {
+                const inputs = row.querySelectorAll('input');
+                const rowData = [];
+
+                let rowName = inputs[0].value.trim();
+                if (!rowName) continue;
+
+                rowNames.push(rowName);
+
+                for (let i = 1; i < inputs.length; i++) {
+                    const value = parseFloat(inputs[i].value);
+                    rowData.push(isNaN(value) ? 0 : value);
+                }
+
+                if (rowData.length > 0) {
+                    data.push(rowData);
+                }
+            }
+
+            return { data, rowNames, colNames };
+        }
+
+        // 从文本解析数据
+        function parseTextData() {
+            const text = document.getElementById('dataInput').value.trim();
+            if (!text) return { data: [], rowNames: [], colNames: [] };
+
+            const lines = text.split('\n').filter(line => line.trim());
+            if (lines.length < 2) return { data: [], rowNames: [], colNames: [] };
+
+            const colNames = lines[0].split(',').slice(1).map(s => s.trim());
+
+            const data = [];
+            const rowNames = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].split(',').map(s => s.trim());
+                if (parts.length > 1) {
+                    rowNames.push(parts[0]);
+                    const rowData = parts.slice(1).map(v => {
+                        const num = parseFloat(v);
+                        return isNaN(num) ? 0 : num;
+                    });
+                    data.push(rowData);
+                }
+            }
+
+            return { data, rowNames, colNames };
+        }
+
+        // 获取颜色
+        function getColor(value, min, max) {
+            const colors = colorSchemes[colorScheme];
+            const normalized = (value - min) / (max - min);
+
+            const segments = colors.length - 1;
+            const segmentIndex = Math.floor(normalized * segments);
+            const segmentProgress = (normalized * segments) - segmentIndex;
+
+            const idx = Math.min(segmentIndex, segments - 1);
+            const color1 = colors[idx];
+            const color2 = colors[Math.min(idx + 1, colors.length - 1)];
+
+            const r = Math.round(color1[0] + (color2[0] - color1[0]) * segmentProgress);
+            const g = Math.round(color1[1] + (color2[1] - color1[1]) * segmentProgress);
+            const b = Math.round(color1[2] + (color2[2] - color1[2]) * segmentProgress);
+
+            return `rgb(${r},${g},${b})`;
+        }
+
+        // 生成热图
+        function generatePlot() {
+            const parsed = currentTab === 'excel' ? getTableData() : parseTextData();
+
+            if (!parsed.data || parsed.data.length === 0) {
+                alert('请输入有效数据！');
+                return;
+            }
+
+            currentData = parsed;
+            const { data, rowNames, colNames } = parsed;
+
+            const title = document.getElementById('plotTitle').value;
+            const cellSize = parseInt(document.getElementById('cellSize').value);
+            const fontSize = parseInt(document.getElementById('fontSize').value);
+            const showValues = document.getElementById('showValues').checked;
+            const showGrid = document.getElementById('showGrid').checked;
+
+            const plotDiv = document.getElementById('heatmapPlot');
+
+            const rowCount = data.length;
+            const colCount = data[0].length;
+
+            const labelWidth = 100;
+            const labelHeight = 60;
+            const width = labelWidth + colCount * cellSize;
+            const height = labelHeight + rowCount * cellSize;
+
+            let html = `<div class="plot-title">${title}</div>`;
+            html += `<canvas id="heatmapCanvas" width="${width}" height="${height}"></canvas>`;
+
+            // 添加颜色条
+            const allValues = data.flat();
+            const minVal = Math.min(...allValues);
+            const maxVal = Math.max(...allValues);
+
+            html += '<div class="color-scale">';
+            html += '<canvas id="colorBar" width="300" height="30"></canvas>';
+            html += `<div class="color-labels"><span>${minVal.toFixed(2)}</span><span>${maxVal.toFixed(2)}</span></div>`;
+            html += '</div>';
+
+            plotDiv.innerHTML = html;
+
+            // 绘制热图
+            const canvas = document.getElementById('heatmapCanvas');
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
+
+            // 绘制单元格
+            for (let i = 0; i < rowCount; i++) {
+                for (let j = 0; j < colCount; j++) {
+                    const value = data[i][j];
+                    const x = labelWidth + j * cellSize;
+                    const y = labelHeight + i * cellSize;
+
+                    ctx.fillStyle = getColor(value, minVal, maxVal);
+                    ctx.fillRect(x, y, cellSize, cellSize);
+
+                    if (showGrid) {
+                        ctx.strokeStyle = '#ddd';
+                        ctx.lineWidth = 0.5;
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+                    }
+
+                    if (showValues && cellSize >= 25) {
+                        ctx.fillStyle = '#000';
+                        ctx.font = `${Math.min(fontSize, cellSize / 3)}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(value.toFixed(1), x + cellSize / 2, y + cellSize / 2);
+                    }
+                }
+            }
+
+            // 绘制行标签
+            ctx.fillStyle = '#000';
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i < rowCount; i++) {
+                const y = labelHeight + i * cellSize + cellSize / 2;
+                ctx.fillText(rowNames[i], labelWidth - 5, y);
+            }
+
+            // 绘制列标签
+            ctx.save();
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            for (let j = 0; j < colCount; j++) {
+                const x = labelWidth + j * cellSize + cellSize / 2;
+                ctx.translate(x, labelHeight - 5);
+                ctx.rotate(-Math.PI / 4);
+                ctx.fillText(colNames[j], 0, 0);
+                ctx.rotate(Math.PI / 4);
+                ctx.translate(-x, -(labelHeight - 5));
+            }
+            ctx.restore();
+
+            // 绘制颜色条
+            const colorBarCanvas = document.getElementById('colorBar');
+            if (colorBarCanvas) {
+                const colorCtx = colorBarCanvas.getContext('2d');
+                const barWidth = 300;
+                const barHeight = 30;
+
+                for (let i = 0; i < barWidth; i++) {
+                    const value = minVal + (maxVal - minVal) * (i / barWidth);
+                    colorCtx.fillStyle = getColor(value, minVal, maxVal);
+                    colorCtx.fillRect(i, 0, 1, barHeight);
+                }
+
+                colorCtx.strokeStyle = '#000';
+                colorCtx.lineWidth = 1;
+                colorCtx.strokeRect(0, 0, barWidth, barHeight);
+            }
+        }
+
+        function exportPNG() {
+            if (!currentData) {
+                alert('请先生成热图！');
+                return;
+            }
+            const plot = document.getElementById('heatmapPlot');
+            html2canvas(plot, {
+                backgroundColor: '#ffffff',
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'heatmap.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function exportPDF() {
+            if (!currentData) {
+                alert('请先生成热图！');
+                return;
+            }
+            const plot = document.getElementById('heatmapPlot');
+            html2canvas(plot, {
+                backgroundColor: '#ffffff',
+                scale: 2
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgWidth = 280;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                pdf.save('heatmap.pdf');
+            });
+        }
+
+        function exportCSV() {
+            if (!currentData) {
+                alert('请先生成热图！');
+                return;
+            }
+
+            const { data, rowNames, colNames } = currentData;
+            let csv = ',' + colNames.join(',') + '\n';
+
+            data.forEach((row, i) => {
+                csv += rowNames[i] + ',' + row.join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'heatmap_data.csv';
+            link.click();
+        }
+
+        // 文件导入
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                Papa.parse(file, {
+                    complete: (results) => {
+                        const csvText = results.data.map(row => row.join(',')).join('\n');
+                        document.getElementById('dataInput').value = csvText;
+                        alert('文件导入成功！');
+                    },
+                    error: (error) => {
+                        alert('文件解析失败：' + error.message);
+                    }
+                });
+            }
+        });
+
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            initTable();
+
+            // 加载示例数据
+            const exampleRows = [
+                ['BRCA1', '8.5', '9.2', '7.8', '8.9'],
+                ['TP53', '6.2', '7.1', '6.8', '7.5'],
+                ['MYC', '5.5', '6.2', '5.9', '6.4'],
+                ['EGFR', '4.8', '5.5', '5.2', '5.7'],
+                ['KRAS', '3.2', '3.8', '3.5', '4.1'],
+                ['PIK3CA', '2.5', '3.1', '2.8', '3.3'],
+                ['PTEN', '1.8', '2.4', '2.1', '2.6'],
+                ['AKT1', '1.2', '1.8', '1.5', '2.0']
+            ];
+
+            const tbody = document.getElementById('excelTableBody');
+            exampleRows.forEach((rowData, i) => {
+                const row = tbody.rows[i];
+                if (row) {
+                    rowData.forEach((value, j) => {
+                        const input = row.cells[j].querySelector('input');
+                        if (input) input.value = value;
+                    });
+                }
+            });
+
+            // 文本模式示例数据
+            const exampleData = `Gene,Sample1,Sample2,Sample3,Sample4
+BRCA1,8.5,9.2,7.8,8.9
+TP53,6.2,7.1,6.8,7.5
+MYC,5.5,6.2,5.9,6.4
+EGFR,4.8,5.5,5.2,5.7
+KRAS,3.2,3.8,3.5,4.1
+PIK3CA,2.5,3.1,2.8,3.3
+PTEN,1.8,2.4,2.1,2.6
+AKT1,1.2,1.8,1.5,2.0`;
+            document.getElementById('dataInput').value = exampleData;
+        });
+    </script>
+</body>
+</html>
