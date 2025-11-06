@@ -1,170 +1,187 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World - 欢迎</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            width: 100%;
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .section {
-            margin-top: 30px;
-        }
-
-        .section-title {
-            color: #667eea;
-            font-size: 1.5em;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
-
-        .game-list {
-            list-style: none;
-        }
-
-        .game-item {
-            margin: 15px 0;
-        }
-
-        .game-link {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .game-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .game-icon {
-            font-size: 2em;
-            margin-right: 15px;
-        }
-
-        .game-info {
-            flex: 1;
-        }
-
-        .game-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .game-desc {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-
-        .blog-info {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .blog-info p {
-            color: white;
-            font-size: 1.1em;
-            margin: 0;
-            line-height: 1.6;
-        }
-
-        .blog-info a {
-            color: white;
-            font-weight: bold;
-            text-decoration: none;
-            border-bottom: 2px solid white;
-            transition: all 0.3s;
-        }
-
-        .blog-info a:hover {
-            opacity: 0.8;
-            border-bottom-color: transparent;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>徐洲更 - 个人简历</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #222;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+      background-color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+    header {
+      border-bottom: 3px solid #2a7ae2;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 2.4rem;
+    }
+    h2 {
+      margin-top: 32px;
+      font-size: 1.6rem;
+      color: #2a7ae2;
+      border-left: 6px solid #2a7ae2;
+      padding-left: 12px;
+    }
+    ul {
+      padding-left: 22px;
+    }
+    li {
+      margin-bottom: 8px;
+    }
+    a {
+      color: #2a7ae2;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .highlight {
+      font-weight: bold;
+    }
+    .summary {
+      font-size: 1.1rem;
+    }
+    .intro {
+      margin-top: 12px;
+    }
+    .section-content p {
+      margin: 8px 0;
+    }
+    footer {
+      margin-top: 48px;
+      font-size: 0.9rem;
+      color: #666;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>hello world!</h1>
+  <main class="container">
+    <header>
+      <h1>徐洲更</h1>
+      <p class="summary">中国科学院分子植物科学卓越创新中心（CEMPS）博士后（王佳伟研究组）</p>
+      <p class="intro">
+        浙江农林大学农学学士学位，中国科学院大学博士学位。主要研究方向为植物单细胞测序与跨物种细胞图谱构建。研究成果发表于
+        <em>Cell</em>、<em>Science</em>、<em>Molecular Plant</em> 等国内外重要学术期刊，相关成果入选 2024 年度“中国生命科学十大进展”。
+      </p>
+      <p>
+        入选“中国科学院特别研究助理资助项目”和“国家资助博士后研究人员计划（B档）”，具备优秀的学习能力和协作沟通能力，乐于探索并能够主动提出和解决问题。
+      </p>
+    </header>
 
-        <div class="blog-info">
-            <p>📝 博客内容目前在 <a href="https://xuzhougeng.com" target="_blank">xuzhougeng.com</a> 上更新</p>
-        </div>
+    <section>
+      <h2>基本信息</h2>
+      <div class="section-content">
+        <p><span class="highlight">姓名：</span>徐洲更</p>
+        <p><span class="highlight">单位：</span>中国科学院分子植物科学卓越创新中心</p>
+        <p><span class="highlight">公众号：</span>洲更的第二大脑</p>
+        <p><span class="highlight">博客：</span><a href="https://xuzhougeng.top" target="_blank" rel="noopener">xuzhougeng.top</a></p>
+      </div>
+    </section>
 
-        <div class="section">
-            <h2 class="section-title">🎮 游戏导航</h2>
-            <ul class="game-list">
-                <li class="game-item">
-                    <a href="game/snake/index.html" class="game-link">
-                        <span class="game-icon">🐍</span>
-                        <div class="game-info">
-                            <div class="game-name">贪吃蛇</div>
-                            <div class="game-desc">经典的贪吃蛇游戏，使用方向键控制</div>
-                        </div>
-                    </a>
-                </li>
-                <li class="game-item">
-                    <a href="game/pacman/index.html" class="game-link">
-                        <span class="game-icon">🟡</span>
-                        <div class="game-info">
-                            <div class="game-name">吃豆人</div>
-                            <div class="game-desc">经典的吃豆人游戏，吃掉所有豆子并躲避幽灵</div>
-                        </div>
-                    </a>
-                </li>
-                <li class="game-item">
-                    <a href="game/tetris/index.html" class="game-link">
-                        <span class="game-icon">🟦</span>
-                        <div class="game-info">
-                            <div class="game-name">俄罗斯方块</div>
-                            <div class="game-desc">经典的俄罗斯方块游戏，消除方块获得高分</div>
-                        </div>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
+    <section>
+      <h2>教育经历</h2>
+      <ul>
+        <li>2012-2016 &nbsp; 浙江农林大学 — 农学学士学位</li>
+        <li>2016-2023 &nbsp; 中国科学院分子植物科学卓越创新中心 — 遗传学博士学位</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>工作经历</h2>
+      <ul>
+        <li>2023 年 7 月至今 — 中国科学院分子植物科学卓越创新中心，博士后</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>专业技能</h2>
+      <ul>
+        <li>基因组学的相关分析</li>
+        <li>熟悉 Linux 和 Shell 编程，具备服务器管理能力</li>
+        <li>熟悉 R 和 Python 编程语言，并了解数据结构和算法的应用</li>
+        <li>基础的网站开发能力</li>
+        <li>运用 AIGC 辅助项目开发</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>其他经历</h2>
+      <p>
+        自 2016 年读研以来，持续在网络上发表生物信息学相关教程，全网阅读量超过 200 万。在哔哩哔哩录制的生物信息学教学视频累计播放量约 10 万次，并通过邮件等方式帮助初学者答疑解惑。
+      </p>
+    </section>
+
+    <section>
+      <h2>发表论文</h2>
+      <div class="section-content">
+        <h3>2025</h3>
+        <ol>
+          <li>Shipeng Guo, Yanshuang Jiang, Jieya Zou, Mei Lu, Daxue Li, Qian Zhang, Weiwei Li, Lina Mao, Shengchun Liu, <strong>Zhougeng Xu</strong>, et al. GPSAdb 2.0: an expanded atlas of gene-perturbation transcriptomes with enhanced tools for regulatory gene discovery. <em>Nucleic Acids Research</em>, 2025. <a href="https://doi.org/10.1093/nar/gkaf1077" target="_blank" rel="noopener">https://doi.org/10.1093/nar/gkaf1077</a></li>
+          <li>Xiaofan Lu, Kailai Li, Zongcheng Li, Anqi Lin, Long Zhao, Rongfang Shen, <strong>Zhougeng Xu</strong>, Jianing Gao, et al. FigureYa: A Standardized Visualization Framework for Enhancing Biomedical Data Interpretation and Research Efficiency. <em>iMetaMed</em>. <a href="https://doi.org/10.1002/imm3.70005" target="_blank" rel="noopener">https://doi.org/10.1002/imm3.70005</a></li>
+          <li>Hao-Chen Xue, <strong>Zhou-Geng Xu</strong>, Yu-Jie Liu, et al. A Unified Cell Atlas of Vascular Plants Reveals Cell-Type Foundational Genes and Accelerates Gene Discovery. <em>Cell</em>, 2025. <a href="https://doi.org/10.1016/j.cell.2025.07.036" target="_blank" rel="noopener">https://doi.org/10.1016/j.cell.2025.07.036</a></li>
+        </ol>
+
+        <h3>2024</h3>
+        <ol>
+          <li>Dong Zhai, Lu-Yi Zhang, Ling-Zi Li, <strong>Zhou-Geng Xu</strong>, et al. Reciprocal Conversion between Annual and Polycarpic Perennial Flowering Behavior in the Brassicaceae. <em>Cell</em>, 2024. <a href="https://doi.org/10.1016/j.cell.2024.04.047" target="_blank" rel="noopener">https://doi.org/10.1016/j.cell.2024.04.047</a></li>
+          <li>Chuan-Miao Zhou, Jian-Xu Li, Tian-Qi Zhang, <strong>Zhou-Geng Xu</strong>, et al. The Structure of B-ARR Reveals the Molecular Basis of Transcriptional Activation by Cytokinin. <em>PNAS</em>, 2024. <a href="https://doi.org/10.1073/pnas.2319335121" target="_blank" rel="noopener">https://doi.org/10.1073/pnas.2319335121</a></li>
+          <li>Haibao Tang, Vivek Krishnakumar, Xiaofei Zeng, <strong>Zhougeng Xu</strong>, et al. JCVI: A Versatile Toolkit for Comparative Genomics Analysis. <em>iMeta</em>. <a href="https://doi.org/10.1002/imt2.211" target="_blank" rel="noopener">https://doi.org/10.1002/imt2.211</a></li>
+        </ol>
+
+        <h3>2023</h3>
+        <ol>
+          <li>L. Wang, M.-C. Wan, R.-Y. Liao, J. Xu, <strong>Z.-G. Xu</strong>, et al. The maturation and aging trajectory of <em>Marchantia polymorpha</em> at single-cell resolution. <em>Developmental Cell</em>, 2023.</li>
+          <li>Hong-Bo Tang, Juan Wang, Long Wang, Guan-Dong Shang, <strong>Zhou-Geng Xu</strong>, et al. Anisotropic cell growth at the leaf base promotes age-related changes in leaf shape in <em>Arabidopsis thaliana</em>. <em>The Plant Cell</em>, 2023. <a href="https://doi.org/10.1093/plcell/koad031" target="_blank" rel="noopener">https://doi.org/10.1093/plcell/koad031</a></li>
+          <li>Ling-Zi Li, <strong>Zhou-Geng Xu</strong>, Tian-Guang Chang, et al. Common evolutionary trajectory of short life-cycle in Brassicaceae ruderal weeds. <em>Nature Communications</em> 14, 290 (2023). <a href="https://doi.org/10.1038/s41467-023-35966-7" target="_blank" rel="noopener">https://doi.org/10.1038/s41467-023-35966-7</a></li>
+        </ol>
+
+        <h3>2022</h3>
+        <ol>
+          <li>Shipeng Guo, <strong>Zhougeng Xu</strong>, Xiangjun Dong, et al. GPSAdb: a comprehensive web resource for interactive exploration of genetic perturbation RNA-seq datasets. <em>Nucleic Acids Research</em>, 2022. <a href="https://doi.org/10.1093/nar/gkac1066" target="_blank" rel="noopener">https://doi.org/10.1093/nar/gkac1066</a></li>
+          <li>Chen-Yi Li, Lei Yang, Yan Liu, <strong>Zhou-Geng Xu</strong>, et al. The Sage Genome Provides Insight into the Evolutionary Dynamics of Diterpene Biosynthesis Gene Cluster in Plants. <em>Cell Reports</em>, 2022. <a href="https://doi.org/10.1016/j.celrep.2022.111236" target="_blank" rel="noopener">https://doi.org/10.1016/j.celrep.2022.111236</a></li>
+          <li>Guan-Dong Shang, <strong>Zhou-Geng Xu</strong>, M.-C. Wan, et al. FindIT2: an R/Bioconductor package to identify influential transcription factor and targets based on multi-omics data. <em>BMC Genomics</em> 23, 272 (2022). <a href="https://doi.org/10.1186/s12864-022-08506-8" target="_blank" rel="noopener">https://doi.org/10.1186/s12864-022-08506-8</a></li>
+          <li>Jian Gao, Ke Zhang, Ying-Juan Cheng, Sha Yu, Guan-Dong Shang, Fu-Xiang Wang, Lian-Yu Wu, <strong>Zhou-Geng Xu</strong>, et al. A Robust Mechanism for Resetting Juvenility during Each Generation in <em>Arabidopsis</em>. <em>Nature Plants</em> 8(3):257–268 (2022). <a href="https://doi.org/10.1038/s41477-022-01110-4" target="_blank" rel="noopener">https://doi.org/10.1038/s41477-022-01110-4</a></li>
+          <li>L.-Y. Wu, G.-D. Shang, F.-X. Wang, J. Gao, M.-C. Wan, <strong>Z.-G. Xu</strong>, and J.-W. Wang. Dynamic chromatin state profiling reveals regulatory roles of auxin and cytokinin in shoot regeneration. <em>Developmental Cell</em>, 2022.</li>
+        </ol>
+
+        <h3>2021</h3>
+        <ol>
+          <li>Kun Huang, Xue-Xue Wu, Chen-Lu Fang, <strong>Z.-G. Xu</strong>, et al. Pol IV and RDR2: A two-RNA-polymerase machine that produces double-stranded RNA. <em>Science</em>, 2021. <a href="https://www.science.org/doi/10.1126/science.abj9184" target="_blank" rel="noopener">https://www.science.org/doi/10.1126/science.abj9184</a></li>
+          <li>Yu-Jin Cheng, Guan-Dong Shang, <strong>Z.-G. Xu</strong>, et al. Cell division in the shoot apical meristem is a trigger for miR156 decline and vegetative phase transition in <em>Arabidopsis</em>. <em>PNAS</em> 118 (2021). <a href="https://doi.org/10.1073/pnas.2115667118" target="_blank" rel="noopener">https://doi.org/10.1073/pnas.2115667118</a></li>
+          <li>Fu-Xiang Wang, Guan-Dong Shang, Lian-Yu Wu, Yan-Xia Mai, Jian Gao, <strong>Zhou-Geng Xu</strong>, Jia-Wei Wang. Protocol for assaying chromatin accessibility using ATAC-seq in plants. <em>STAR Protocols</em> 2(1):100289 (2021). <a href="https://doi.org/10.1016/j.xpro.2020.100289" target="_blank" rel="noopener">https://doi.org/10.1016/j.xpro.2020.100289</a></li>
+        </ol>
+
+        <h3>2020</h3>
+        <ol>
+          <li>Bin-Bin Ye, Guan-Dong Shang, Yu Pan, <strong>Zhou-Geng Xu</strong>, et al. AP2/ERF Transcription Factors Integrate Age and Wound Signals for Root Regeneration. <em>The Plant Cell</em> 32(1):226–241 (2020). <a href="https://doi.org/10.1105/tpc.19.00378" target="_blank" rel="noopener">https://doi.org/10.1105/tpc.19.00378</a></li>
+          <li>Fu-Xiang Wang, Guan-Dong Shang, Lian-Yu Wu, <strong>Zhou-Geng Xu</strong>, et al. Chromatin Accessibility Dynamics and a Hierarchical Transcriptional Regulatory Network Structure for Plant Somatic Embryogenesis. <em>Developmental Cell</em> 54(6):742–757.e8 (2020). <a href="https://doi.org/10.1016/j.devcel.2020.07.003" target="_blank" rel="noopener">https://doi.org/10.1016/j.devcel.2020.07.003</a></li>
+        </ol>
+
+        <h3>2019</h3>
+        <ol>
+          <li>Tian-Qi Zhang, <strong>Zhou-Geng Xu</strong>, Guan-Dong Shang, Jia-Wei Wang. A Single-Cell RNA Sequencing Profiles the Developmental Landscape of <em>Arabidopsis</em> Root. <em>Molecular Plant</em> 12(5):648–660 (2019). <a href="https://doi.org/10.1016/j.molp.2019.04.004" target="_blank" rel="noopener">https://doi.org/10.1016/j.molp.2019.04.004</a></li>
+        </ol>
+      </div>
+    </section>
+
+    <footer>
+      <p>最后更新：2025 年</p>
+    </footer>
+  </main>
 </body>
 </html>
