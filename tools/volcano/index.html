@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>火山图在线生成器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        .sidebar {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #f5576c;
+            padding-bottom: 8px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .input-group textarea {
+            min-height: 200px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        button {
+            padding: 12px 20px;
+            background: #f5576c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #e04556;
+        }
+        button.secondary {
+            background: #48bb78;
+        }
+        button.secondary:hover {
+            background: #38a169;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        .file-input-label {
+            display: block;
+            padding: 12px 20px;
+            background: #ed8936;
+            color: white;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .file-input-label:hover {
+            background: #dd6b20;
+        }
+        .preview-area {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            overflow: auto;
+        }
+        #volcanoPlot {
+            background: white;
+            padding: 20px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .plot-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        #plotCanvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .legend {
+            margin-top: 20px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+        .example-data {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .color-picker input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: none;
+            cursor: pointer;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab {
+            padding: 8px 16px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .tab.active {
+            background: #f5576c;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #excelTable {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 10px;
+        }
+        #excelTable th, #excelTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            min-width: 100px;
+        }
+        #excelTable th {
+            background: #f0f0f0;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        #excelTable td {
+            background: white;
+        }
+        #excelTable input {
+            width: 100%;
+            border: none;
+            padding: 4px;
+            font-size: 13px;
+        }
+        #excelTable input:focus {
+            outline: 2px solid #f5576c;
+            background: #fff5f5;
+        }
+        .table-wrapper {
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .paste-hint {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            border-left: 4px solid #2196f3;
+        }
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌋 火山图在线生成器</h1>
+            <p>差异基因表达分析可视化工具 - 支持Excel粘贴、在线编辑、导出高质量图片</p>
+        </div>
+        <div class="content">
+            <div class="sidebar">
+                <div class="section">
+                    <h3>📊 数据输入</h3>
+
+                    <div class="tabs">
+                        <button class="tab active" onclick="switchTab('excel')">📋 Excel表格</button>
+                        <button class="tab" onclick="switchTab('text')">📝 文本模式</button>
+                    </div>
+
+                    <div id="excelTab" class="tab-content active">
+                        <div class="paste-hint">
+                            💡 <strong>使用方法：</strong><br>
+                            1. 从Excel复制数据（含表头）<br>
+                            2. 点击下方表格任意单元格<br>
+                            3. 按 Ctrl+V (或 Cmd+V) 粘贴<br>
+                            4. 或直接在表格中输入/编辑数据
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="excelTable">
+                                <thead>
+                                    <tr>
+                                        <th>Gene</th>
+                                        <th>Log2FC</th>
+                                        <th>P-value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="excelTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="btn-group">
+                            <button onclick="addRow()">➕ 添加行</button>
+                            <button onclick="clearTable()">🗑️ 清空表格</button>
+                        </div>
+                    </div>
+
+                    <div id="textTab" class="tab-content">
+                        <div class="example-data">
+                            示例格式：基因名,Log2FC,P值<br>
+                            Gene1,2.5,0.001<br>
+                            Gene2,-1.8,0.01
+                        </div>
+                        <div class="input-group">
+                            <label>粘贴数据（CSV格式）：</label>
+                            <textarea id="dataInput" placeholder="Gene,Log2FC,Pvalue&#10;Gene1,2.5,0.001&#10;Gene2,-1.8,0.01"></textarea>
+                            <div class="help-text">每行一个基因，用逗号分隔各字段</div>
+                        </div>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="fileInput" accept=".csv,.txt">
+                            <label for="fileInput" class="file-input-label">📁 导入CSV文件</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🎯 阈值设置</h3>
+                    <div class="input-group">
+                        <label>Log2FC 阈值：</label>
+                        <input type="number" id="fcThreshold" value="1" min="0" max="5" step="0.1">
+                        <div class="help-text">差异倍数的对数值阈值（通常为1，即2倍差异）</div>
+                    </div>
+                    <div class="input-group">
+                        <label>P值 阈值：</label>
+                        <input type="number" id="pThreshold" value="0.05" min="0" max="1" step="0.01">
+                        <div class="help-text">显著性水平（通常为0.05或0.01）</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>🎨 图表设置</h3>
+                    <div class="input-group">
+                        <label>图表标题：</label>
+                        <input type="text" id="plotTitle" value="Volcano Plot - Differential Gene Expression">
+                    </div>
+                    <div class="input-group">
+                        <label>画布宽度（像素）：</label>
+                        <input type="number" id="plotWidth" value="800" min="400" max="1600">
+                    </div>
+                    <div class="input-group">
+                        <label>画布高度（像素）：</label>
+                        <input type="number" id="plotHeight" value="600" min="300" max="1200">
+                    </div>
+                    <div class="input-group">
+                        <label>点的大小：</label>
+                        <input type="range" id="pointSize" min="2" max="10" value="4" step="0.5">
+                        <span id="pointSizeValue">4</span>
+                    </div>
+                    <div class="input-group">
+                        <label>点的透明度：</label>
+                        <input type="range" id="pointAlpha" min="0.1" max="1" value="0.6" step="0.1">
+                        <span id="pointAlphaValue">0.6</span>
+                    </div>
+                    <div class="input-group">
+                        <label>上调基因颜色：</label>
+                        <div class="color-picker">
+                            <input type="color" id="upColor" value="#e74c3c">
+                            <span>红色（上调）</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>下调基因颜色：</label>
+                        <div class="color-picker">
+                            <input type="color" id="downColor" value="#3498db">
+                            <span>蓝色（下调）</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>非显著基因颜色：</label>
+                        <div class="color-picker">
+                            <input type="color" id="nsColor" value="#95a5a6">
+                            <span>灰色（无显著差异）</span>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>显示基因名数量：</label>
+                        <input type="number" id="labelCount" value="10" min="0" max="50">
+                        <div class="help-text">标注最显著的基因名（0表示不标注）</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>💾 导出选项</h3>
+                    <div class="btn-group">
+                        <button onclick="generatePlot()">🔄 生成图表</button>
+                        <button onclick="exportPNG()" class="secondary">📷 导出PNG</button>
+                        <button onclick="exportPDF()">📄 导出PDF</button>
+                        <button onclick="exportCSV()">📑 导出数据CSV</button>
+                    </div>
+                    <button onclick="generateRandomData()" style="width: 100%; margin-top: 10px; background: #9b59b6;">
+                        🎲 生成随机数据
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-area">
+                <div id="volcanoPlot">
+                    <div class="plot-title">请输入数据并点击"生成图表"</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = [];
+        let currentTab = 'excel';
+
+        // 生成随机数据
+        function generateRandomData() {
+            const geneCount = 500; // 生成500个基因
+            const tbody = document.getElementById('excelTableBody');
+
+            // 清空现有数据
+            tbody.innerHTML = '';
+
+            // 添加足够的行
+            for (let i = 0; i < geneCount; i++) {
+                addRow();
+            }
+
+            // 生成随机数据
+            for (let i = 0; i < geneCount; i++) {
+                const row = tbody.rows[i];
+                const inputs = row.querySelectorAll('input');
+
+                // 基因名
+                inputs[0].value = `Gene${i + 1}`;
+
+                // Log2FC: 正态分布，范围 -5 到 5
+                // 大部分在 -2 到 2 之间，少数有极端值
+                let log2fc;
+                const rand = Math.random();
+                if (rand < 0.15) {
+                    // 15% 强烈上调
+                    log2fc = (Math.random() * 3 + 1.5).toFixed(3);
+                } else if (rand < 0.30) {
+                    // 15% 强烈下调
+                    log2fc = (-Math.random() * 3 - 1.5).toFixed(3);
+                } else if (rand < 0.50) {
+                    // 20% 中等上调
+                    log2fc = (Math.random() * 1.5 + 0.5).toFixed(3);
+                } else if (rand < 0.70) {
+                    // 20% 中等下调
+                    log2fc = (-Math.random() * 1.5 - 0.5).toFixed(3);
+                } else {
+                    // 30% 无显著变化
+                    log2fc = ((Math.random() - 0.5) * 1).toFixed(3);
+                }
+                inputs[1].value = log2fc;
+
+                // P值: 对数均匀分布
+                // 显著差异的基因给予小p值
+                let pvalue;
+                const absLog2fc = Math.abs(parseFloat(log2fc));
+                if (absLog2fc > 1.5) {
+                    // 强烈差异：小p值
+                    pvalue = (Math.random() * 0.01).toExponential(3);
+                } else if (absLog2fc > 0.8) {
+                    // 中等差异：中等p值
+                    pvalue = (Math.random() * 0.05).toFixed(4);
+                } else {
+                    // 无显著差异：大p值
+                    pvalue = (Math.random() * 0.5 + 0.1).toFixed(4);
+                }
+                inputs[2].value = pvalue;
+            }
+
+            alert(`成功生成 ${geneCount} 个随机基因数据！\n包括：上调基因、下调基因和无显著差异基因。\n点击"生成图表"查看火山图。`);
+        }
+
+        // 更新滑块显示值
+        document.getElementById('pointSize').addEventListener('input', (e) => {
+            document.getElementById('pointSizeValue').textContent = e.target.value;
+        });
+        document.getElementById('pointAlpha').addEventListener('input', (e) => {
+            document.getElementById('pointAlphaValue').textContent = e.target.value;
+        });
+
+        // 切换标签页
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            if (tab === 'excel') {
+                document.querySelector('.tab:nth-child(1)').classList.add('active');
+                document.getElementById('excelTab').classList.add('active');
+            } else {
+                document.querySelector('.tab:nth-child(2)').classList.add('active');
+                document.getElementById('textTab').classList.add('active');
+            }
+        }
+
+        // 初始化表格
+        function initTable() {
+            const tbody = document.getElementById('excelTableBody');
+            tbody.innerHTML = '';
+            for (let i = 0; i < 20; i++) {
+                addRow();
+            }
+        }
+
+        // 添加行
+        function addRow() {
+            const tbody = document.getElementById('excelTableBody');
+            const row = tbody.insertRow();
+            for (let i = 0; i < 3; i++) {
+                const cell = row.insertCell();
+                const input = document.createElement('input');
+                input.type = 'text';
+                cell.appendChild(input);
+            }
+        }
+
+        // 清空表格
+        function clearTable() {
+            if (confirm('确定要清空表格吗？')) {
+                initTable();
+            }
+        }
+
+        // 处理粘贴事件
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.getElementById('excelTable');
+
+            table.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text');
+                const rows = pastedData.split('\n').filter(row => row.trim());
+
+                let currentCell = e.target.closest('td');
+                if (!currentCell) return;
+
+                let currentRow = currentCell.parentElement;
+                let startColIndex = Array.from(currentRow.cells).indexOf(currentCell);
+
+                const tbody = document.getElementById('excelTableBody');
+                let rowIndex = Array.from(tbody.rows).indexOf(currentRow);
+
+                while (tbody.rows.length < rowIndex + rows.length) {
+                    addRow();
+                }
+
+                rows.forEach((rowData, i) => {
+                    const cells = rowData.split('\t');
+                    const targetRow = tbody.rows[rowIndex + i];
+
+                    cells.forEach((cellData, j) => {
+                        const targetColIndex = startColIndex + j;
+                        if (targetColIndex < 3) {
+                            const input = targetRow.cells[targetColIndex].querySelector('input');
+                            if (input) {
+                                input.value = cellData.trim();
+                            }
+                        }
+                    });
+                });
+
+                alert('数据粘贴成功！共 ' + rows.length + ' 行');
+            });
+        });
+
+        // 从表格获取数据
+        function getTableData() {
+            const tbody = document.getElementById('excelTableBody');
+            const data = [];
+
+            for (let row of tbody.rows) {
+                const inputs = row.querySelectorAll('input');
+                const rowData = Array.from(inputs).map(input => input.value.trim());
+
+                if (rowData[0] && rowData[1] && rowData[2]) {
+                    data.push(rowData);
+                }
+            }
+
+            return data;
+        }
+
+        // 文件导入
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                Papa.parse(file, {
+                    complete: (results) => {
+                        const csvText = results.data.map(row => row.join(',')).join('\n');
+                        document.getElementById('dataInput').value = csvText;
+                        alert('文件导入成功！');
+                    },
+                    error: (error) => {
+                        alert('文件解析失败：' + error.message);
+                    }
+                });
+            }
+        });
+
+        function parseData() {
+            if (currentTab === 'excel') {
+                const tableData = getTableData();
+                const data = [];
+
+                tableData.forEach(row => {
+                    const gene = row[0];
+                    const log2fc = parseFloat(row[1]);
+                    const pvalue = parseFloat(row[2]);
+
+                    if (gene && !isNaN(log2fc) && !isNaN(pvalue) && pvalue > 0) {
+                        data.push({
+                            gene: gene,
+                            log2fc: log2fc,
+                            pvalue: pvalue,
+                            negLogP: -Math.log10(pvalue)
+                        });
+                    }
+                });
+
+                return data;
+            } else {
+                const text = document.getElementById('dataInput').value.trim();
+                if (!text) return [];
+
+                const lines = text.split('\n').filter(line => line.trim());
+                const data = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const parts = lines[i].split(',').map(s => s.trim());
+                    if (parts.length >= 3) {
+                        const gene = parts[0];
+                        const log2fc = parseFloat(parts[1]);
+                        const pvalue = parseFloat(parts[2]);
+
+                        if (gene && !isNaN(log2fc) && !isNaN(pvalue) && pvalue > 0) {
+                            data.push({
+                                gene: gene,
+                                log2fc: log2fc,
+                                pvalue: pvalue,
+                                negLogP: -Math.log10(pvalue)
+                            });
+                        }
+                    }
+                }
+                return data;
+            }
+        }
+
+        function generatePlot() {
+            currentData = parseData();
+            if (currentData.length === 0) {
+                alert('请输入有效数据！确保包含基因名、Log2FC和P值。');
+                return;
+            }
+
+            const plotDiv = document.getElementById('volcanoPlot');
+            const title = document.getElementById('plotTitle').value;
+            const width = parseInt(document.getElementById('plotWidth').value);
+            const height = parseInt(document.getElementById('plotHeight').value);
+            const fcThreshold = parseFloat(document.getElementById('fcThreshold').value);
+            const pThreshold = parseFloat(document.getElementById('pThreshold').value);
+            const pointSize = parseFloat(document.getElementById('pointSize').value);
+            const pointAlpha = parseFloat(document.getElementById('pointAlpha').value);
+            const upColor = document.getElementById('upColor').value;
+            const downColor = document.getElementById('downColor').value;
+            const nsColor = document.getElementById('nsColor').value;
+            const labelCount = parseInt(document.getElementById('labelCount').value);
+
+            const negLogPThreshold = -Math.log10(pThreshold);
+
+            // 分类基因
+            let upGenes = 0, downGenes = 0, nsGenes = 0;
+            currentData.forEach(d => {
+                if (d.log2fc > fcThreshold && d.negLogP > negLogPThreshold) {
+                    d.category = 'up';
+                    upGenes++;
+                } else if (d.log2fc < -fcThreshold && d.negLogP > negLogPThreshold) {
+                    d.category = 'down';
+                    downGenes++;
+                } else {
+                    d.category = 'ns';
+                    nsGenes++;
+                }
+            });
+
+            // 获取最显著的基因用于标注
+            const sortedForLabel = [...currentData]
+                .filter(d => d.category !== 'ns')
+                .sort((a, b) => b.negLogP - a.negLogP)
+                .slice(0, labelCount);
+
+            // 计算坐标范围
+            const maxLogFC = Math.max(...currentData.map(d => Math.abs(d.log2fc)));
+            const maxNegLogP = Math.max(...currentData.map(d => d.negLogP));
+            const xRange = Math.ceil(maxLogFC) + 1;
+            const yRange = Math.ceil(maxNegLogP) + 1;
+
+            // 画布边距
+            const margin = { top: 40, right: 40, bottom: 60, left: 60 };
+            const plotWidth = width - margin.left - margin.right;
+            const plotHeight = height - margin.top - margin.bottom;
+
+            // 创建画布
+            let html = `<div class="plot-title">${title}</div>`;
+            html += `<canvas id="plotCanvas" width="${width}" height="${height}"></canvas>`;
+
+            // 添加图例
+            html += '<div class="legend">';
+            html += `<div class="legend-item"><div class="legend-color" style="background:${upColor}"></div><span>上调 (${upGenes})</span></div>`;
+            html += `<div class="legend-item"><div class="legend-color" style="background:${downColor}"></div><span>下调 (${downGenes})</span></div>`;
+            html += `<div class="legend-item"><div class="legend-color" style="background:${nsColor}"></div><span>无显著差异 (${nsGenes})</span></div>`;
+            html += '</div>';
+
+            // 添加统计信息
+            html += '<div class="stats">';
+            html += `<div class="stat-item"><div class="stat-value">${currentData.length}</div><div class="stat-label">总基因数</div></div>`;
+            html += `<div class="stat-item"><div class="stat-value">${upGenes}</div><div class="stat-label">上调基因</div></div>`;
+            html += `<div class="stat-item"><div class="stat-value">${downGenes}</div><div class="stat-label">下调基因</div></div>`;
+            html += '</div>';
+
+            plotDiv.innerHTML = html;
+
+            // 绘制火山图
+            const canvas = document.getElementById('plotCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // 背景
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, width, height);
+
+            // 绘制网格
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 10; i++) {
+                const x = margin.left + (plotWidth / 10) * i;
+                const y = margin.top + (plotHeight / 10) * i;
+                ctx.beginPath();
+                ctx.moveTo(x, margin.top);
+                ctx.lineTo(x, height - margin.bottom);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(width - margin.right, y);
+                ctx.stroke();
+            }
+
+            // 绘制阈值线
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 5]);
+
+            // 垂直阈值线
+            const xPosThreshold = margin.left + ((fcThreshold + xRange) / (2 * xRange)) * plotWidth;
+            const xNegThreshold = margin.left + ((-fcThreshold + xRange) / (2 * xRange)) * plotWidth;
+            ctx.beginPath();
+            ctx.moveTo(xPosThreshold, margin.top);
+            ctx.lineTo(xPosThreshold, height - margin.bottom);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(xNegThreshold, margin.top);
+            ctx.lineTo(xNegThreshold, height - margin.bottom);
+            ctx.stroke();
+
+            // 水平阈值线
+            const yThreshold = height - margin.bottom - (negLogPThreshold / yRange) * plotHeight;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, yThreshold);
+            ctx.lineTo(width - margin.right, yThreshold);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 绘制坐标轴
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, height - margin.bottom);
+            ctx.lineTo(width - margin.right, height - margin.bottom);
+            ctx.stroke();
+
+            // 坐标轴标签
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Log2 Fold Change', width / 2, height - 10);
+
+            ctx.save();
+            ctx.translate(15, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('-Log10 (P-value)', 0, 0);
+            ctx.restore();
+
+            // X轴刻度
+            ctx.font = '12px Arial';
+            for (let i = -xRange; i <= xRange; i += Math.ceil(xRange / 5)) {
+                const x = margin.left + ((i + xRange) / (2 * xRange)) * plotWidth;
+                ctx.fillText(i.toString(), x, height - margin.bottom + 20);
+                ctx.beginPath();
+                ctx.moveTo(x, height - margin.bottom);
+                ctx.lineTo(x, height - margin.bottom + 5);
+                ctx.stroke();
+            }
+
+            // Y轴刻度
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= Math.ceil(yRange); i += Math.ceil(yRange / 5)) {
+                const y = height - margin.bottom - (i / yRange) * plotHeight;
+                ctx.fillText(i.toString(), margin.left - 10, y + 5);
+                ctx.beginPath();
+                ctx.moveTo(margin.left - 5, y);
+                ctx.lineTo(margin.left, y);
+                ctx.stroke();
+            }
+
+            // 绘制数据点
+            currentData.forEach(d => {
+                const x = margin.left + ((d.log2fc + xRange) / (2 * xRange)) * plotWidth;
+                const y = height - margin.bottom - (d.negLogP / yRange) * plotHeight;
+
+                let color;
+                if (d.category === 'up') color = upColor;
+                else if (d.category === 'down') color = downColor;
+                else color = nsColor;
+
+                ctx.globalAlpha = pointAlpha;
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, pointSize, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+
+            ctx.globalAlpha = 1;
+
+            // 标注基因名
+            if (labelCount > 0) {
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'left';
+
+                sortedForLabel.forEach(d => {
+                    const x = margin.left + ((d.log2fc + xRange) / (2 * xRange)) * plotWidth;
+                    const y = height - margin.bottom - (d.negLogP / yRange) * plotHeight;
+
+                    ctx.fillText(d.gene, x + pointSize + 3, y + 4);
+                });
+            }
+        }
+
+        function exportPNG() {
+            const plot = document.getElementById('volcanoPlot');
+            html2canvas(plot, {
+                backgroundColor: '#ffffff',
+                scale: 2
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'volcano_plot.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        function exportPDF() {
+            const plot = document.getElementById('volcanoPlot');
+            html2canvas(plot, {
+                backgroundColor: '#ffffff',
+                scale: 2
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgWidth = 280;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                pdf.save('volcano_plot.pdf');
+            });
+        }
+
+        function exportCSV() {
+            if (currentData.length === 0) {
+                alert('请先生成图表！');
+                return;
+            }
+
+            let csv = 'Gene,Log2FC,Pvalue,NegLogP,Category\n';
+            currentData.forEach(row => {
+                csv += `${row.gene},${row.log2fc},${row.pvalue},${row.negLogP.toFixed(3)},${row.category}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'volcano_plot_data.csv';
+            link.click();
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            initTable();
+
+            // 加载示例数据到表格
+            const exampleRows = [
+                ['BRCA1', '3.2', '0.0001'],
+                ['TP53', '2.8', '0.0005'],
+                ['MYC', '2.5', '0.001'],
+                ['EGFR', '2.1', '0.005'],
+                ['KRAS', '1.8', '0.01'],
+                ['PIK3CA', '-2.5', '0.0008'],
+                ['PTEN', '-2.2', '0.002'],
+                ['AKT1', '-1.9', '0.008'],
+                ['VEGFA', '0.8', '0.2'],
+                ['CDK4', '0.5', '0.4']
+            ];
+
+            const tbody = document.getElementById('excelTableBody');
+            exampleRows.forEach((rowData, i) => {
+                const row = tbody.rows[i];
+                if (row) {
+                    rowData.forEach((value, j) => {
+                        const input = row.cells[j].querySelector('input');
+                        if (input) input.value = value;
+                    });
+                }
+            });
+
+            // 文本模式的示例数据
+            const exampleData = `Gene,Log2FC,Pvalue
+BRCA1,3.2,0.0001
+TP53,2.8,0.0005
+MYC,2.5,0.001
+EGFR,2.1,0.005
+KRAS,1.8,0.01
+PIK3CA,-2.5,0.0008
+PTEN,-2.2,0.002
+AKT1,-1.9,0.008
+VEGFA,0.8,0.2
+CDK4,0.5,0.4`;
+            document.getElementById('dataInput').value = exampleData;
+        });
+    </script>
+</body>
+</html>
