@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>不写一行代码，通过Claude Code web搭建自己个人网站</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
+
+        .meta {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        article {
+            padding: 40px;
+        }
+
+        .content p {
+            margin-bottom: 1.5em;
+            text-indent: 2em;
+        }
+
+        .content img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 30px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .content a {
+            color: #667eea;
+            text-decoration: none;
+            border-bottom: 1px solid #667eea;
+        }
+
+        .content a:hover {
+            color: #764ba2;
+            border-bottom-color: #764ba2;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin: 40px 0 20px;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover {
+            background: #764ba2;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            border-top: 1px solid #eee;
+        }
+
+        .reference {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+        }
+
+        .reference p {
+            margin-bottom: 0;
+            text-indent: 0;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 40px 20px;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            article {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>不写一行代码，通过Claude Code web搭建自己个人网站</h1>
+            <div class="meta">发布时间：2025年11月7日</div>
+        </header>
+
+        <article>
+            <div class="content">
+                <p>最近anthropic搞活动，claude pro用户送250刀的<a href="https://claude.ai/code" target="_blank">https://claude.ai/code</a>额度，然后这个工具会跟你的github连接，这意味着你就可以直接在网页上进行项目开发了。</p>
+
+                <p>我想起了很久前，我利用github page搞个人博客，但是每次都是不了了之，不再更新，因为需要在本地编辑页面，然后推送到github上，github利用action进行编译生成最后的静态文件，这实在是不如直接用Halo这类带后台的工具编辑方便。不过现在AI网站都在推网页项目开发，这个github page就又可以继续利用起来了。</p>
+
+                <p>首先，你得能访问到github，这样你才能注册一个github账号，点击右上角的+号，新建一个账号同名账户，比如说我的账号是xuzhougeng，那么我填写xuzhougeng，这里就会有一个特殊的提醒，告诉你这个仓库是特殊的。</p>
+
+                <img src="images/01-create-repo.png" alt="创建同名仓库">
+
+                <p>打开我们的用户名同名的仓库，我的是 github.com/xuzhougeng/xuzhougeng ,可以看到我们位于main的分支下。</p>
+
+                <img src="images/02-repo-page.png" alt="仓库页面">
+
+                <p>打开Settings，选择其中Pages，默认下我们就是Deploy from a brach，然后我们在Branch选择main进行保存，这个时候，github会使用我们刚才main分支下的index.html文件作为网页。</p>
+
+                <img src="images/03-pages-settings.png" alt="GitHub Pages设置">
+
+                <p>默认github使用 用户名.github.io 作为这个域名用于访问这个github page，但是如果你买了域名，可以设置Custom domain，作为这一步之后，他会在你的main新增一个CNAME文件。</p>
+
+                <img src="images/04-custom-domain.png" alt="自定义域名">
+
+                <p>同时你也需要你的DNS域名服务商中设置解析。这是我在万网的配置方法。</p>
+
+                <img src="images/05-dns-config.png" alt="DNS配置">
+
+                <p>然后，我们就可以到cladue code web里面搞开发了。第一次使用的时候，会提示你需要在github中安装一个Claude GitHub app.</p>
+
+                <img src="images/06-install-claude-app.png" alt="安装Claude GitHub app">
+
+                <p>你可以授权所有的仓库，也可以像我一样，只选择了xuzhougeng</p>
+
+                <img src="images/07-authorize-repo.png" alt="授权仓库">
+
+                <p>最后你输入提示语，就行了，比如说我们写一个hello world!</p>
+
+                <img src="images/08-input-prompt.png" alt="输入提示语">
+
+                <p>他就会启动任务，然后提交一个PR,</p>
+
+                <img src="images/09-start-task.png" alt="启动任务">
+
+                <p>跳转到github的pulls页面下，我们只需要点击Create Pull request</p>
+
+                <img src="images/10-create-pr.png" alt="创建Pull Request">
+
+                <p>点击merge pull request，就可以将Claude生成的代码跟我们的主分支main进行合并。等待一会后就可以在你的github page上看到hello world.</p>
+
+                <img src="images/11-merge-result.png" alt="合并结果">
+
+                <p>当然了， 我们还可以写一个经典的网页版贪吃蛇游戏。</p>
+
+                <img src="images/12-snake-game.png" alt="贪吃蛇游戏">
+
+                <p>等待他完成后，我们继续点view PR</p>
+
+                <img src="images/13-view-pr.png" alt="查看PR">
+
+                <p>这一次不一样的是，我们无法直接看到提交PR的页面。但是没有关系，我们可以在pulls页面中，选择Compare & pull request</p>
+
+                <img src="images/14-compare-pr.png" alt="Compare & pull request">
+
+                <p>可以看到我们改动的代码，重复刚才的操作即可。</p>
+
+                <img src="images/15-view-changes.png" alt="查看改动">
+
+                <img src="images/16-merge-operation.png" alt="合并操作">
+
+                <img src="images/17-final-result.png" alt="最终效果">
+
+                <div class="reference">
+                    <p><strong>参考：</strong><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site" target="_blank">https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site</a></p>
+                </div>
+            </div>
+
+            <a href="../../index.html" class="back-link">返回博客列表</a>
+
+            <footer>
+                <p>&copy; 2025 我的博客. All rights reserved.</p>
+            </footer>
+        </article>
+    </div>
+</body>
+</html>
