@@ -137,67 +137,67 @@
 
                 <p>首先，你得能访问到github，这样你才能注册一个github账号，点击右上角的+号，新建一个账号同名账户，比如说我的账号是xuzhougeng，那么我填写xuzhougeng，这里就会有一个特殊的提醒，告诉你这个仓库是特殊的。</p>
 
-                <img src="https://files.mdnice.com/user/4168/b40a9a5a-d933-4c92-90df-e5681bb70c7a.png" alt="创建同名仓库">
+                <img src="images/01-create-repo.png" alt="创建同名仓库">
 
                 <p>打开我们的用户名同名的仓库，我的是 github.com/xuzhougeng/xuzhougeng ,可以看到我们位于main的分支下。</p>
 
-                <img src="https://files.mdnice.com/user/4168/ddd853d2-572a-4253-a41e-48e180860ad0.png" alt="仓库页面">
+                <img src="images/02-repo-page.png" alt="仓库页面">
 
                 <p>打开Settings，选择其中Pages，默认下我们就是Deploy from a brach，然后我们在Branch选择main进行保存，这个时候，github会使用我们刚才main分支下的index.html文件作为网页。</p>
 
-                <img src="https://files.mdnice.com/user/4168/f81379f9-e8e4-49af-9e8e-8e17dcb4469b.png" alt="GitHub Pages设置">
+                <img src="images/03-pages-settings.png" alt="GitHub Pages设置">
 
                 <p>默认github使用 用户名.github.io 作为这个域名用于访问这个github page，但是如果你买了域名，可以设置Custom domain，作为这一步之后，他会在你的main新增一个CNAME文件。</p>
 
-                <img src="https://files.mdnice.com/user/4168/8ac6825a-ec39-44bc-b1e4-09e89b130d18.png" alt="自定义域名">
+                <img src="images/04-custom-domain.png" alt="自定义域名">
 
                 <p>同时你也需要你的DNS域名服务商中设置解析。这是我在万网的配置方法。</p>
 
-                <img src="https://files.mdnice.com/user/4168/31a9abe9-3134-45ed-bcd5-f37bf8c0a9b0.png" alt="DNS配置">
+                <img src="images/05-dns-config.png" alt="DNS配置">
 
                 <p>然后，我们就可以到cladue code web里面搞开发了。第一次使用的时候，会提示你需要在github中安装一个Claude GitHub app.</p>
 
-                <img src="https://files.mdnice.com/user/4168/978afb8c-176b-4a31-9976-8f220da5d4ff.png" alt="安装Claude GitHub app">
+                <img src="images/06-install-claude-app.png" alt="安装Claude GitHub app">
 
                 <p>你可以授权所有的仓库，也可以像我一样，只选择了xuzhougeng</p>
 
-                <img src="https://files.mdnice.com/user/4168/f483750c-c265-4790-9aa7-02e795bb129a.png" alt="授权仓库">
+                <img src="images/07-authorize-repo.png" alt="授权仓库">
 
                 <p>最后你输入提示语，就行了，比如说我们写一个hello world!</p>
 
-                <img src="https://files.mdnice.com/user/4168/d3a85091-4231-4692-b129-0fc0ce13628a.png" alt="输入提示语">
+                <img src="images/08-input-prompt.png" alt="输入提示语">
 
                 <p>他就会启动任务，然后提交一个PR,</p>
 
-                <img src="https://files.mdnice.com/user/4168/4cabf4e7-21dc-418c-9f5e-2423c0435c8e.png" alt="启动任务">
+                <img src="images/09-start-task.png" alt="启动任务">
 
                 <p>跳转到github的pulls页面下，我们只需要点击Create Pull request</p>
 
-                <img src="https://files.mdnice.com/user/4168/00f907bc-ba30-48b9-833e-adce1d3d0947.png" alt="创建Pull Request">
+                <img src="images/10-create-pr.png" alt="创建Pull Request">
 
                 <p>点击merge pull request，就可以将Claude生成的代码跟我们的主分支main进行合并。等待一会后就可以在你的github page上看到hello world.</p>
 
-                <img src="https://files.mdnice.com/user/4168/2feae306-a39c-4b7f-9ee8-75f54f1812df.png" alt="合并结果">
+                <img src="images/11-merge-result.png" alt="合并结果">
 
                 <p>当然了， 我们还可以写一个经典的网页版贪吃蛇游戏。</p>
 
-                <img src="https://files.mdnice.com/user/4168/4d5350b5-4e2c-4d76-81b6-0d8a7f4aecdc.png" alt="贪吃蛇游戏">
+                <img src="images/12-snake-game.png" alt="贪吃蛇游戏">
 
                 <p>等待他完成后，我们继续点view PR</p>
 
-                <img src="https://files.mdnice.com/user/4168/0a3858c9-0b2e-41ed-b544-fe51e3de905d.png" alt="查看PR">
+                <img src="images/13-view-pr.png" alt="查看PR">
 
                 <p>这一次不一样的是，我们无法直接看到提交PR的页面。但是没有关系，我们可以在pulls页面中，选择Compare & pull request</p>
 
-                <img src="https://files.mdnice.com/user/4168/725ec770-f353-4657-a765-bfa1334d7e9c.png" alt="Compare & pull request">
+                <img src="images/14-compare-pr.png" alt="Compare & pull request">
 
                 <p>可以看到我们改动的代码，重复刚才的操作即可。</p>
 
-                <img src="https://files.mdnice.com/user/4168/7f89f24d-6504-4c80-93a6-72480078224c.png" alt="查看改动">
+                <img src="images/15-view-changes.png" alt="查看改动">
 
-                <img src="https://files.mdnice.com/user/4168/aefbca00-78dd-4688-9c0d-2248ecd7d35a.png" alt="合并操作">
+                <img src="images/16-merge-operation.png" alt="合并操作">
 
-                <img src="https://files.mdnice.com/user/4168/0227a4d5-81bd-4be1-9787-be35b0d5bc0d.png" alt="最终效果">
+                <img src="images/17-final-result.png" alt="最终效果">
 
                 <div class="reference">
                     <p><strong>参考：</strong><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site" target="_blank">https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site</a></p>
