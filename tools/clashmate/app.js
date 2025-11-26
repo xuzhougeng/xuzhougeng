@@ -30,6 +30,7 @@ const refs = {
   copyYamlBtn: document.getElementById("copyYamlBtn"),
   resetBaseBtn: document.getElementById("resetBaseBtn"),
   themeToggle: document.getElementById("themeToggle"),
+  connectivityTestContainer: document.getElementById("connectivityTestContainer"),
 };
 
 const typeOptions = [
@@ -121,7 +122,7 @@ function updateBaseFromInputs() {
   state.base.mode = refs.mode.value;
   state.base.logLevel = refs.logLevel.value;
   state.base.allowLan = refs.allowLan.value === "true";
-  state.base.udp = refs.udp.value === "true";
+  state.base.udp = state.base.udp = refs.udp.value === "true";
 }
 
 function resetBaseInputs() {
@@ -152,11 +153,45 @@ function newNode(name = "") {
   };
 }
 
+function renderConnectivityTestCommands() {
+  if (!refs.connectivityTestContainer) return; // Ensure the element exists
+
+  if (!state.nodes.length) {
+    refs.connectivityTestContainer.innerHTML =
+      '<p class="subtle">请解析或添加节点以生成测试命令。</p>';
+    return;
+  }
+
+  const firstNode = state.nodes[0];
+  const server = firstNode.server;
+  const port = firstNode.port || firstNode.ports; // Use port or ports for Hysteria2
+
+  if (!server || (!port && firstNode.type !== "hysteria2") || (firstNode.type === "hysteria2" && !port)) {
+    refs.connectivityTestContainer.innerHTML =
+      '<p class="subtle">无法为当前节点生成连通性测试命令，缺少服务器地址或端口。</p>';
+    return;
+  }
+
+  const powershellCommand = `Test-NetConnection ${server} -Port ${port}`;
+  const linuxMacCommand = `nc -vz ${server} ${port}`;
+
+  refs.connectivityTestContainer.innerHTML = `
+    <p class="subtle">以下是针对第一个节点的连通性测试命令：</p>
+    <pre><code class="language-powershell"># PowerShell (Windows)
+${powershellCommand}</code></pre>
+    <pre><code class="language-bash"># nc (Linux/macOS)
+${linuxMacCommand}</code></pre>
+    <p class="tiny">请注意：这些命令仅测试基础网络连通性，不保证服务可用性。</p>
+  `;
+}
+
+
 function renderNodes() {
   if (!state.nodes.length) {
     refs.nodesContainer.innerHTML =
       '<div class="hint">解析结果会显示在这里，也可以点击“新增空节点”手动填写。</div>';
     refs.parseSummary.textContent = "等待解析";
+    renderConnectivityTestCommands(); // Call here too
     return;
   }
 
@@ -249,6 +284,7 @@ function renderNodes() {
       if (field === "name") {
         renderNodes();
       }
+      renderConnectivityTestCommands(); // Call here for live updates
     });
   });
 
@@ -263,6 +299,7 @@ function renderNodes() {
         renderNodes();
       });
     });
+  renderConnectivityTestCommands(); // Call at the end of renderNodes
 }
 
 function normalizeKey(line) {
@@ -329,7 +366,6 @@ function finalizeBlock(block, index) {
       ? `Trojan ${index + 1}`
       : block.hintType === "socks5"
       ? `Socks5 ${index + 1}`
-      : block.hintType === "http"
       ? `HTTP ${index + 1}`
       : block.hintType === "hysteria2"
       ? `Hysteria2 ${index + 1}`
@@ -736,6 +772,7 @@ function handleParse() {
   const parsed = parseRawText(raw);
   if (!parsed.length) {
     refs.parseSummary.textContent = "没有识别到节点，请检查格式";
+    renderConnectivityTestCommands(); // Call here too
     return;
   }
   state.nodes = [...state.nodes, ...parsed];
@@ -788,10 +825,12 @@ function bindEvents() {
   refs.addNodeBtn.addEventListener("click", () => {
     state.nodes.push(newNode());
     renderNodes();
+    renderConnectivityTestCommands(); // Call here too
   });
   refs.clearNodesBtn.addEventListener("click", () => {
     state.nodes = [];
     renderNodes();
+    renderConnectivityTestCommands(); // Call here too
   });
   refs.resetBaseBtn.addEventListener("click", () => {
     state.base = {
@@ -821,6 +860,7 @@ function init() {
   resetBaseInputs();
   renderNodes();
   bindEvents();
+  renderConnectivityTestCommands(); // Call here too
 }
 
 init();
