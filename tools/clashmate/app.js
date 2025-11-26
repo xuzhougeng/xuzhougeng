@@ -150,6 +150,7 @@ function newNode(name = "") {
     obfsPassword: "",
     alpn: "",
     ports: "",
+    "dialer-proxy": "",
   };
 }
 
@@ -261,6 +262,9 @@ function renderNodes() {
             <label>Obfs 密码
               <input name="obfsPassword" value="${escapeHtml(node.obfsPassword)}" placeholder="混淆密码">
             </label>
+            <label>dialer-proxy
+              <input name="dialer-proxy" value="${escapeHtml(node['dialer-proxy'] || '')}" placeholder="前置代理名称">
+            </label>
           </div>
         </div>
       `;
@@ -319,6 +323,7 @@ function normalizeKey(line) {
   if (key.includes("obfs-password") || key.includes("混淆密码")) return "obfsPassword";
   if (key === "alpn") return "alpn";
   if (key === "ports") return "ports";
+  if (key.includes("dialer-proxy")) return "dialer-proxy";
   return "";
 }
 
@@ -366,6 +371,7 @@ function finalizeBlock(block, index) {
       ? `Trojan ${index + 1}`
       : block.hintType === "socks5"
       ? `Socks5 ${index + 1}`
+      : block.hintType === "http"
       ? `HTTP ${index + 1}`
       : block.hintType === "hysteria2"
       ? `Hysteria2 ${index + 1}`
@@ -388,6 +394,7 @@ function finalizeBlock(block, index) {
     obfsPassword: none(block.obfsPassword) || "",
     alpn: none(block.alpn) || "",
     ports: none(block.ports) || "",
+    "dialer-proxy": none(block["dialer-proxy"]) || "",
   };
 }
 
@@ -460,6 +467,7 @@ function parseInlineNode(line) {
     obfsPassword: record["obfs-password"] || "",
     alpn: cleanAlpn(record.alpn || ""),
     ports: record.ports || "",
+    "dialer-proxy": record["dialer-proxy"] || "",
   };
 }
 
@@ -488,6 +496,7 @@ function parseRawText(raw) {
     obfsPassword: "",
     alpn: "",
     ports: "",
+    "dialer-proxy": "",
   };
 
   const hostPortPattern =
@@ -513,9 +522,10 @@ function parseRawText(raw) {
     obfs: "",
     obfsPassword: "",
     alpn: "",
-    ports: "",
+        ports: "",
+        "dialer-proxy": "",
+      };
     };
-  };
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -690,6 +700,7 @@ function nodeToYaml(node) {
   if (!node.server) return "";
   if (node.type === "hysteria2" && !node.port && !node.ports) return "";
   if (node.type !== "hysteria2" && !node.port) return "";
+  const dialerProxyLine = node["dialer-proxy"] ? `    dialer-proxy: ${yamlSafe(node["dialer-proxy"])}` : "";
   if (node.type === "trojan") {
     return [
       `  - name: ${yamlSafe(node.name)}`,
@@ -698,6 +709,7 @@ function nodeToYaml(node) {
       `    port: ${node.port}`,
       `    password: ${yamlSafe(node.password)}`,
       node.sni ? `    sni: ${yamlSafe(node.sni)}` : "",
+      dialerProxyLine,
       `    udp: true`,
     ]
       .filter(Boolean)
@@ -714,6 +726,7 @@ function nodeToYaml(node) {
       node.password ? `    password: ${yamlSafe(node.password)}` : "",
       typeof node.tls === "boolean" ? `    tls: ${node.tls}` : "",
       typeof node.skipCertVerify === "boolean" ? `    skip-cert-verify: ${node.skipCertVerify}` : "",
+      dialerProxyLine,
     ]
       .filter(Boolean)
       .join("\n");
@@ -733,6 +746,7 @@ function nodeToYaml(node) {
       typeof node.skipCertVerify === "boolean" ? `    skip-cert-verify: ${node.skipCertVerify}` : "",
       node.obfs ? `    obfs: ${yamlSafe(node.obfs)}` : "",
       node.obfsPassword ? `    obfs-password: ${yamlSafe(node.obfsPassword)}` : "",
+      dialerProxyLine,
       ...alpnLines,
     ]
       .filter(Boolean)
@@ -747,6 +761,7 @@ function nodeToYaml(node) {
       `    port: ${node.port}`,
       node.username ? `    username: ${yamlSafe(node.username)}` : "",
       node.password ? `    password: ${yamlSafe(node.password)}` : "",
+      dialerProxyLine,
       `    udp: true`,
     ]
       .filter(Boolean)
@@ -761,6 +776,7 @@ function nodeToYaml(node) {
     `    port: ${node.port}`,
     `    cipher: ${yamlSafe(node.method || "aes-256-gcm")}`,
     `    password: ${yamlSafe(node.password)}`,
+    dialerProxyLine,
     `    udp: true`,
   ]
     .filter(Boolean)
