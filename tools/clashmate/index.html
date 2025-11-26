@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clash 配置助手</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero__intro">
+        <p class="eyebrow">Clash Config Helper</p>
+        <h1>把杂乱的节点粘贴，变成可用的 config.yaml</h1>
+        <p class="lede">
+          粘贴服务商提供的明文节点信息（地址、端口、密码、加密等），快速解析到列表里，在线生成可下载的 Clash 配置。
+        </p>
+        <div class="hero__actions">
+          <button id="generateYamlBtn" class="btn btn-primary">生成 config.yaml</button>
+          <button id="downloadYamlBtn" class="btn btn-ghost">下载文件</button>
+          <button id="themeToggle" class="btn btn-ghost">切换明/暗</button>
+        </div>
+        <p class="tiny">只在浏览器本地处理，不会上传到服务器。</p>
+      </div>
+      <div class="hero__panel">
+        <div class="hero__panel__inner">
+          <p class="panel-label">快捷提示</p>
+          <ul>
+            <li>支持中文字段：服务器地址、端口、用户名、密码、加密。</li>
+            <li>自动识别 Trojan、Shadowsocks/2022、Socks5、HTTP、Hysteria2。</li>
+            <li>解析后可手动补全 SNI、加密算法等缺失信息。</li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card span-2">
+        <div class="card__header">
+          <div>
+            <p class="eyebrow">节点文本解析</p>
+            <h2>粘贴原始节点信息</h2>
+            <p class="subtle">例如客服发来的中文字段，或一次粘贴多个 Trojan/SS/SSLTide 节点。</p>
+          </div>
+          <div class="chip" id="parseSummary">等待解析</div>
+        </div>
+        <textarea id="rawInput" class="raw-input" rows="10" placeholder="粘贴原始信息，例如：&#10;SSLTide&#10;服务器地址 cn1.gmdns.net&#10;服务器端口 4453&#10;用户名 185780&#10;密码 9e34ea37&#10;Trojan&#10;服务器地址 cn1.gmdns.net&#10;服务器端口 8085&#10;密码 185780:9e34ea37"></textarea>
+        <div class="card__footer">
+          <div class="hint">支持中文分行、冒号分隔、空格分隔，自动按行扫描。</div>
+          <div class="actions">
+            <label class="btn btn-ghost file-btn">
+              读取文本文件
+              <input id="fileInput" type="file" accept=".txt,.log,.conf,.yaml">
+            </label>
+            <button id="parseBtn" class="btn btn-primary">解析到节点列表</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__header">
+          <div>
+            <p class="eyebrow">基础配置</p>
+            <h2>Clash 运行参数</h2>
+          </div>
+          <button id="resetBaseBtn" class="btn btn-ghost tiny-btn">重置默认</button>
+        </div>
+        <div class="form-grid">
+          <label>mixed-port
+            <input id="mixedPort" type="number" min="1" max="65535" value="7890">
+          </label>
+          <label>socks-port
+            <input id="socksPort" type="number" min="1" max="65535" value="7891">
+          </label>
+          <label>mode
+            <select id="mode">
+              <option value="Rule">Rule</option>
+              <option value="Global">Global</option>
+              <option value="Direct">Direct</option>
+            </select>
+          </label>
+          <label>log-level
+            <select id="logLevel">
+              <option value="info">info</option>
+              <option value="warning">warning</option>
+              <option value="error">error</option>
+              <option value="debug">debug</option>
+            </select>
+          </label>
+          <label>allow-lan
+            <select id="allowLan">
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </label>
+          <label>udp
+            <select id="udp">
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="card span-2">
+        <div class="card__header">
+          <div>
+            <p class="eyebrow">节点列表</p>
+            <h2>解析结果与手工编辑</h2>
+          </div>
+          <div class="actions">
+            <button id="addNodeBtn" class="btn btn-ghost">新增空节点</button>
+            <button id="clearNodesBtn" class="btn btn-ghost">清空列表</button>
+          </div>
+        </div>
+        <div id="nodesContainer" class="nodes"></div>
+      </section>
+
+      <section class="card span-2">
+        <div class="card__header">
+          <div>
+            <p class="eyebrow">输出</p>
+            <h2>生成的 config.yaml</h2>
+          </div>
+          <div class="actions">
+            <button id="copyYamlBtn" class="btn btn-primary">复制文本</button>
+          </div>
+        </div>
+        <textarea id="yamlOutput" class="yaml-output" rows="14" readonly placeholder="点击上方“生成 config.yaml”后出现结果"></textarea>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
