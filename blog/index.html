@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>博客导航</title>
+    <title>博客导航 - Geektastic!</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
@@ -12,38 +14,55 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Roboto Mono', monospace; /* Monospaced font for geeky feel */
             line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #00ff00; /* Bright green text */
+            background: #1a1a1a; /* Dark background */
             min-height: 100vh;
             padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            background: #222; /* Slightly lighter dark background for container */
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2); /* Neon green shadow */
             overflow: hidden;
+            border: 1px solid #00ff00;
         }
 
         header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
+            background: #000; /* Even darker header */
+            color: #00ff00;
+            padding: 30px 20px;
             text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5); /* Inner neon glow */
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>"; /* Terminal prompt */
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
         }
 
         header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 2.2em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 5px #00ff00; /* Text glow */
+            letter-spacing: 2px;
         }
 
         header p {
-            font-size: 1.1em;
-            opacity: 0.9;
+            font-size: 0.9em;
+            opacity: 0.8;
         }
 
         .content {
@@ -57,89 +76,99 @@
         .blog-item {
             margin-bottom: 20px;
             padding: 20px;
-            border-left: 4px solid #667eea;
-            background: #f8f9fa;
-            border-radius: 5px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 3px solid #00ff00; /* Green left border */
+            background: #2a2a2a; /* Darker background for items */
+            border-radius: 4px;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            cursor: pointer;
         }
 
         .blog-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.6), 0 0 30px rgba(0, 255, 0, 0.3); /* Intense neon glow on hover */
+            background: #333;
         }
 
         .blog-item a {
             text-decoration: none;
-            color: #333;
+            color: #00ff00; /* Green text for links */
             display: block;
         }
 
         .blog-item h2 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 1.5em;
+            color: #00ffff; /* Cyan for titles */
+            margin-bottom: 8px;
+            font-size: 1.4em;
+            text-shadow: 0 0 3px #00ffff;
         }
 
         .blog-date {
-            color: #666;
-            font-size: 0.9em;
+            color: #aaa; /* Lighter gray for date */
+            font-size: 0.8em;
             margin-bottom: 10px;
         }
 
         .blog-excerpt {
-            color: #666;
-            line-height: 1.6;
+            color: #eee; /* White for excerpt */
+            line-height: 1.5;
+            font-size: 0.9em;
         }
 
         .home-link {
             display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
+            margin-top: 30px;
+            padding: 12px 25px;
+            background: #00ff00; /* Green button */
+            color: #1a1a1a; /* Dark text on button */
             text-decoration: none;
             border-radius: 5px;
-            transition: background 0.3s;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid #00ff00;
         }
 
         .home-link:hover {
-            background: #764ba2;
+            background: #1a1a1a; /* Dark background on hover */
+            color: #00ff00; /* Green text on hover */
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.8); /* Intense green glow */
         }
 
         footer {
             text-align: center;
             padding: 20px;
             color: #666;
-            border-top: 1px solid #eee;
+            border-top: 1px dashed #00ff00; /* Dashed green border */
+            font-size: 0.8em;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>我的博客</h1>
-            <p>记录学习与生活</p>
+            <h1>ACCESS GRANTED // BLOG_INDEX</h1>
+            <p>_  Loading articles from virtual filesystem..._</p>
         </header>
 
         <div class="content">
             <ul class="blog-list">
                 <li class="blog-item">
                     <a href="2025/11/7/index.html">
-                        <h2>不写一行代码，通过Claude Code web搭建自己个人网站</h2>
-                        <div class="blog-date">2025年11月7日</div>
+                        <h2>[ARTICLE] 不写一行代码，通过Claude Code web搭建自己个人网站</h2>
+                        <div class="blog-date">// 2025-11-07</div>
                         <p class="blog-excerpt">
-                            最近anthropic搞活动，claude pro用户送250刀的额度，可以直接在网页上进行项目开发。
-                            利用GitHub Pages和Claude Code，无需本地编辑器就能轻松搭建个人网站...
+                            _INIT_ Claude Pro users get $250 credit for web development... building personal website with GitHub Pages and Claude Code without local editor... _EOF_
                         </p>
                     </a>
                 </li>
             </ul>
 
-            <a href="../index.html" class="home-link">返回首页</a>
+            <a href="/index.html" class="home-link">RETURN_TO_MAIN_MENU</a>
         </div>
 
         <footer>
-            <p>&copy; 2025 我的博客. All rights reserved.</p>
+            <p>// END_OF_TRANSMISSION // &copy; 2025 XZG. All rights reserved.</p>
         </footer>
     </div>
 </body>
