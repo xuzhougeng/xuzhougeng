@@ -1,175 +1,188 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World - 欢迎</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            width: 100%;
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .section {
-            margin-top: 30px;
-        }
-
-        .section-title {
-            color: #667eea;
-            font-size: 1.5em;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
-
-        .game-list {
-            list-style: none;
-        }
-
-        .game-item {
-            margin: 15px 0;
-        }
-
-        .game-link {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        .game-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .game-icon {
-            font-size: 2em;
-            margin-right: 15px;
-        }
-
-        .game-info {
-            flex: 1;
-        }
-
-        .game-name {
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .game-desc {
-            font-size: 0.9em;
-            opacity: 0.9;
-        }
-
-        .blog-info {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .blog-info p {
-            color: white;
-            font-size: 1.1em;
-            margin: 0;
-            line-height: 1.6;
-        }
-
-        .blog-info a {
-            color: white;
-            font-weight: bold;
-            text-decoration: none;
-            border-bottom: 2px solid white;
-            transition: all 0.3s;
-        }
-
-        .blog-info a:hover {
-            opacity: 0.8;
-            border-bottom-color: transparent;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>游戏 - 徐洲更</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #222;
+      line-height: 1.6;
+    }
+    .page-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .sidebar {
+      width: 200px;
+      background-color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 24px 16px;
+      position: sticky;
+      top: 40px;
+    }
+    .sidebar ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar li {
+      margin-bottom: 16px;
+    }
+    .sidebar a {
+      display: block;
+      font-weight: 600;
+      color: #1f4fbf;
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .sidebar a:hover {
+      background-color: rgba(42, 122, 226, 0.1);
+      color: #17408f;
+    }
+    .container {
+      flex: 1;
+      max-width: 960px;
+      margin: 0;
+      padding: 40px 20px 60px;
+      background-color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+    }
+    @media (max-width: 768px) {
+      .page-wrapper {
+        flex-direction: column;
+        padding: 24px 16px 40px;
+      }
+      .sidebar {
+        width: 100%;
+        position: static;
+        padding: 16px;
+      }
+      .sidebar ul {
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+      .sidebar li {
+        margin-bottom: 0;
+      }
+      .sidebar a {
+        text-align: center;
+      }
+    }
+    header {
+      border-bottom: 3px solid #2a7ae2;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 2.4rem;
+    }
+    a {
+      color: #2a7ae2;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .game-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+        padding-left: 0;
+        list-style: none;
+    }
+    .game-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+        display: block;
+    }
+    .game-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+    .game-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #2a7ae2;
+    }
+    .game-description {
+        font-size: 1rem;
+        color: #555;
+        line-height: 1.6;
+    }
+    footer {
+      margin-top: 48px;
+      font-size: 0.9rem;
+      color: #666;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
+  <div class="page-wrapper">
+    <nav class="sidebar">
+      <ul>
+        <li><a href="/index.html">主页</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/tools/">Tools</a></li>
+      </ul>
+    </nav>
+    <main class="container">
+      <header>
         <h1>轻松一下！</h1>
-
-        <div class="section">
-            <h2 class="section-title">🎮 游戏导航</h2>
-            <ul class="game-list">
-                <li class="game-item">
-                    <a href="snake/index.html" class="game-link">
-                        <span class="game-icon">🐍</span>
-                        <div class="game-info">
-                            <div class="game-name">贪吃蛇</div>
-                            <div class="game-desc">经典的贪吃蛇游戏，使用方向键控制</div>
-                        </div>
-                    </a>
-                </li>
-                <li class="game-item">
-                    <a href="pacman/index.html" class="game-link">
-                        <span class="game-icon">🟡</span>
-                        <div class="game-info">
-                            <div class="game-name">吃豆人</div>
-                            <div class="game-desc">经典的吃豆人游戏，吃掉所有豆子并躲避幽灵</div>
-                        </div>
-                    </a>
-                </li>
-                <li class="game-item">
-                    <a href="tetris/index.html" class="game-link">
-                        <span class="game-icon">🟦</span>
-                        <div class="game-info">
-                            <div class="game-name">俄罗斯方块</div>
-                            <div class="game-desc">经典的俄罗斯方块游戏，消除方块获得高分</div>
-                        </div>
-                    </a>
-                </li>
-                <li class="game-item">
-                    <a href="typing/index.html" class="game-link">
-                        <span class="game-icon">⌨️</span>
-                        <div class="game-info">
-                            <div class="game-name">终端打字训练</div>
-                            <div class="game-desc">上传 PDF 生成自定义单词库的绿色终端风格打字游戏</div>
-                        </div>
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </div>
+        <p>游戏导航</p>
+      </header>
+      
+      <section>
+        <ul class="game-grid">
+            <li>
+                <a href="snake/index.html" class="game-card">
+                    <h3 class="game-title">🐍 贪吃蛇</h3>
+                    <p class="game-description">经典的贪吃蛇游戏，使用方向键控制。</p>
+                </a>
+            </li>
+            <li>
+                <a href="pacman/index.html" class="game-card">
+                    <h3 class="game-title">🟡 吃豆人</h3>
+                    <p class="game-description">经典的吃豆人游戏，吃掉所有豆子并躲避幽灵。</p>
+                </a>
+            </li>
+            <li>
+                <a href="tetris/index.html" class="game-card">
+                    <h3 class="game-title">🟦 俄罗斯方块</h3>
+                    <p class="game-description">经典的俄罗斯方块游戏，消除方块获得高分。</p>
+                </a>
+            </li>
+            <li>
+                <a href="typing/index.html" class="game-card">
+                    <h3 class="game-title">⌨️ 终端打字训练</h3>
+                    <p class="game-description">上传 PDF 生成自定义单词库的绿色终端风格打字游戏。</p>
+                </a>
+            </li>
+        </ul>
+      </section>
+      
+      <footer>
+        <p>&copy; 2025</p>
+      </footer>
+    </main>
+  </div>
 </body>
 </html>

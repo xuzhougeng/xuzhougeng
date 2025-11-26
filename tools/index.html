@@ -1,212 +1,189 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>在线工具集 - 生物信息学分析工具</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 50px;
-            padding: 40px 20px;
-        }
-        .header h1 {
-            font-size: 48px;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-        .header p {
-            font-size: 20px;
-            opacity: 0.95;
-        }
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 50px;
-        }
-        .tool-card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-        .tool-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-        }
-        .tool-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .tool-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #333;
-            text-align: center;
-        }
-        .tool-description {
-            font-size: 15px;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-        .tool-features {
-            list-style: none;
-            margin-bottom: 20px;
-        }
-        .tool-features li {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 8px;
-            padding-left: 20px;
-            position: relative;
-        }
-        .tool-features li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #48bb78;
-            font-weight: bold;
-        }
-        .tool-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            background: #f093fb;
-            color: white;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        .footer {
-            text-align: center;
-            color: white;
-            padding: 30px 20px;
-            opacity: 0.9;
-        }
-        .footer a {
-            color: white;
-            text-decoration: underline;
-        }
-        @media (max-width: 768px) {
-            .tools-grid {
-                grid-template-columns: 1fr;
-            }
-            .header h1 {
-                font-size: 36px;
-            }
-            .header p {
-                font-size: 16px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>在线工具 - 徐洲更</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #222;
+      line-height: 1.6;
+    }
+    .page-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .sidebar {
+      width: 200px;
+      background-color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 24px 16px;
+      position: sticky;
+      top: 40px;
+    }
+    .sidebar ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar li {
+      margin-bottom: 16px;
+    }
+    .sidebar a {
+      display: block;
+      font-weight: 600;
+      color: #1f4fbf;
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .sidebar a:hover {
+      background-color: rgba(42, 122, 226, 0.1);
+      color: #17408f;
+    }
+    .container {
+      flex: 1;
+      max-width: 960px;
+      margin: 0;
+      padding: 40px 20px 60px;
+      background-color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+    }
+    @media (max-width: 768px) {
+      .page-wrapper {
+        flex-direction: column;
+        padding: 24px 16px 40px;
+      }
+      .sidebar {
+        width: 100%;
+        position: static;
+        padding: 16px;
+      }
+      .sidebar ul {
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+      .sidebar li {
+        margin-bottom: 0;
+      }
+      .sidebar a {
+        text-align: center;
+      }
+    }
+    header {
+      border-bottom: 3px solid #2a7ae2;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 2.4rem;
+    }
+    a {
+      color: #2a7ae2;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .tools-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+        padding-left: 0;
+        list-style: none;
+    }
+    .tool-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+        display: block;
+    }
+    .tool-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+    .tool-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: #2a7ae2;
+    }
+    .tool-description {
+        font-size: 1rem;
+        color: #555;
+        line-height: 1.6;
+    }
+    footer {
+      margin-top: 48px;
+      font-size: 0.9rem;
+      color: #666;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🛠️ 在线工具集</h1>
-            <p>专业的生物信息学分析和可视化工具</p>
-        </div>
-
-        <div class="tools-grid">
-            <!-- 火山图工具 -->
-            <a href="./volcano/" class="tool-card">
-                <div class="tool-icon">🌋</div>
-                <div class="tool-title">火山图生成器</div>
-                <div class="tool-description">
-                    在线生成高质量的差异基因表达分析火山图，支持数据导入、参数调整和多种格式导出。
-                </div>
-                <ul class="tool-features">
-                    <li>支持Excel粘贴和CSV文件导入</li>
-                    <li>在线表格编辑，实时预览</li>
-                    <li>自定义颜色、阈值和图表样式</li>
-                    <li>导出PNG、PDF和数据CSV文件</li>
-                    <li>自动标注显著差异基因</li>
-                    <li>生成随机测试数据</li>
-                </ul>
-                <span class="tool-badge">推荐</span>
-            </a>
-
-            <!-- 热图工具 -->
-            <a href="./heatmap/" class="tool-card">
-                <div class="tool-icon">🔥</div>
-                <div class="tool-title">热图生成器</div>
-                <div class="tool-description">
-                    在线生成基因表达热图，支持多种配色方案、自定义样式和高质量图片导出。
-                </div>
-                <ul class="tool-features">
-                    <li>支持Excel粘贴和CSV文件导入</li>
-                    <li>在线表格编辑，动态添加行列</li>
-                    <li>多种配色方案（蓝-白-红、Viridis等）</li>
-                    <li>自定义单元格大小和字体</li>
-                    <li>导出PNG、PDF和数据CSV文件</li>
-                    <li>生成随机测试数据</li>
-                </ul>
-                <span class="tool-badge" style="background: #fa709a;">热门</span>
-            </a>
-
-            <!-- SVG编辑器工具 -->
-            <a href="./svg-editor/" class="tool-card">
-                <div class="tool-icon">🎨</div>
-                <div class="tool-title">SVG在线编辑器</div>
-                <div class="tool-description">
-                    在线编辑SVG矢量图形，支持代码编辑、实时预览、格式化和多种导出格式。
-                </div>
-                <ul class="tool-features">
-                    <li>上传SVG文件并在线编辑</li>
-                    <li>实时预览编辑效果</li>
-                    <li>代码格式化和压缩</li>
-                    <li>导出SVG和PNG格式</li>
-                    <li>调整背景颜色和缩放</li>
-                    <li>复制代码和示例加载</li>
-                </ul>
-                <span class="tool-badge" style="background: #667eea;">实用</span>
-            </a>
-
-            <!-- 更多工具即将添加 -->
-
-            <div class="tool-card" style="opacity: 0.6; cursor: not-allowed; pointer-events: none;">
-                <div class="tool-icon">🎯</div>
-                <div class="tool-title">GO富集分析</div>
-                <div class="tool-description">
-                    即将推出：基因本体论（GO）功能富集分析和可视化工具。
-                </div>
-                <ul class="tool-features">
-                    <li>自动GO注释</li>
-                    <li>富集分析统计</li>
-                    <li>气泡图和条形图展示</li>
-                </ul>
-                <span class="tool-badge" style="background: #95a5a6;">即将推出</span>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>💡 这些工具完全免费，无需注册，在浏览器中即可使用</p>
-            <p style="margin-top: 10px;">所有数据处理均在本地完成，保护您的数据隐私</p>
-        </div>
-    </div>
+  <div class="page-wrapper">
+    <nav class="sidebar">
+      <ul>
+        <li><a href="/index.html">主页</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/game/">Game</a></li>
+      </ul>
+    </nav>
+    <main class="container">
+      <header>
+        <h1>在线工具集</h1>
+        <p>专业的生物信息学分析和可视化工具</p>
+      </header>
+      
+      <section>
+        <ul class="tools-grid">
+            <li>
+                <a href="./volcano/" class="tool-card">
+                    <h3 class="tool-title">🌋 火山图生成器</h3>
+                    <p class="tool-description">在线生成高质量的差异基因表达分析火山图。</p>
+                </a>
+            </li>
+            <li>
+                <a href="./heatmap/" class="tool-card">
+                    <h3 class="tool-title">🔥 热图生成器</h3>
+                    <p class="tool-description">在线生成基因表达热图。</p>
+                </a>
+            </li>
+            <li>
+                <a href="./svg-editor/" class="tool-card">
+                    <h3 class="tool-title">🎨 SVG在线编辑器</h3>
+                    <p class="tool-description">在线编辑SVG矢量图形。</p>
+                </a>
+            </li>
+            <li>
+              <a href="./clashmate/" class="tool-card">
+                  <h3 class="tool-title">🎯 ClashMate</h3>
+                  <p class="tool-description">Clash配置文件在线转换</p>
+              </a>
+          </li>
+        </ul>
+      </section>
+      
+      <footer>
+        <p>💡 这些工具完全免费，无需注册，在浏览器中即可使用</p>
+        <p style="margin-top: 10px;">所有数据处理均在本地完成，保护您的数据隐私</p>
+      </footer>
+    </main>
+  </div>
 </body>
 </html>

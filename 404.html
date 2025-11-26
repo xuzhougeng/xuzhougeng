@@ -1,134 +1,148 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - 页面未找到</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 60px 40px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
-        }
-
-        .error-code {
-            font-size: 8em;
-            font-weight: bold;
-            color: #667eea;
-            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-20px);
-            }
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 2em;
-        }
-
-        p {
-            color: #666;
-            font-size: 1.1em;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-
-        .countdown {
-            color: #667eea;
-            font-size: 1.2em;
-            font-weight: bold;
-            margin-bottom: 30px;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 15px 40px;
-            font-size: 1.2em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 25px;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            margin: 5px;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .icon {
-            font-size: 1.5em;
-            margin-right: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>404 - 页面未找到 - 徐洲更</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #222;
+      line-height: 1.6;
+    }
+    .page-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .sidebar {
+      width: 200px;
+      background-color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 24px 16px;
+      position: sticky;
+      top: 40px;
+    }
+    .sidebar ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .sidebar li {
+      margin-bottom: 16px;
+    }
+    .sidebar a {
+      display: block;
+      font-weight: 600;
+      color: #1f4fbf;
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .sidebar a:hover {
+      background-color: rgba(42, 122, 226, 0.1);
+      color: #17408f;
+    }
+    .container {
+      flex: 1;
+      max-width: 960px;
+      margin: 0;
+      padding: 40px 20px 60px;
+      background-color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      .page-wrapper {
+        flex-direction: column;
+        padding: 24px 16px 40px;
+      }
+      .sidebar {
+        width: 100%;
+        position: static;
+        padding: 16px;
+      }
+      .sidebar ul {
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+      .sidebar li {
+        margin-bottom: 0;
+      }
+      .sidebar a {
+        text-align: center;
+      }
+    }
+    header {
+      border-bottom: 3px solid #2a7ae2;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 2.4rem;
+    }
+    a {
+      color: #2a7ae2;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .error-code {
+        font-size: 6rem;
+        font-weight: bold;
+        color: #2a7ae2;
+    }
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        font-size: 1.1rem;
+        background-color: #2a7ae2;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: background-color 0.3s;
+    }
+    .btn:hover {
+        background-color: #1f4fbf;
+        text-decoration: none;
+    }
+    footer {
+      margin-top: 48px;
+      font-size: 0.9rem;
+      color: #666;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
+  <div class="page-wrapper">
+    <nav class="sidebar">
+      <ul>
+        <li><a href="/index.html">主页</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/tools/">Tools</a></li>
+        <li><a href="/game/">Game</a></li>
+      </ul>
+    </nav>
+    <main class="container">
+      <div>
         <div class="error-code">404</div>
-        <h1>哎呀！页面未找到</h1>
-        <p>
-            很抱歉，您访问的页面不存在或已被移除。<br>
-            系统将在 <span class="countdown" id="countdown">5</span> 秒后自动跳转到首页。
-        </p>
-        <div>
-            <a href="/" class="btn">
-                <span class="icon">🏠</span>返回首页
-            </a>
-            <a href="https://xuzhougeng.com" class="btn" target="_blank">
-                <span class="icon">📝</span>访问博客
-            </a>
-        </div>
-    </div>
-
-    <script>
-        // 倒计时自动跳转
-        let countdown = 5;
-        const countdownElement = document.getElementById('countdown');
-
-        const timer = setInterval(() => {
-            countdown--;
-            countdownElement.textContent = countdown;
-
-            if (countdown <= 0) {
-                clearInterval(timer);
-                window.location.href = '/';
-            }
-        }, 1000);
-    </script>
+        <h1>页面未找到</h1>
+        <p>抱歉，您要查找的页面不存在。</p>
+        <a href="/" class="btn">返回首页</a>
+      </div>
+    </main>
+  </div>
 </body>
 </html>
