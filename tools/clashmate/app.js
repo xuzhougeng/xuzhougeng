@@ -111,6 +111,18 @@ function normalizeRegionName(str = "") {
   return out;
 }
 
+function extractInlineValue(line) {
+  const colonIndex = line.search(/[:：]/);
+  if (colonIndex !== -1) {
+    return line.slice(colonIndex + 1).trim();
+  }
+  const parts = line.trim().split(/\s+/);
+  if (parts.length > 1) {
+    return parts.slice(1).join(" ").trim();
+  }
+  return "";
+}
+
 function normalizeName(name = "") {
   const noEmoji = stripEmoji(name);
   return normalizeRegionName(noEmoji).replace(/\s+/g, " ").trim();
@@ -562,11 +574,7 @@ function parseRawText(raw) {
     const normalizedKey = normalizeKey(line);
     if (normalizedKey) {
       const nextValue = lines[i + 1] ? lines[i + 1].trim() : "";
-      const inlineValue = line
-        .split(/[:：\s]+/)
-        .slice(1)
-        .join(" ")
-        .trim();
+      const inlineValue = extractInlineValue(line);
 
       if (normalizedKey === "type") {
         const value = inlineValue || nextValue;
@@ -599,18 +607,16 @@ function parseRawText(raw) {
         }
       }
 
-      if (nextValue) {
+      const hasInline = inlineValue.length > 0;
+      const hasNext = !!nextValue;
+      if (hasInline || hasNext) {
         if (normalizedKey === "server" && current.server) {
           pushCurrent();
         }
-        current[normalizedKey] = nextValue;
-        i += 1;
-        continue;
-      } else if (inlineValue) {
-        if (normalizedKey === "server" && current.server) {
-          pushCurrent();
+        current[normalizedKey] = hasInline ? inlineValue : nextValue;
+        if (!hasInline && hasNext) {
+          i += 1;
         }
-        current[normalizedKey] = inlineValue;
         continue;
       }
     }
@@ -638,7 +644,7 @@ function parseRawText(raw) {
       continue;
     }
 
-    if (/密码|pass|secret/i.test(line) && lines[i + 1]) {
+    if (/密码|pass|secret/i.test(line) && lines[i + 1] && !line.includes(":")) {
       current.password = lines[i + 1].trim();
       i += 1;
       continue;
