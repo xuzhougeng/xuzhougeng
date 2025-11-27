@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 # ========= 配置区 =========
-BARK_KEY = "7iKuxsxwsnmxsdfEC9MVe"  # 必填！
+BARK_KEY = "你的BARK KEY"  # 必填！
 BARK_SERVER = "https://api.day.app"      # 自建 bark-server 就改这里
 THRESHOLD = 80                           # 总内存使用率阈值（百分比）
 STATE_FILE = "/var/tmp/mem_watch_bark_state.json"
