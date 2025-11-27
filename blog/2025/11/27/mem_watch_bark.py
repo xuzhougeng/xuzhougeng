@@ -4,6 +4,7 @@ import pwd
 import json
 import socket
 import time
+import subprocess
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -17,6 +18,52 @@ TOP_USERS = 5                            # 推送中展示的用户 Top N
 TOP_GROUPS = 5                           # 用户+命令组合 Top N
 TOP_PROCS_PER_GROUP = 2                  # 每个组合展示几个最大进程
 MIN_ALERT_INTERVAL_SEC = 600             # 两次告警之间的最小间隔（秒），防止刷屏
+
+def get_all_ip_addresses():
+    """
+    获取本机所有非回环的IPv4地址列表。
+    会优先将 10.10.x.x 的地址排在前面。
+    """
+    ips = set()
+    try:
+        # Main method: Use `ip` command on Linux
+        output = subprocess.check_output(
+            ["ip", "-4", "addr"], stderr=subprocess.DEVNULL, text=True
+        )
+        for line in output.split("\n"):
+            if " inet " in line:
+                parts = line.strip().split()
+                ip = parts[1].split("/")[0]
+                if ip != "127.0.0.1":
+                    ips.add(ip)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback for non-Linux or systems without `ip` command
+        try:
+            hostname = socket.gethostname()
+            # This can return multiple IPs for a hostname
+            _, _, ipaddrlist = socket.gethostbyname_ex(hostname)
+            for ip in ipaddrlist:
+                if ip != "127.0.0.1":
+                    ips.add(ip)
+        except socket.gaierror:
+            # A final, simple fallback
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                ip = s.getsockname()[0]
+                s.close()
+                if ip != "127.0.0.1":
+                    ips.add(ip)
+            except OSError:
+                pass  # No IP found
+
+    # Sort IPs, putting '10.10.' addresses first
+    ips_list = list(ips)
+    preferred_ips = sorted([ip for ip in ips_list if ip.startswith("10.10.")])
+    other_ips = sorted([ip for ip in ips_list if not ip.startswith("10.10.")])
+
+    return preferred_ips + other_ips
+
 
 def read_meminfo():
     """从 /proc/meminfo 读取总内存、可用内存和 swap 信息，单位 kB。"""
@@ -220,6 +267,8 @@ def main():
 
     users, groups = collect_stats()
     hostname = socket.gethostname()
+    ip_addresses = get_all_ip_addresses()
+    ip_str = ", ".join(ip_addresses) if ip_addresses else "N/A"
 
     total_gib = total_kb / 1024 / 1024
     used_gib = used_kb / 1024 / 1024
@@ -230,7 +279,7 @@ def main():
     la1, la5, la15 = read_loadavg()
 
     lines = []
-    lines.append(f"主机: {hostname}")
+    lines.append(f"主机: {hostname} (IPs: {ip_str})")
     lines.append(f"有效内存使用: {used_gib:.1f} GiB / {total_gib:.1f} GiB ({percent}%)")
     lines.append(f"剩余可用: {avail_gib:.1f} GiB")
 
