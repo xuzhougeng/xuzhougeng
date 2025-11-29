@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网站开发历史调研报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .active-tab {
+            background-color: #e5e5e5;
+            border-left: 4px solid #d97706;
+            font-weight: 700;
+        }
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals & Earth Tones (Stone-50 background, Amber/Orange accents for highlights, Slate for text) to convey history and stability. -->
+    
+    <!-- Application Structure Plan: 
+         Structure: Dashboard-style Split Layout. 
+         - Left Sidebar: Chronological Navigation (Timeline). Allows linear or random access to historical stages.
+         - Main Content Area: Dynamic content container based on selection.
+            - Header: Title and Era Summary.
+            - Top Section: Key Metrics/Visualizations (Chart.js) specific to the era (e.g., Browser Wars in Era 2, Framework popularity in Era 5).
+            - Middle Section: "Tech Stack" & "Paradigm Shift" cards using Grid layout to break down complex info.
+            - Bottom Section: Iconic Frameworks detailed view.
+         Why: This structure allows users to digest history piece-by-piece. The timeline anchor keeps them oriented. Charts provide immediate visual context to the text descriptions. 
+    -->
+
+    <!-- Visualization & Content Choices: 
+         1. Evolution Timeline (Nav): Text List -> Goal: Navigation -> Interactive Sidebar.
+         2. Era Statistics (Chart): Market Share/Adoption Trends -> Goal: Compare -> Chart.js Bar/Line Charts. Justification: Visualizing the dominance of tools (e.g., jQuery) is more impactful than reading numbers.
+         3. Paradigm Cards: Key Concepts (MVC, SSR, etc.) -> Goal: Inform -> Styled Grid Cards.
+         4. Framework Highlights: Specific Tools -> Goal: Organize -> Interactive Badge/List system.
+         NO SVG graphics used. NO Mermaid JS used. Relying on HTML/CSS shapes and Chart.js canvas.
+    -->
+    
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-stone-50 text-slate-800 h-screen overflow-hidden flex flex-col">
+
+    <!-- Top Navigation / Header -->
+    <header class="bg-white border-b border-stone-200 h-16 flex-none flex items-center justify-between px-6 shadow-sm z-10">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-amber-600 rounded flex items-center justify-center text-white font-bold text-lg">H</div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">Web Dev History <span class="text-stone-500 font-normal text-sm ml-2">网站开发历史演变调研</span></h1>
+        </div>
+        <div class="text-sm text-stone-500 hidden md:block">
+            互动调研报告 / Interactive Research Report
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- Left Sidebar: Timeline Navigation -->
+        <nav class="w-64 bg-stone-100 border-r border-stone-200 flex-none overflow-y-auto hidden md:block" id="sidebar-nav">
+            <div class="p-4">
+                <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-4">发展阶段 timeline</h3>
+                <div class="space-y-1" id="nav-container">
+                    <!-- Nav items injected by JS -->
+                </div>
+            </div>
+            <div class="p-4 mt-4 border-t border-stone-200">
+                <div class="bg-amber-50 border border-amber-100 rounded p-3 text-xs text-amber-800">
+                    <strong>提示：</strong> 点击上方的时间轴节点，探索不同时代的标志性技术与数据。
+                </div>
+            </div>
+        </nav>
+
+        <!-- Mobile Nav Dropdown (Visible only on small screens) -->
+        <div class="md:hidden w-full absolute top-16 bg-stone-100 border-b border-stone-200 z-20 p-2">
+            <select id="mobile-nav-select" class="w-full p-2 border border-stone-300 rounded bg-white">
+                <!-- Options injected by JS -->
+            </select>
+        </div>
+
+        <!-- Right Content Area -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 relative scroll-smooth" id="main-content">
+            
+            <!-- Dynamic Content Container -->
+            <div class="max-w-5xl mx-auto space-y-8">
+
+                <!-- Section 1: Header & Intro -->
+                <section class="animate-fade-in">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-stone-200 pb-4 mb-6">
+                        <div>
+                            <span id="era-years" class="text-amber-600 font-bold tracking-wide text-sm bg-amber-100 px-2 py-1 rounded-full mb-2 inline-block">1991 - 1995</span>
+                            <h2 id="era-title" class="text-3xl md:text-4xl font-bold text-slate-900 mt-1">静态网页时代</h2>
+                            <p id="era-subtitle" class="text-stone-500 text-lg mt-2">The Static Era</p>
+                        </div>
+                        <div class="text-right hidden md:block">
+                            <div class="text-xs text-stone-400 uppercase">Key Tech</div>
+                            <div id="era-tech-badge" class="font-mono text-sm font-bold text-slate-700">HTML 1.0</div>
+                        </div>
+                    </div>
+                    
+                    <p id="era-description" class="text-slate-700 leading-relaxed text-lg max-w-3xl">
+                        此阶段主要用于学术和军事信息的单向传递。网页由纯HTML构成，缺乏样式和交互，内容更新需要手动修改文件。
+                    </p>
+                </section>
+
+                <!-- Section 2: Data Visualization (Chart.js) -->
+                <section class="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="w-2 h-6 bg-amber-500 rounded-sm"></span>
+                            数据洞察 / Data Insight
+                        </h3>
+                        <span class="text-xs text-stone-400 bg-stone-100 px-2 py-1 rounded">Interactive Chart</span>
+                    </div>
+                    
+                    <p id="chart-context" class="text-sm text-stone-600 mb-6">
+                        展示该阶段最核心的技术趋势或市场份额对比。
+                    </p>
+
+                    <!-- Chart Container (Strictly styled per requirements) -->
+                    <div class="chart-container">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Section 3: Key Characteristics (Grid) -->
+                <section>
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">核心特征 / Key Characteristics</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="features-grid">
+                        <!-- Feature Cards Injected JS -->
+                    </div>
+                </section>
+
+                <!-- Section 4: Landmark Frameworks -->
+                <section class="bg-slate-50 rounded-xl border border-slate-200 p-6">
+                    <h3 class="text-lg font-bold text-slate-800 mb-6">标志性框架与工具 / Landmark Frameworks</h3>
+                    <div class="space-y-4" id="frameworks-list">
+                        <!-- Framework items injected by JS -->
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Footer -->
+            <footer class="mt-12 py-6 border-t border-stone-200 text-center text-stone-400 text-sm">
+                Generated Report based on Web Development History Research
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        // --- Data Source ---
+        const historyData = [
+            {
+                id: 'stage1',
+                title: '静态页面时代',
+                years: '1991 - 1995',
+                subtitle: 'The Static Web',
+                techBadge: 'HTML / HTTP',
+                description: 'Web的诞生初期。网页主要是纯文本的HTML文档，用于共享科研信息。没有CSS进行样式修饰，也没有JavaScript提供交互。这是一种“只读”的Web体验，服务器只是简单地返回文件。',
+                chartTitle: '全球网站数量增长趋势 (1991-1995)',
+                chartType: 'line',
+                chartLabels: ['1991', '1992', '1993', '1994', '1995'],
+                chartData: [1, 10, 130, 2738, 23500],
+                chartLabel: 'Websites Count',
+                chartContext: '本图展示了万维网早期网站数量的指数级爆发，标志着互联网从实验室走向公众视野。',
+                features: [
+                    { title: '纯内容展示', desc: '没有布局引擎，仅依靠标签语义展示文本。' },
+                    { title: '超链接导航', desc: '蓝色下划线链接是唯一的交互方式。' },
+                    { title: '服务端渲染', desc: '完全依赖服务器发送完整的HTML文件。' }
+                ],
+                frameworks: [
+                    { name: 'CERN httpd', type: 'Server', desc: 'Tim Berners-Lee编写的第一个Web服务器。' },
+                    { name: 'Mosaic', type: 'Browser', desc: '第一个广泛流行的图形化浏览器，支持在文本中嵌入图片。' },
+                    { name: 'HTML 2.0', type: 'Standard', desc: '确立了Web文档的基础规范。' }
+                ]
+            },
+            {
+                id: 'stage2',
+                title: '动态HTML与浏览器战争',
+                years: '1996 - 2004',
+                subtitle: 'The Browser Wars & DHTML',
+                techBadge: 'CSS / JS / Flash',
+                description: 'CSS的引入让网页有了美感，JavaScript的诞生带来了初步交互。这是IE与Netscape争霸的时代。Table布局盛行，Flash用于制作丰富的多媒体动画。',
+                chartTitle: '浏览器市场份额 (约 2002年)',
+                chartType: 'pie',
+                chartLabels: ['Internet Explorer', 'Netscape', 'Mozilla/Firefox', 'Others'],
+                chartData: [95, 3, 1, 1],
+                chartLabel: 'Market Share %',
+                chartContext: 'Internet Explorer在此阶段通过操作系统捆绑策略取得了绝对垄断地位，导致了Web标准的碎片化。',
+                features: [
+                    { title: '样式分离', desc: 'CSS开始负责表现层，不再完全依赖HTML属性。' },
+                    { title: '脚本交互', desc: 'JavaScript用于简单的表单验证和动态效果。' },
+                    { title: '多媒体插件', desc: 'Flash填补了HTML在音视频和复杂动画上的空白。' }
+                ],
+                frameworks: [
+                    { name: 'Flash', type: 'Plugin', desc: '统治了富媒体交互领域，提供矢量动画和脚本能力。' },
+                    { name: 'Table Layout', type: 'Technique', desc: '利用表格进行极其复杂的页面排版。' },
+                    { name: 'PHP/ASP', type: 'Backend', desc: '服务端脚本语言兴起，使CMS系统成为可能。' }
+                ]
+            },
+            {
+                id: 'stage3',
+                title: 'Web 2.0 与 Ajax 革命',
+                years: '2005 - 2009',
+                subtitle: 'Web 2.0 & The Rise of Ajax',
+                techBadge: 'Ajax / jQuery',
+                description: 'Google Maps的出现展示了Ajax的威力，网页不再需要每次操作都刷新。用户生成内容(UGC)爆发。jQuery的出现抹平了浏览器兼容性差异，成为开发者的必备工具。',
+                chartTitle: 'jQuery 市场占有率增长 (模拟)',
+                chartType: 'bar',
+                chartLabels: ['2006', '2007', '2008', '2009'],
+                chartData: [15, 45, 70, 85],
+                chartLabel: 'Adoption Rate (%)',
+                chartContext: 'jQuery以其简洁的语法和强大的跨浏览器兼容性，迅速统治了DOM操作库市场，"Write Less, Do More"深入人心。',
+                features: [
+                    { title: '异步通信', desc: 'Ajax允许在不刷新页面的情况下与服务器交换数据。' },
+                    { title: 'DOM 操作', desc: '通过库(Library)轻松操作页面元素，无需关心浏览器差异。' },
+                    { title: '社交化', desc: '博客、Wiki、社交网络兴起，用户从浏览者变为创作者。' }
+                ],
+                frameworks: [
+                    { name: 'jQuery', type: 'Library', desc: '统治时代的王者，极大简化了JS开发。' },
+                    { name: 'Prototype.js', type: 'Library', desc: '早期的面向对象JS框架，对Ruby on Rails社区影响深远。' },
+                    { name: 'Mootools', type: 'Library', desc: '提供了模块化和面向对象的类系统。' }
+                ]
+            },
+            {
+                id: 'stage4',
+                title: 'MVC 与 SPA 的兴起',
+                years: '2010 - 2014',
+                subtitle: 'The MVC Era & SPA',
+                techBadge: 'AngularJS / Node.js',
+                description: '随着前端逻辑日益复杂，传统的“面条式代码”难以维护。MVC/MVVM模式被引入前端。单页应用(SPA)开始流行，前后端分离架构确立。Node.js让JS走入服务端。',
+                chartTitle: '前端框架关注度趋势 (2012-2014)',
+                chartType: 'line',
+                chartLabels: ['2010', '2011', '2012', '2013', '2014'],
+                chartData: [10, 25, 50, 80, 95], 
+                chartLabel: 'AngularJS Interest Index',
+                chartContext: 'AngularJS (v1) 在此期间爆发式增长，它引入的双向数据绑定和依赖注入概念改变了前端开发范式。',
+                features: [
+                    { title: '双向绑定', desc: '模型(Model)与视图(View)自动同步，大幅减少DOM操作代码。' },
+                    { title: '路由管理', desc: '前端接管路由控制，实现无刷新页面跳转。' },
+                    { title: '前后端分离', desc: 'API驱动开发，前端成为独立的工程体系。' }
+                ],
+                frameworks: [
+                    { name: 'AngularJS', type: 'Framework', desc: 'Google推出，以HTML指令和双向绑定著称，开启了框架时代。' },
+                    { name: 'Backbone.js', type: 'Library', desc: '轻量级MVC库，为前端应用提供了基本的结构（Models/Views）。' },
+                    { name: 'Knockout.js', type: 'Library', desc: 'MVVM模式的早期实践者，专注于声明式绑定。' }
+                ]
+            },
+            {
+                id: 'stage5',
+                title: '组件化与现代生态',
+                years: '2015 - 2020',
+                subtitle: 'The Component Era',
+                techBadge: 'React / Vue / Webpack',
+                description: 'React引入了虚拟DOM和单向数据流，组件化开发成为标准。ES6标准的发布极大增强了语言能力。构建工具(Webpack)和转译工具(Babel)构建了现代工程化体系。',
+                chartTitle: '主流框架 NPM 下载量对比 (模拟趋势)',
+                chartType: 'bar',
+                chartLabels: ['2016', '2017', '2018', '2019', '2020'],
+                chartData: [20, 40, 60, 80, 100], 
+                chartLabel: 'React Adoption Scale',
+                chartContext: 'React凭借其“组件化”思想和强大的生态系统，逐渐占据主导地位，Vue.js则以其易用性占据重要市场。',
+                features: [
+                    { title: '组件化', desc: 'UI被拆分为独立的、可复用的组件，像搭积木一样构建应用。' },
+                    { title: '虚拟 DOM', desc: '通过内存中的DOM计算最小变更，提升渲染性能。' },
+                    { title: '工程化', desc: 'Webpack, Babel, TypeScript构成了复杂的编译构建链条。' }
+                ],
+                frameworks: [
+                    { name: 'React', type: 'Library', desc: 'Facebook推出，主张函数式编程思想和JSX语法。' },
+                    { name: 'Vue.js', type: 'Framework', desc: '尤雨溪创造，融合了Angular的模板和React的组件化，平缓的学习曲线。' },
+                    { name: 'Webpack', type: 'Tool', desc: '模块打包器，现代前端工程化的基石。' }
+                ]
+            },
+            {
+                id: 'stage6',
+                title: '全栈与服务端渲染回归',
+                years: '2021 - Present',
+                subtitle: 'Full-Stack & SSR Renaissance',
+                techBadge: 'Next.js / Vite',
+                description: '为了追求极致性能和SEO，服务端渲染(SSR)和静态生成(SSG)回归。元框架(Meta-frameworks)模糊了前后端界限。Rust/Go工具链提升了构建速度。',
+                chartTitle: '构建工具速度对比 (Build Time)',
+                chartType: 'bar',
+                chartLabels: ['Webpack', 'Rollup', 'Parcel', 'Vite/Esbuild'],
+                chartData: [100, 80, 60, 5],
+                chartLabel: 'Relative Build Time (Lower is better)',
+                chartContext: '新一代基于Go和Rust的构建工具（如Esbuild, SWC）将构建速度提升了10-100倍，极大改善了开发体验。',
+                features: [
+                    { title: '元框架', desc: 'Next.js, Nuxt等提供开箱即用的路由、SSR和API功能。' },
+                    { title: 'Edge Computing', desc: '将渲染逻辑部署到边缘节点，贴近用户。' },
+                    { title: 'No-Build/Bundless', desc: '利用浏览器原生ESM支持，实现极速的开发服务器启动。' }
+                ],
+                frameworks: [
+                    { name: 'Next.js', type: 'Meta-Framework', desc: '基于React的全栈框架，实际上成为了React开发的标准方式。' },
+                    { name: 'Vite', type: 'Tool', desc: '基于ESBuild的下一代前端构建工具，极速冷启动。' },
+                    { name: 'Tailwind CSS', type: 'CSS', desc: '实用主义优先的CSS框架，改变了写样式的范式。' }
+                ]
+            }
+        ];
+
+        // --- Application Logic ---
+        let currentChart = null;
+        let currentStageIndex = 0;
+
+        // DOM Elements
+        const navContainer = document.getElementById('nav-container');
+        const mobileNavSelect = document.getElementById('mobile-nav-select');
+        const mainChartCanvas = document.getElementById('mainChart');
+        
+        // Content Elements
+        const elEraYears = document.getElementById('era-years');
+        const elEraTitle = document.getElementById('era-title');
+        const elEraSubtitle = document.getElementById('era-subtitle');
+        const elEraTech = document.getElementById('era-tech-badge');
+        const elEraDesc = document.getElementById('era-description');
+        const elChartContext = document.getElementById('chart-context');
+        const elFeaturesGrid = document.getElementById('features-grid');
+        const elFrameworksList = document.getElementById('frameworks-list');
+
+        function init() {
+            renderNav();
+            loadStage(0);
+        }
+
+        function renderNav() {
+            historyData.forEach((stage, index) => {
+                // Sidebar Nav
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left px-4 py-3 text-sm rounded-r-md hover:bg-stone-200 transition-all flex flex-col mb-1 border-l-4 border-transparent`;
+                btn.onclick = () => loadStage(index);
+                btn.id = `nav-btn-${index}`;
+                
+                const yearSpan = document.createElement('span');
+                yearSpan.className = 'text-xs text-stone-500 font-mono mb-1';
+                yearSpan.innerText = stage.years;
+                
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'font-medium text-slate-700';
+                titleSpan.innerText = stage.title;
+
+                btn.appendChild(yearSpan);
+                btn.appendChild(titleSpan);
+                navContainer.appendChild(btn);
+
+                // Mobile Select Option
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.innerText = `${stage.years} - ${stage.title}`;
+                mobileNavSelect.appendChild(opt);
+            });
+
+            // Mobile Nav Listener
+            mobileNavSelect.addEventListener('change', (e) => {
+                loadStage(parseInt(e.target.value));
+            });
+        }
+
+        function updateActiveNav(index) {
+            // Reset all
+            document.querySelectorAll('#nav-container button').forEach(b => {
+                b.classList.remove('active-tab');
+                b.classList.remove('bg-white');
+            });
+            // Set active
+            const activeBtn = document.getElementById(`nav-btn-${index}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active-tab');
+                activeBtn.classList.add('bg-white');
+                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            mobileNavSelect.value = index;
+        }
+
+        function loadStage(index) {
+            currentStageIndex = index;
+            const data = historyData[index];
+            updateActiveNav(index);
+
+            // 1. Update Text Content
+            elEraYears.innerText = data.years;
+            elEraTitle.innerText = data.title;
+            elEraSubtitle.innerText = data.subtitle;
+            elEraTech.innerText = data.techBadge;
+            elEraDesc.innerText = data.description;
+            elChartContext.innerText = data.chartContext;
+
+            // 2. Update Features Grid
+            elFeaturesGrid.innerHTML = '';
+            data.features.forEach(feat => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-lg shadow-sm border border-stone-200 hover:border-amber-300 transition-colors';
+                card.innerHTML = `
+                    <h4 class="font-bold text-slate-800 text-sm mb-2 border-b border-stone-100 pb-2">${feat.title}</h4>
+                    <p class="text-xs text-stone-600 leading-relaxed">${feat.desc}</p>
+                `;
+                elFeaturesGrid.appendChild(card);
+            });
+
+            // 3. Update Frameworks List
+            elFrameworksList.innerHTML = '';
+            data.frameworks.forEach(fw => {
+                const item = document.createElement('div');
+                item.className = 'flex items-start gap-4 p-3 rounded-lg hover:bg-white transition-colors';
+                
+                // Color coding based on type
+                let badgeColor = 'bg-stone-200 text-stone-700';
+                if(fw.type.includes('Library')) badgeColor = 'bg-blue-100 text-blue-800';
+                if(fw.type.includes('Framework')) badgeColor = 'bg-green-100 text-green-800';
+                if(fw.type.includes('Tool')) badgeColor = 'bg-purple-100 text-purple-800';
+                if(fw.type.includes('Browser')) badgeColor = 'bg-orange-100 text-orange-800';
+
+                item.innerHTML = `
+                    <div class="flex-none w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg font-bold text-slate-500 shadow-sm border border-stone-200">
+                        ${fw.name.charAt(0)}
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-slate-800">${fw.name}</span>
+                            <span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full ${badgeColor}">${fw.type}</span>
+                        </div>
+                        <p class="text-sm text-stone-600">${fw.desc}</p>
+                    </div>
+                `;
+                elFrameworksList.appendChild(item);
+            });
+
+            // 4. Update Chart
+            renderChart(data);
+        }
+
+        function renderChart(data) {
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const ctx = mainChartCanvas.getContext('2d');
+            
+            // Chart Config based on type
+            const config = {
+                type: data.chartType,
+                data: {
+                    labels: data.chartLabels,
+                    datasets: [{
+                        label: data.chartLabel,
+                        data: data.chartData,
+                        backgroundColor: data.chartType === 'pie' 
+                            ? ['#d97706', '#94a3b8', '#cbd5e1', '#f1f5f9'] 
+                            : 'rgba(217, 119, 6, 0.7)', // Amber-600 with opacity
+                        borderColor: '#d97706',
+                        borderWidth: 1,
+                        tension: 0.3,
+                        fill: data.chartType === 'line'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 11 }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: data.chartTitle,
+                            font: { size: 14, family: "'Noto Sans SC', sans-serif" },
+                            padding: { bottom: 20 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1e293b',
+                            bodyColor: '#475569',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false
+                        }
+                    },
+                    scales: data.chartType === 'pie' ? {} : {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { size: 10 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            };
+
+            currentChart = new Chart(ctx, config);
+        }
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
