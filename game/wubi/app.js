@@ -38,6 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const wubiChars = Object.keys(wubiDict);
 
+    const radicalDict = {
+        'q': '金勺缺', 'w': '人八', 'e': '月彡乃', 'r': '白手看', 't': '禾竹撇',
+        'y': '言文方', 'u': '立辛六', 'i': '水旁小', 'o': '火业米', 'p': '之宝盖',
+        'a': '工戈草', 's': '木丁西', 'd': '大犬羊', 'f': '土士二', 'g': '王青戋',
+        'h': '目上卜', 'j': '日早虫', 'k': '口川', 'l': '田甲框', ';': '',
+        'z': '', 'x': '慈母弓', 'c': '又巴马', 'v': '女刀九', 'b': '子耳了',
+        'n': '已半己', 'm': '山由贝', ',': '', '.': '', '/': ''
+    };
+
     const keyboardLayout = [
         ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
         ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';'],
@@ -58,7 +67,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const keyButton = document.createElement('button');
                 keyButton.className = 'key';
                 keyButton.id = `key-${key}`;
-                keyButton.textContent = key.toUpperCase();
+
+                const keyLabel = document.createElement('div');
+                keyLabel.textContent = key.toUpperCase();
+                keyButton.appendChild(keyLabel);
+
+                const radicalLabel = document.createElement('div');
+                radicalLabel.className = 'key-radical';
+                radicalLabel.textContent = radicalDict[key] || '';
+                keyButton.appendChild(radicalLabel);
+
                 rowDiv.appendChild(keyButton);
             });
             keyboardContainer.appendChild(rowDiv);
@@ -124,6 +142,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputBox.classList.remove('error');
                 inputBox.value = '';
             }, 500);
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.code === 'Space') {
+            event.preventDefault();
+            clearInterval(timer);
+            newChallenge();
         }
     });
 

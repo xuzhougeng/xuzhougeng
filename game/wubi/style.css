@@ -86,6 +86,7 @@ header h1 {
     cursor: default;
     transition: background-color 0.2s, transform 0.1s;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -97,19 +98,14 @@ header h1 {
     transform: scale(1.1);
 }
 
-.wubi-legend {
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid #dfe1e5;
-}
-
-.wubi-legend h2 {
+.key-radical {
+    font-size: 0.7rem;
     color: #5f6368;
-    margin-bottom: 15px;
+    margin-top: 4px;
+    display: none;
 }
 
-.wubi-legend img {
-    max-width: 100%;
-    border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+.key.highlight .key-radical {
+    display: block;
+    color: #e8f0fe;
 }
