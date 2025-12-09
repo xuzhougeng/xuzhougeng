@@ -89,13 +89,51 @@
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
         }
 
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
         pre {
             background: #0d0d0d;
             border: 1px solid #00ff00;
             border-radius: 4px;
             padding: 15px;
+            padding-top: 35px;
             overflow-x: auto;
-            margin: 20px 0;
+            margin: 0;
             box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
         }
 
@@ -166,32 +204,36 @@
 
             <p>准备好基础配置信息</p>
 
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
 <pre><code>mkdir -p ~/.config/mihomo
 # 复制上面截图的配置文件的地址
 curl 'https://getconf.oss-accelerate.aliyuncs.com/clash/你的/配置文件' -o ~/.config/mihomo/config.yaml
 # 下载geoip
-curl https://r2.dlbun.com/panda/dl/mmdb/geoip-jan-8.metadb -o ~/.config/mihomo/geoip.metadb</code></pre>
+curl https://r2.dlbun.com/panda/dl/mmdb/geoip-jan-8.metadb -o ~/.config/mihomo/geoip.metadb</code></pre></div>
 
             <p>从<a href="https://github.com/MetaCubeX/mihomo/releases">https://github.com/MetaCubeX/mihomo/releases</a>获取clash的下载地址。</p>
 
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
 <pre><code># 如果下载不成功，可以本地上传
 wget https://github.com/MetaCubeX/mihomo/releases/download/v1.19.17/mihomo-linux-amd64-v1-go123-v1.19.17.gz
 # 解压缩
 gunzip  mihomo-linux-amd64-v1-go123-v1.19.17.gz
 mv mihomo-linux-amd64-* mihomo
 chmod +x mihomo
-./mihomo</code></pre>
+./mihomo</code></pre></div>
 
             <p>运行的时候如果出现如下错误，说明服务器上的7890和7891端口被占用了，需要用vim或者nano编辑配置文件，也就是 ~/.config/mihomo/config.yaml，将最开头的7890和7891改成其他的，例如7892,7893</p>
 
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
 <pre><code>ERRO[2025-12-09T10:04:15.982104810+08:00] Start HTTP server error: listen tcp :7890: bind: address already in use
 ERRO[2025-12-09T10:04:15.982138157+08:00] Start HTTP server error: listen tcp :7890: bind: address already in use
-INFO[2025-12-09T10:04:15.982390708+08:00] SOCKS proxy listening at: [::]:7891</code></pre>
+INFO[2025-12-09T10:04:15.982390708+08:00] SOCKS proxy listening at: [::]:7891</code></pre></div>
 
             <p>后续就可以通过如下代码，设置http_proxy/https_proxy，来进行流量转发。注意，我用的是7892，这是因为我的7890被用了</p>
 
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
 <pre><code>export http_proxy=http://127.0.0.1:7892
-export https_proxy=http://127.0.0.1:7892</code></pre>
+export https_proxy=http://127.0.0.1:7892</code></pre></div>
 
             <p>下载示意图</p>
 
@@ -204,6 +246,19 @@ export https_proxy=http://127.0.0.1:7892</code></pre>
             <p>// END_OF_TRANSMISSION // &copy; 2025 XZG. All rights reserved.</p>
         </footer>
     </div>
+    <script>
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'COPIED!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'COPY';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 </html>
 

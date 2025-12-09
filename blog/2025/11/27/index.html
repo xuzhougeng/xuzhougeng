@@ -107,13 +107,52 @@
             text-decoration: underline;
         }
 
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
         pre {
             background: #0d0d0d;
             border: 1px solid #00ff00;
             border-radius: 4px;
             padding: 15px;
+            padding-top: 35px;
             overflow-x: auto;
-            margin: 20px 0;
+            margin: 0;
             box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
         }
 
@@ -192,10 +231,12 @@
 
             <p>首先，我们需要把核心的Python脚本文件放到服务器上。我习惯放在 <code>/usr/local/bin</code> 目录下，方便管理。你可以用 <code>nano</code> 或者你更顺手的 <code>vim</code> 来创建它：</p>
 
-<pre><code>sudo nano /usr/local/bin/mem_watch_bark.py</code></pre>
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>sudo nano /usr/local/bin/mem_watch_bark.py</code></pre></div>
 
             <p>然后，把下面这段代码完整地粘贴进去。<strong>唯一需要你动手改的</strong>，就是把 <code>BARK_KEY</code> 换成你自己的 Bark 设备 Key，不然脚本喊破喉咙你也收不到通知。</p>
 
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
 <pre><code>#!/usr/bin/env python3
 import os
 import pwd
@@ -410,17 +451,19 @@ def main():
     send_bark(title, body)
 
 if __name__ == "__main__":
-    main()</code></pre>
+    main()</code></pre></div>
 
             <p>你也可以通过 <code>wget</code> 或 <code>curl</code> 直接下载到这个脚本：</p>
 
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
 <pre><code>wget https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2025/11/27/mem_watch_bark.py
 # 或者
-curl -o /usr/local/bin/mem_watch_bark.py https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2025/11/27/mem_watch_bark.py</code></pre>
+curl -o /usr/local/bin/mem_watch_bark.py https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2025/11/27/mem_watch_bark.py</code></pre></div>
 
             <p>保存退出后，别忘了给它加上执行权限，不然它跑不起来：</p>
 
-<pre><code>sudo chmod +x /usr/local/bin/mem_watch_bark.py</code></pre>
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>sudo chmod +x /usr/local/bin/mem_watch_bark.py</code></pre></div>
 
             <h2>第二步：让脚本"活"起来</h2>
 
@@ -428,11 +471,13 @@ curl -o /usr/local/bin/mem_watch_bark.py https://raw.githubusercontent.com/xuzho
 
             <p>编辑 root 用户的 crontab：</p>
 
-<pre><code>sudo crontab -e</code></pre>
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>sudo crontab -e</code></pre></div>
 
             <p>然后在文件的最后加上这一行，告诉 <code>cron</code> 每分钟都去运行一次我们的脚本：</p>
 
-<pre><code>* * * * * /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre>
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>* * * * * /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre></div>
 
             <blockquote>
                 <p>一个小提示：如果你的 <code>python3</code> 不在 <code>/usr/bin/python3</code>，可以先用 <code>which python3</code> 命令找到它的藏身之处，然后换成正确的路径。</p>
@@ -446,8 +491,9 @@ curl -o /usr/local/bin/mem_watch_bark.py https://raw.githubusercontent.com/xuzho
                 <li>先把脚本里的告警阈值调得特别低，比如 <code>THRESHOLD = 1</code>，这样随便一跑就会超标。</li>
                 <li>然后，在命令行手动把它运行两次：
 
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
 <pre><code>sudo /usr/bin/python3 /usr/local/bin/mem_watch_bark.py
-sudo /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre>
+sudo /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre></div>
 
                     <p>因为我们的逻辑是"连续2次"超标才告警，所以当你运行第二次后，你的手机就应该会"叮"一下收到 Bark 的推送了。</p>
                 </li>
@@ -474,5 +520,18 @@ sudo /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre>
             <p>// END_OF_TRANSMISSION // &copy; 2025 XZG. All rights reserved.</p>
         </footer>
     </div>
+    <script>
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'COPIED!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'COPY';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 </html>

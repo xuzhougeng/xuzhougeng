@@ -36,6 +36,65 @@
 - hover时增强发光效果
 - 按钮hover反转配色
 
+### 代码块复制按钮
+
+代码块需包裹在 `.code-block` 容器中，并添加复制按钮：
+
+```html
+<div class="code-block">
+    <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+    <pre><code>代码内容</code></pre>
+</div>
+```
+
+CSS 样式：
+```css
+.code-block {
+    position: relative;
+    margin: 20px 0;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #00ff00;
+    color: #1a1a1a;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75em;
+    font-weight: 700;
+    transition: all 0.3s;
+    opacity: 0;
+}
+
+.code-block:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { background: #1a1a1a; color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.8); }
+.copy-btn.copied { background: #00ffff; color: #1a1a1a; }
+
+pre { padding-top: 35px; margin: 0; }  /* 为按钮留空间 */
+```
+
+JavaScript（放在 `</body>` 前）：
+```javascript
+<script>
+function copyCode(btn) {
+    const code = btn.nextElementSibling.querySelector('code').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'COPIED!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = 'COPY';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+</script>
+```
+
 ### 文件结构
 ```
 blog/
