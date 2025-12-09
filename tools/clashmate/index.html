@@ -1,144 +1,153 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clash 配置助手</title>
+  <title>ClashMate - 配置增强工具</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 </head>
 <body>
-  <div class="page">
-    <header class="hero">
-      <div class="hero__intro">
-        <p class="eyebrow">Clash Config Helper</p>
-        <h1>把杂乱的节点粘贴，变成可用的 config.yaml</h1>
-        <p class="lede">
-          粘贴服务商提供的明文节点信息（地址、端口、密码、加密等），快速解析到列表里，在线生成可下载的 Clash 配置。
-        </p>
-        <div class="hero__actions">
-          <button id="generateYamlBtn" class="btn btn-primary">生成 config.yaml</button>
-          <button id="downloadYamlBtn" class="btn btn-ghost">下载文件</button>
-          <button id="themeToggle" class="btn btn-ghost">切换明/暗</button>
-        </div>
-        <p class="tiny">只在浏览器本地处理，不会上传到服务器。</p>
-      </div>
-      <div class="hero__panel">
-        <div class="hero__panel__inner">
-          <p class="panel-label">快捷提示</p>
-          <ul>
-            <li>支持中文字段：服务器地址、端口、用户名、密码、加密。</li>
-            <li>自动识别 Trojan、Shadowsocks/2022、Socks5、HTTP、Hysteria2。</li>
-            <li>解析后可手动补全 SNI、加密算法等缺失信息。</li>
-          </ul>
-        </div>
-      </div>
+  <div class="container">
+    <header>
+      <h1>ClashMate</h1>
+      <p class="tagline">获取节点 → 自定义分组 → 配置规则</p>
     </header>
 
-    <main class="grid">
-      <section class="card span-2">
-        <div class="card__header">
-          <div>
-            <p class="eyebrow">节点文本解析</p>
-            <h2>粘贴原始节点信息</h2>
-            <p class="subtle">例如常见的分享格式，或一次粘贴多个 Trojan/Shadowsocks/Hysteria2 节点。</p>
-          </div>
-          <div class="chip" id="parseSummary">等待解析</div>
-        </div>
-        <textarea id="rawInput" class="raw-input" rows="10" placeholder="粘贴原始信息，例如：&#10;Shadowsocks&#10;服务器地址 example.com&#10;服务器端口 8443&#10;加密 aes-256-gcm&#10;密码 your_ss_password&#10;Trojan&#10;服务器地址 example.org&#10;服务器端口 443&#10;密码 your_trojan_password"></textarea>
-        <div class="card__footer">
-          <div class="hint">支持中文分行、冒号分隔、空格分隔，自动按行扫描。</div>
-          <div class="actions">
-            <label class="btn btn-ghost file-btn">
-              读取文本文件
-              <input id="fileInput" type="file" accept=".txt,.log,.conf,.yaml">
-            </label>
-            <button id="parseBtn" class="btn btn-primary">解析到节点列表</button>
-          </div>
-        </div>
-      </section>
-
+    <main>
+      <!-- Step 1: 获取节点 -->
       <section class="card">
-        <div class="card__header">
-          <div>
-            <p class="eyebrow">基础配置</p>
-            <h2>Clash 运行参数</h2>
+        <div class="card-header">
+          <span class="step">1</span>
+          <h2>获取节点</h2>
+        </div>
+        <div class="input-methods">
+          <div class="url-input-group">
+            <input type="url" id="configUrl" placeholder="输入订阅 URL">
+            <button id="fetchBtn" class="btn-primary">获取</button>
           </div>
-          <button id="resetBaseBtn" class="btn btn-ghost tiny-btn">重置默认</button>
-        </div>
-        <div class="form-grid">
-          <label>mixed-port
-            <input id="mixedPort" type="number" min="1" max="65535" value="7890">
-          </label>
-          <label>socks-port
-            <input id="socksPort" type="number" min="1" max="65535" value="7891">
-          </label>
-          <label>mode
-            <select id="mode">
-              <option value="Rule">Rule</option>
-              <option value="Global">Global</option>
-              <option value="Direct">Direct</option>
-            </select>
-          </label>
-          <label>log-level
-            <select id="logLevel">
-              <option value="info">info</option>
-              <option value="warning">warning</option>
-              <option value="error">error</option>
-              <option value="debug">debug</option>
-            </select>
-          </label>
-          <label>allow-lan
-            <select id="allowLan">
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
-          </label>
-          <label>udp
-            <select id="udp">
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
+          <div class="divider">或</div>
+          <label class="file-upload">
+            <input type="file" id="fileInput" accept=".yaml,.yml,.txt">
+            <span class="btn-sm">上传 YAML 文件</span>
           </label>
         </div>
+        <div id="proxyStatus" class="status" hidden></div>
+        <div id="proxyList" class="proxy-list" hidden></div>
       </section>
 
-      <section class="card span-2">
-        <div class="card__header">
-          <div>
-            <p class="eyebrow">节点列表</p>
-            <h2>解析结果与手工编辑</h2>
-          </div>
-          <div class="actions">
-            <button id="addNodeBtn" class="btn btn-ghost">新增空节点</button>
-            <button id="clearNodesBtn" class="btn btn-ghost">清空列表</button>
-          </div>
+      <!-- Step 1.5: 手动添加节点 -->
+      <section class="card" id="manualProxySection" hidden>
+        <div class="card-header">
+          <span class="step">+</span>
+          <h2>手动添加节点</h2>
+          <button id="addManualProxyBtn" class="btn-sm">+ 新建节点</button>
         </div>
-        <div id="nodesContainer" class="nodes"></div>
+        <p class="hint">可手动添加节点（支持 dialer-proxy 配置代理链）。添加后会出现在节点列表中。</p>
+        <div id="manualProxiesContainer"></div>
       </section>
 
-      <section class="card span-2">
-        <div class="card__header">
-          <div>
-            <p class="eyebrow">连通性测试</p>
-            <h2>如何测试服务器连通性</h2>
+      <!-- Step 2: 自定义 proxy-groups -->
+      <section class="card" id="groupsSection" hidden>
+        <div class="card-header">
+          <span class="step">2</span>
+          <h2>自定义代理组</h2>
+          <button id="addGroupBtn" class="btn-sm">+ 新建分组</button>
+        </div>
+        <p class="hint">默认已创建 Auto 组（包含所有节点）。可添加自定义分组。</p>
+        
+        <details class="help-box">
+          <summary>📖 代理组类型说明</summary>
+          <div class="help-content">
+            <dl>
+              <dt><strong>url-test</strong></dt>
+              <dd>自动测速选择延迟最低的节点。定期向指定 URL 发请求，自动切换到最快的可用节点。</dd>
+              
+              <dt><strong>select</strong></dt>
+              <dd>手动选择。用户在客户端手动选择使用哪个节点，不会自动切换。</dd>
+              
+              <dt><strong>fallback</strong></dt>
+              <dd>故障转移。按列表顺序使用第一个可用节点，当前节点不可用时自动切换到下一个。</dd>
+              
+              <dt><strong>load-balance</strong></dt>
+              <dd>负载均衡。将请求分散到多个节点，可以选择轮询或一致性哈希策略。</dd>
+            </dl>
           </div>
-        </div>
-        <div id="connectivityTestContainer">
-          <p class="subtle">请解析或添加节点以生成测试命令。</p>
-        </div>
+        </details>
+        
+        <div id="groupsContainer"></div>
       </section>
 
-      <section class="card span-2">
-        <div class="card__header">
-          <div>
-            <p class="eyebrow">输出</p>
-            <h2>生成的 config.yaml</h2>
-          </div>
-          <div class="actions">
-            <button id="copyYamlBtn" class="btn btn-primary">复制文本</button>
+      <!-- Step 3: 为规则分配 proxy-group -->
+      <section class="card" id="rulesSection" hidden>
+        <div class="card-header">
+          <span class="step">3</span>
+          <h2>规则分配</h2>
+          <div class="header-actions">
+            <button class="btn-sm" id="selectAll">全选规则</button>
+            <button class="btn-sm" id="selectNone">清空</button>
           </div>
         </div>
-        <textarea id="yamlOutput" class="yaml-output" rows="14" readonly placeholder="点击上方“生成 config.yaml”后出现结果"></textarea>
+        <p class="hint">勾选要使用的规则，并为每条规则选择代理组</p>
+        <div id="rulesContainer"></div>
+      </section>
+
+      <!-- Step 4: 生成 -->
+      <section class="card" id="outputSection" hidden>
+        <div class="card-header">
+          <span class="step">4</span>
+          <h2>生成配置</h2>
+          <div class="header-actions">
+            <button id="generateBtn" class="btn-primary">生成</button>
+            <button id="copyBtn" class="btn-sm" hidden>复制</button>
+            <button id="downloadBtn" class="btn-sm" hidden>下载</button>
+          </div>
+        </div>
+        
+        <details class="help-box" open>
+          <summary>⚙️ 基础配置</summary>
+          <div class="base-config-grid">
+            <label>
+              <span>HTTP 端口</span>
+              <input type="number" id="cfgPort" value="7893" min="1" max="65535">
+            </label>
+            <label>
+              <span>SOCKS5 端口</span>
+              <input type="number" id="cfgSocksPort" value="7894" min="1" max="65535">
+            </label>
+            <label>
+              <span>允许局域网</span>
+              <select id="cfgAllowLan">
+                <option value="true">true</option>
+                <option value="false">false</option>
+              </select>
+            </label>
+            <label>
+              <span>模式</span>
+              <select id="cfgMode">
+                <option value="rule">rule</option>
+                <option value="global">global</option>
+                <option value="direct">direct</option>
+              </select>
+            </label>
+            <label>
+              <span>日志级别</span>
+              <select id="cfgLogLevel">
+                <option value="info">info</option>
+                <option value="warning">warning</option>
+                <option value="error">error</option>
+                <option value="debug">debug</option>
+              </select>
+            </label>
+            <label>
+              <span>控制接口</span>
+              <input type="text" id="cfgController" value="0.0.0.0:9090" placeholder="0.0.0.0:9090">
+            </label>
+          </div>
+        </details>
+        
+        <pre id="yamlOutput" class="code-block" hidden></pre>
       </section>
     </main>
   </div>
@@ -146,3 +155,4 @@
   <script src="app.js"></script>
 </body>
 </html>
+
