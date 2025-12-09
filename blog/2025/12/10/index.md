@@ -21,3 +21,27 @@ clash的本质是分析URL，根据规则，判断是否需要转发，以及如
 例如，[https://www.clashverge.dev/](https://www.clashverge.dev/ "https://www.clashverge.dev/")，配置完之后，就可以发现cursor相关的流量，因为匹配到AI Suite的规则，所以走的是AI的代理组。
 
 ![](image/image_5khghVNgE2.png)
+
+
+需要注意的是，如果用的是Linux命令行的方式使用clash，那么对于设置了select的代理组，在Linux中默认是使用第一个节点，需要通过RESTful API（默认端口 9090），进行 API 来查看和切换代理节点。
+
+```bash
+# 获取代理组
+curl -s http://127.0.0.1:9090/proxies | \
+  jq -r '.proxies | to_entries[] | select(.value.type=="Selector") | .key'
+# 输出可能是GLOBAL, Proxy
+
+# 以Proxy为例
+# 查看指定代理组的所有可用节点
+curl -s http://127.0.0.1:9090/proxies | jq -r '.proxies.Proxy.all[]'
+
+# 查看Proxy目前用的节点
+curl -s http://127.0.0.1:9090/proxies | jq -r '.proxies.Proxy.now'
+
+# 设置Proxy的节点
+curl -X PUT http://127.0.0.1:9090/proxies/Proxy \
+  -H "Content-Type: application/json" \
+  -d '{"name":"🇺🇸 CN1 美国高级线路 ⚡"}'
+```
+
+通过这些命令，你可以查看可用的节点列表，并根据需要手动切换到特定的节点。

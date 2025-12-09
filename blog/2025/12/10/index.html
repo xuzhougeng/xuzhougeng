@@ -140,6 +140,59 @@
             color: #666;
             font-size: 0.85em;
         }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
+        pre {
+            padding-top: 35px;
+            margin: 0;
+            background: #000;
+            padding: 35px 20px 20px 20px;
+            border-radius: 4px;
+            border: 1px solid #00ff00;
+            overflow-x: auto;
+        }
+
+        code {
+            color: #00ff00;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -171,12 +224,49 @@
 
             <img src="images/image_5khghVNgE2.png" alt="Clash客户端使用">
 
+            <p>需要注意的是，如果用的是Linux命令行的方式使用clash，那么对于设置了select的代理组，在Linux中默认是使用第一个节点，需要通过RESTful API（默认端口 9090），进行 API 来查看和切换代理节点。</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 获取代理组
+curl -s http://127.0.0.1:9090/proxies | \
+  jq -r '.proxies | to_entries[] | select(.value.type=="Selector") | .key'
+# 输出可能是GLOBAL, Proxy
+
+# 以Proxy为例
+# 查看指定代理组的所有可用节点
+curl -s http://127.0.0.1:9090/proxies | jq -r '.proxies.Proxy.all[]'
+
+# 查看Proxy目前用的节点
+curl -s http://127.0.0.1:9090/proxies | jq -r '.proxies.Proxy.now'
+
+# 设置Proxy的节点
+curl -X PUT http://127.0.0.1:9090/proxies/Proxy \
+  -H "Content-Type: application/json" \
+  -d '{"name":"🇺🇸 CN1 美国高级线路 ⚡"}'</code></pre>
+            </div>
+
+            <p>通过这些命令，你可以查看可用的节点列表，并根据需要手动切换到特定的节点。</p>
+
             <a href="../../../index.html" class="back-link">Return_To_Blog_Index</a>
         </main>
         <footer>
             <p>© 2025 Geektastic! Terminal Blog | Powered by Pure HTML</p>
         </footer>
     </div>
+    <script>
+    function copyCode(btn) {
+        const code = btn.nextElementSibling.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'COPIED!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = 'COPY';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+    </script>
 </body>
 </html>
 
