@@ -1,155 +1,160 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>不写一行代码，通过Claude Code web搭建自己个人网站 - 徐洲更</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-      color: #222;
-      line-height: 1.6;
-    }
-    .page-wrapper {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px 60px;
-      display: flex;
-      gap: 24px;
-      align-items: flex-start;
-    }
-    .sidebar {
-      width: 200px;
-      background-color: #fff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-      border-radius: 12px;
-      padding: 24px 16px;
-      position: sticky;
-      top: 40px;
-    }
-    .sidebar ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    .sidebar li {
-      margin-bottom: 16px;
-    }
-    .sidebar a {
-      display: block;
-      font-weight: 600;
-      color: #1f4fbf;
-      padding: 10px 12px;
-      border-radius: 8px;
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-    .sidebar a:hover {
-      background-color: rgba(42, 122, 226, 0.1);
-      color: #17408f;
-    }
-    .container {
-      flex: 1;
-      max-width: 960px;
-      margin: 0;
-      padding: 40px 20px 60px;
-      background-color: #fff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-      border-radius: 12px;
-    }
-    @media (max-width: 768px) {
-      .page-wrapper {
-        flex-direction: column;
-        padding: 24px 16px 40px;
-      }
-      .sidebar {
-        width: 100%;
-        position: static;
-        padding: 16px;
-      }
-      .sidebar ul {
-        display: flex;
-        gap: 12px;
-        justify-content: space-between;
-      }
-      .sidebar li {
-        margin-bottom: 0;
-      }
-      .sidebar a {
-        text-align: center;
-      }
-    }
-    header {
-      border-bottom: 3px solid #2a7ae2;
-      margin-bottom: 32px;
-      padding-bottom: 16px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 2.4rem;
-    }
-    h2 {
-      margin-top: 32px;
-      font-size: 1.6rem;
-      color: #2a7ae2;
-      border-left: 6px solid #2a7ae2;
-      padding-left: 12px;
-    }
-    ul {
-      padding-left: 22px;
-    }
-    li {
-      margin-bottom: 8px;
-    }
-    a {
-      color: #2a7ae2;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .article-content p {
-        margin-bottom: 1.5em;
-    }
-    .article-content img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 30px auto;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    .meta {
-        font-size: 0.95em;
-        color: #666;
-    }
-    footer {
-      margin-top: 48px;
-      font-size: 0.9rem;
-      color: #666;
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>不写一行代码，通过Claude Code web搭建自己个人网站 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+        }
+
+        header h1 {
+            font-size: 1.6em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 5px #00ff00;
+            letter-spacing: 2px;
+        }
+
+        .date {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            color: #eee;
+        }
+
+        a {
+            color: #00ffff;
+            text-decoration: none;
+            text-shadow: 0 0 3px #00ffff;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        img {
+            max-width: 100%;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            margin: 15px 0;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        pre {
+            background: #0d0d0d;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            margin: 20px 0;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        code {
+            font-family: 'Roboto Mono', monospace;
+            color: #00ff00;
+            font-size: 0.9em;
+        }
+
+        .home-link {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 25px;
+            background: #00ff00;
+            color: #1a1a1a;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid #00ff00;
+        }
+
+        .home-link:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+            text-decoration: none;
+        }
+
+        .reference {
+            margin-top: 30px;
+            padding: 15px;
+            border-left: 3px solid #00ff00;
+            background: #2a2a2a;
+        }
+
+        .reference strong {
+            color: #00ffff;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            border-top: 1px dashed #00ff00;
+            font-size: 0.8em;
+        }
+    </style>
 </head>
 <body>
-  <div class="page-wrapper">
-    <nav class="sidebar">
-      <ul>
-        <li><a href="/index.html">主页</a></li>
-        <li><a href="/blog/">Blog</a></li>
-        <li><a href="/tools/">Tools</a></li>
-        <li><a href="/game/">Game</a></li>
-      </ul>
-    </nav>
-    <main class="container">
+    <div class="container">
         <header>
-            <h1>不写一行代码，通过Claude Code web搭建自己个人网站</h1>
-            <div class="meta">发布时间：2025年11月7日</div>
+            <h1>[ARTICLE] 不写一行代码，通过Claude Code web搭建自己个人网站</h1>
+            <div class="date">// 2025-11-07</div>
         </header>
 
-        <article class="article-content">
+        <div class="content">
             <p>最近anthropic搞活动，claude pro用户送250刀的<a href="https://claude.ai/code" target="_blank">https://claude.ai/code</a>额度，然后这个工具会跟你的github连接，这意味着你就可以直接在网页上进行项目开发了。</p>
 
             <p>我想起了很久前，我利用github page搞个人博客，但是每次都是不了了之，不再更新，因为需要在本地编辑页面，然后推送到github上，github利用action进行编译生成最后的静态文件，这实在是不如直接用Halo这类带后台的工具编辑方便。不过现在AI网站都在推网页项目开发，这个github page就又可以继续利用起来了。</p>
@@ -198,7 +203,7 @@
 
             <img src="images/11-merge-result.png" alt="合并结果">
 
-            <p>当然了， 我们还可以写一个经典的网页版贪吃蛇游戏。</p>
+            <p>当然了，我们还可以写一个经典的网页版贪吃蛇游戏。</p>
 
             <img src="images/12-snake-game.png" alt="贪吃蛇游戏">
 
@@ -219,14 +224,15 @@
             <img src="images/17-final-result.png" alt="最终效果">
 
             <div class="reference">
-                <p><strong>参考：</strong><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site" target="_blank">https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site</a></p>
+                <p><strong>参考：</strong><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site" target="_blank">GitHub Pages 官方文档</a></p>
             </div>
-        </article>
-      
-      <footer>
-        <p>&copy; 2025</p>
-      </footer>
-    </main>
-  </div>
+
+            <a href="../../../index.html" class="home-link">RETURN_TO_BLOG_INDEX</a>
+        </div>
+
+        <footer>
+            <p>// END_OF_TRANSMISSION // &copy; 2025 XZG. All rights reserved.</p>
+        </footer>
+    </div>
 </body>
 </html>
