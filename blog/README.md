@@ -25,10 +25,21 @@ blog/
 
 ### 发布新文章
 
-1. 创建目录 `blog/YYYY/MM/DD/`
+#### 方法1: 直接在项目中编辑
+
+1. 根据当前日期, 创建目录 `blog/YYYY/MM/DD/`, 如果已经存在, 则DD+1, 确保文件夹不重复
 2. 编写 `index.md` 文章内容
 3. 将 `index.md` 转换为 `index.html`（参考 style.md）
 4. 更新 `blog/index.html` 添加文章条目（最新文章在最上面）
+
+#### 方法2: 基于wolai导出的markdown
+
+1. 根据当前日期, 创建目录 `blog/YYYY/MM/DD/`, 如果已经存在, 则DD+1, 确保文件夹不重复
+2. 对zip文件进行解压缩, 输出的文件夹名字不固定
+3. 将解压缩文件中的md文件移动到 `blog/YYYY/MM/DD/index.md`
+4. 将解压缩文件中的image移动到 `blog/YYYY/MM/DD/images`
+5. 将 `index.md` 转换为 `index.html`（参考 style.md）
+6. 更新 `blog/index.html` 添加文章条目（最新文章在最上面）
 
 ### Markdown 转 HTML 要点
 
@@ -57,6 +68,7 @@ blog/
 
 | 日期 | 标题 |
 |------|------|
+| 2025-12-10 | Clash配置 |
 | 2025-12-09 | 科研人员科学上网指南 |
 | 2025-11-30 | 网站开发历史调研报告 |
 | 2025-11-29 | 2025年全球AI编程辅助工具全景研究报告 |
