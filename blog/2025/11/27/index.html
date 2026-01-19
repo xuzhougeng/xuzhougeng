@@ -1,196 +1,243 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>加强版Python监控脚本，聚合用户内存使用并支持Bark推送 - 徐洲更</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-      color: #222;
-      line-height: 1.6;
-    }
-    .page-wrapper {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 40px 20px 60px;
-      display: flex;
-      gap: 24px;
-      align-items: flex-start;
-    }
-    .sidebar {
-      width: 200px;
-      background-color: #fff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-      border-radius: 12px;
-      padding: 24px 16px;
-      position: sticky;
-      top: 40px;
-    }
-    .sidebar ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-    .sidebar li {
-      margin-bottom: 16px;
-    }
-    .sidebar a {
-      display: block;
-      font-weight: 600;
-      color: #1f4fbf;
-      padding: 10px 12px;
-      border-radius: 8px;
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-    .sidebar a:hover {
-      background-color: rgba(42, 122, 226, 0.1);
-      color: #17408f;
-    }
-    .container {
-      flex: 1;
-      max-width: 960px;
-      margin: 0;
-      padding: 40px 20px 60px;
-      background-color: #fff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-      border-radius: 12px;
-    }
-    @media (max-width: 768px) {
-      .page-wrapper {
-        flex-direction: column;
-        padding: 24px 16px 40px;
-      }
-      .sidebar {
-        width: 100%;
-        position: static;
-        padding: 16px;
-      }
-      .sidebar ul {
-        display: flex;
-        gap: 12px;
-        justify-content: space-between;
-      }
-      .sidebar li {
-        margin-bottom: 0;
-      }
-      .sidebar a {
-        text-align: center;
-      }
-    }
-    header {
-      border-bottom: 3px solid #2a7ae2;
-      margin-bottom: 32px;
-      padding-bottom: 16px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 2.4rem;
-    }
-    h2 {
-      margin-top: 32px;
-      font-size: 1.6rem;
-      color: #2a7ae2;
-      border-left: 6px solid #2a7ae2;
-      padding-left: 12px;
-    }
-    h3 {
-        margin-top: 28px;
-        font-size: 1.3rem;
-        color: #1f4fbf;
-    }
-    ul {
-      padding-left: 22px;
-    }
-    li {
-      margin-bottom: 8px;
-    }
-    a {
-      color: #2a7ae2;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .article-content p, .article-content ul, .article-content ol, .article-content blockquote {
-        margin-bottom: 1.5em;
-    }
-    .article-content img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 30px auto;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-    .article-content pre {
-        background-color: #2d2d2d;
-        color: #f8f8f2;
-        padding: 1.2em 1.4em;
-        border-radius: 8px;
-        overflow-x: auto;
-        font-family: "Fira Code", "Courier New", monospace;
-        font-size: 0.95em;
-    }
-    .article-content code {
-        font-family: "Fira Code", "Courier New", monospace;
-    }
-    .article-content pre code {
-        background: none;
-        padding: 0;
-    }
-    .article-content blockquote {
-        border-left: 4px solid #ccc;
-        padding-left: 1em;
-        margin-left: 0;
-        color: #666;
-    }
-    .meta {
-        font-size: 0.95em;
-        color: #666;
-    }
-    footer {
-      margin-top: 48px;
-      font-size: 0.9rem;
-      color: #666;
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>加强版Python监控脚本，聚合用户内存使用并支持Bark推送 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 5px #00ff00;
+            letter-spacing: 2px;
+        }
+
+        .date {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        h2 {
+            color: #00ffff;
+            font-size: 1.3em;
+            margin: 30px 0 15px;
+            padding-left: 15px;
+            border-left: 3px solid #00ff00;
+            text-shadow: 0 0 3px #00ffff;
+        }
+
+        h3 {
+            color: #00ffff;
+            font-size: 1.1em;
+            margin: 25px 0 12px;
+            opacity: 0.9;
+        }
+
+        p {
+            margin-bottom: 20px;
+            color: #eee;
+        }
+
+        ul, ol {
+            margin-bottom: 20px;
+            padding-left: 25px;
+            color: #eee;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: #00ffff;
+            text-decoration: none;
+            text-shadow: 0 0 3px #00ffff;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+            z-index: 10;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
+        pre {
+            background: #0d0d0d;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 15px;
+            padding-top: 35px;
+            overflow-x: auto;
+            margin: 0;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        code {
+            font-family: 'Roboto Mono', monospace;
+            color: #00ff00;
+            font-size: 0.85em;
+        }
+
+        blockquote {
+            border-left: 3px solid #00ff00;
+            padding-left: 15px;
+            margin: 20px 0;
+            color: #aaa;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        strong {
+            color: #00ffff;
+        }
+
+        .home-link {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 25px;
+            background: #00ff00;
+            color: #1a1a1a;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid #00ff00;
+        }
+
+        .home-link:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+            text-decoration: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            border-top: 1px dashed #00ff00;
+            font-size: 0.8em;
+        }
+    </style>
 </head>
 <body>
-  <div class="page-wrapper">
-    <nav class="sidebar">
-      <ul>
-        <li><a href="/index.html">主页</a></li>
-        <li><a href="/blog/">Blog</a></li>
-        <li><a href="/tools/">Tools</a></li>
-        <li><a href="/game/">Game</a></li>
-      </ul>
-    </nav>
-    <main class="container">
+    <div class="container">
         <header>
-            <h1>加强版Python监控脚本，聚合用户内存使用并支持Bark推送</h1>
-            <div class="meta">发布时间：2025年11月27日</div>
+            <h1>[ARTICLE] 加强版Python监控脚本，聚合用户内存使用并支持Bark推送</h1>
+            <div class="date">// 2025-11-27</div>
         </header>
 
-        <article class="article-content">
+        <div class="content">
             <p>作为服务器管理员，你是不是也经常碰到这种糟心事：半夜收到内存告警，登录上去想看看是哪个小天才在搞鬼，结果用 <code>top</code> 或 <code>htop</code> 一看，茫茫多的进程列表，根本不知道从何查起。特别是当某个用户开了几十上百个小进程，想手动把它们的内存加起来，简直是噩梦。</p>
-            <p>为了从这种重复的抓狂中解脱出来，我决定写一个“加强版”的Python监控脚本。我希望它能帮我实现下面这几个小目标：</p>
+
+            <p>为了从这种重复的抓狂中解脱出来，我决定写一个"加强版"的Python监控脚本。我希望它能帮我实现下面这几个小目标：</p>
+
             <ul>
                 <li>✅ <strong>按「用户 + 命令」来聚合内存</strong>，一眼就能看出是哪个用户跑的哪个程序把内存吃光了。</li>
                 <li>✅ <strong>别太敏感</strong>，只有当总内存使用率连续几分钟都超过80%才告警，避免被瞬间的内存抖动疯狂打扰。</li>
-                <li>✅ <strong>报告要详细</strong>，用 <a href="https://github.com/Finb/Bark" target="_blank">Bark</a> 推送到我手机上的报告，要写清楚是哪几个“用户+命令”组合在作怪，再顺便告诉我现在的 Swap 和系统负载情况。</li>
+                <li>✅ <strong>报告要详细</strong>，用 <a href="https://github.com/Finb/Bark" target="_blank">Bark</a> 推送到我手机上的报告，要写清楚是哪几个"用户+命令"组合在作怪，再顺便告诉我现在的 Swap 和系统负载情况。</li>
             </ul>
-            <p>经过一番折腾，下面就是我的最终成果，分享给你，希望能帮你摆脱“内存刺客”。</p>
 
-            <h2>第一步：把主角“监控脚本”放对位置</h2>
+            <p>经过一番折腾，下面就是我的最终成果，分享给你，希望能帮你摆脱"内存刺客"。</p>
+
+            <h2>第一步：把主角"监控脚本"放对位置</h2>
+
             <p>首先，我们需要把核心的Python脚本文件放到服务器上。我习惯放在 <code>/usr/local/bin</code> 目录下，方便管理。你可以用 <code>nano</code> 或者你更顺手的 <code>vim</code> 来创建它：</p>
-            <pre><code>sudo nano /usr/local/bin/mem_watch_bark.py</code></pre>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>sudo nano /usr/local/bin/mem_watch_bark.py</code></pre></div>
+
             <p>然后，把下面这段代码完整地粘贴进去。<strong>唯一需要你动手改的</strong>，就是把 <code>BARK_KEY</code> 换成你自己的 Bark 设备 Key，不然脚本喊破喉咙你也收不到通知。</p>
-            <pre><code>#!/usr/bin/env python3
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>#!/usr/bin/env python3
 import os
 import pwd
 import json
@@ -208,7 +255,7 @@ STATE_FILE = "/var/tmp/mem_watch_bark_state.json"
 TOP_USERS = 5                            # 推送中展示的用户 Top N
 TOP_GROUPS = 5                           # 用户+命令组合 Top N
 TOP_PROCS_PER_GROUP = 2                  # 每个组合展示几个最大进程
-MIN_ALERT_INTERVAL_SEC = 600             # 两次告警之间的最小间隔（秒），防止刷屏
+MIN_ALERT_INTERVAL_SEC = 600             # 两次告警之间的最小间隔（秒）
 
 def read_meminfo():
     """从 /proc/meminfo 读取总内存、可用内存和 swap 信息，单位 kB。"""
@@ -239,22 +286,12 @@ def read_meminfo():
     swap_percent = int(swap_used_kb * 100 / swap_total_kb) if swap_total_kb > 0 else 0
 
     return (
-        total_kb,
-        used_effective_kb,
-        avail_kb,
-        percent,
-        swap_total_kb,
-        swap_used_kb,
-        swap_percent,
+        total_kb, used_effective_kb, avail_kb, percent,
+        swap_total_kb, swap_used_kb, swap_percent,
     )
 
 def collect_stats():
-    """
-    遍历 /proc，按 用户 和 用户+命令 聚合 RSS。
-    返回：
-      users:  {uid: {"username", "rss_kb", "procs":[(rss_kb,pid,cmd), ...]}}
-      groups: {(uid, base_cmd): {"username","base_cmd","rss_kb","procs":[...]}}
-    """
+    """遍历 /proc，按 用户 和 用户+命令 聚合 RSS。"""
     users = {}
     groups = {}
     proc_root = "/proc"
@@ -303,17 +340,12 @@ def collect_stats():
 
         base_cmd = cmd.split()[0] if cmd.split() else (name or "unknown")
 
-        info_u = users.setdefault(
-            uid, {"username": username, "rss_kb": 0, "procs": []}
-        )
+        info_u = users.setdefault(uid, {"username": username, "rss_kb": 0, "procs": []})
         info_u["rss_kb"] += rss_kb
         info_u["procs"].append((rss_kb, int(pid), cmd[:160]))
 
         key = (uid, base_cmd)
-        info_g = groups.setdefault(
-            key,
-            {"username": username, "base_cmd": base_cmd, "rss_kb": 0, "procs": []},
-        )
+        info_g = groups.setdefault(key, {"username": username, "base_cmd": base_cmd, "rss_kb": 0, "procs": []})
         info_g["rss_kb"] += rss_kb
         info_g["procs"].append((rss_kb, int(pid), cmd[:160]))
 
@@ -333,10 +365,7 @@ def load_state():
     try:
         with open(STATE_FILE) as f:
             data = json.load(f)
-        prev_percent = int(data.get("prev_percent", 0))
-        consec_high = int(data.get("consec_high", 0))
-        last_alert_ts = float(data.get("last_alert_ts", 0.0))
-        return prev_percent, consec_high, last_alert_ts
+        return int(data.get("prev_percent", 0)), int(data.get("consec_high", 0)), float(data.get("last_alert_ts", 0.0))
     except Exception:
         return 0, 0, 0.0
 
@@ -344,14 +373,7 @@ def save_state(percent, consec_high, last_alert_ts):
     try:
         os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
         with open(STATE_FILE, "w") as f:
-            json.dump(
-                {
-                    "prev_percent": int(percent),
-                    "consec_high": int(consec_high),
-                    "last_alert_ts": float(last_alert_ts),
-                },
-                f,
-            )
+            json.dump({"prev_percent": int(percent), "consec_high": int(consec_high), "last_alert_ts": float(last_alert_ts)}, f)
     except Exception:
         pass
 
@@ -369,17 +391,7 @@ def send_bark(title, body):
 
 def main():
     now = time.time()
-
-    (
-        total_kb,
-        used_kb,
-        avail_kb,
-        percent,
-        swap_total_kb,
-        swap_used_kb,
-        swap_percent,
-    ) = read_meminfo()
-
+    (total_kb, used_kb, avail_kb, percent, swap_total_kb, swap_used_kb, swap_percent) = read_meminfo()
     prev_percent, consec_high, last_alert_ts = load_state()
 
     if percent >= THRESHOLD:
@@ -409,21 +421,10 @@ def main():
 
     la1, la5, la15 = read_loadavg()
 
-    lines = []
-    lines.append(f"主机: {hostname}")
-    lines.append(f"有效内存使用: {used_gib:.1f} GiB / {total_gib:.1f} GiB ({percent}%)")
-    lines.append(f"剩余可用: {avail_gib:.1f} GiB")
-
-    if swap_total_kb > 0:
-        lines.append(
-            f"Swap 使用: {swap_used_gib:.1f} GiB / {swap_total_gib:.1f} GiB ({swap_percent}%)"
-        )
-    else:
-        lines.append("Swap: 未启用或为 0")
-
+    lines = [f"主机: {hostname}", f"有效内存使用: {used_gib:.1f} GiB / {total_gib:.1f} GiB ({percent}%)", f"剩余可用: {avail_gib:.1f} GiB"]
+    lines.append(f"Swap 使用: {swap_used_gib:.1f} GiB / {swap_total_gib:.1f} GiB ({swap_percent}%)" if swap_total_kb > 0 else "Swap: 未启用或为 0")
     if la1 is not None:
         lines.append(f"LoadAvg: {la1:.2f}, {la5:.2f}, {la15:.2f}")
-
     lines.append("")
 
     user_list = sorted(users.items(), key=lambda kv: kv[1]["rss_kb"], reverse=True)
@@ -431,84 +432,106 @@ def main():
     for i, (uid, info) in enumerate(user_list[:TOP_USERS], start=1):
         rss_gib = info["rss_kb"] / 1024 / 1024
         user_percent = info["rss_kb"] * 100.0 / total_kb
-        lines.append(
-            f"{i}. {info['username']} (UID {uid}): "
-            f"{rss_gib:.1f} GiB (~{user_percent:.1f}% 总内存)"
-        )
+        lines.append(f"{i}. {info['username']} (UID {uid}): {rss_gib:.1f} GiB (~{user_percent:.1f}% 总内存)")
 
     lines.append("")
-
     group_list = sorted(groups.items(), key=lambda kv: kv[1]["rss_kb"], reverse=True)
     lines.append("按 用户+命令 组合 Top:")
-    for i, ((uid, base_cmd), info) in enumerate(
-        group_list[:TOP_GROUPS], start=1
-    ):
+    for i, ((uid, base_cmd), info) in enumerate(group_list[:TOP_GROUPS], start=1):
         rss_gib = info["rss_kb"] / 1024 / 1024
         user_percent = info["rss_kb"] * 100.0 / total_kb
-        lines.append(
-            f"{i}. {info['username']} (UID {uid}), {base_cmd}: "
-            f"{rss_gib:.1f} GiB (~{user_percent:.1f}% 总内存)"
-        )
+        lines.append(f"{i}. {info['username']} (UID {uid}), {base_cmd}: {rss_gib:.1f} GiB (~{user_percent:.1f}% 总内存)")
         procs = sorted(info["procs"], key=lambda x: x[0], reverse=True)
-        for rss_kb, pid, cmd in procs[:TOP_PROCS_PER_PROCS]:
+        for rss_kb, pid, cmd in procs[:TOP_PROCS_PER_GROUP]:
             proc_gib = rss_kb / 1024 / 1024
             lines.append(f"   - PID {pid}: {proc_gib:.2f} GiB | {cmd}")
 
     body = "\n".join(lines)
-    title = (
-        f"内存告警: {hostname} {percent}% "
-        f"(连续 {consec_high} 次 >= {THRESHOLD}%)"
-    )
-
+    title = f"内存告警: {hostname} {percent}% (连续 {consec_high} 次 >= {THRESHOLD}%)"
     send_bark(title, body)
 
 if __name__ == "__main__":
-    main()
-</code></pre>
-            <p>你也可以通过 <code>wget</code> 或 <code>curl</code> 直接下载到这个脚本：</p>
-            <pre><code>wget https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2025/11/27/mem_watch_bark.py
-# 或者
-curl -o /usr/local/bin/mem_watch_bark.py https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2025/11/27/mem_watch_bark.py</code></pre>
-            <p>保存退出后，别忘了给它加上执行权限，不然它跑不起来：</p>
-            <pre><code>sudo chmod +x /usr/local/bin/mem_watch_bark.py</code></pre>
+    main()</code></pre></div>
 
-            <h2>第二步：让脚本“活”起来</h2>
-            <p>脚本自己不会跑，我们得找个监工。Linux 上最好的监工莫过于 <code>cron</code> 了。我们用它来设置一个定时任务，每分钟“叫醒”一次我们的脚本，实现持续监控。</p>
+            <p>你也可以通过 <code>wget</code> 或 <code>curl</code> 直接下载到这个脚本：</p>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>wget https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2025/11/27/mem_watch_bark.py
+# 或者
+curl -o /usr/local/bin/mem_watch_bark.py https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2025/11/27/mem_watch_bark.py</code></pre></div>
+
+            <p>保存退出后，别忘了给它加上执行权限，不然它跑不起来：</p>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>sudo chmod +x /usr/local/bin/mem_watch_bark.py</code></pre></div>
+
+            <h2>第二步：让脚本"活"起来</h2>
+
+            <p>脚本自己不会跑，我们得找个监工。Linux 上最好的监工莫过于 <code>cron</code> 了。我们用它来设置一个定时任务，每分钟"叫醒"一次我们的脚本，实现持续监控。</p>
+
             <p>编辑 root 用户的 crontab：</p>
-            <pre><code>sudo crontab -e</code></pre>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>sudo crontab -e</code></pre></div>
+
             <p>然后在文件的最后加上这一行，告诉 <code>cron</code> 每分钟都去运行一次我们的脚本：</p>
-            <pre><code>* * * * * /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>* * * * * /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre></div>
+
             <blockquote>
                 <p>一个小提示：如果你的 <code>python3</code> 不在 <code>/usr/bin/python3</code>，可以先用 <code>which python3</code> 命令找到它的藏身之处，然后换成正确的路径。</p>
             </blockquote>
 
             <h3>第三步：演练一次，确保万无一失</h3>
-            <p>在正式投入使用前，我强烈建议你先跟它“彩排”一次，看看它会不会按你的预期工作。</p>
+
+            <p>在正式投入使用前，我强烈建议你先跟它"彩排"一次，看看它会不会按你的预期工作。</p>
+
             <ol>
                 <li>先把脚本里的告警阈值调得特别低，比如 <code>THRESHOLD = 1</code>，这样随便一跑就会超标。</li>
                 <li>然后，在命令行手动把它运行两次：
-                    <pre><code>sudo /usr/bin/python3 /usr/local/bin/mem_watch_bark.py
-sudo /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre>
-                    <p>因为我们的逻辑是“连续2次”超标才告警，所以当你运行第二次后，你的手机就应该会“叮”一下收到 Bark 的推送了。</p>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>sudo /usr/bin/python3 /usr/local/bin/mem_watch_bark.py
+sudo /usr/bin/python3 /usr/local/bin/mem_watch_bark.py</code></pre></div>
+
+                    <p>因为我们的逻辑是"连续2次"超标才告警，所以当你运行第二次后，你的手机就应该会"叮"一下收到 Bark 的推送了。</p>
                 </li>
                 <li>收到通知，确认一切正常后，<strong>千万记得</strong>把阈值改回 <code>80</code> 或者一个你觉得安全的位置！</li>
             </ol>
 
             <h2>大功告成，回顾一下</h2>
+
             <p>现在，我们这个小哨兵就正式上岗了。回顾一下，它是不是刚好解决了我们开头提到的那些痛点？</p>
+
             <ul>
-                <li><strong>精准定位：</strong>不再是面对一大堆进程干瞪眼，它直接告诉你“用户A的Python脚本”或者“用户B的R语言程序”是罪魁祸首。</li>
-                <li><strong>告警不“狼来了”：</strong>只有当内存连续几分钟持续爆炸时，它才会来找你，避免了因为瞬间波动带来的无效骚扰。</li>
+                <li><strong>精准定位：</strong>不再是面对一大堆进程干瞪眼，它直接告诉你"用户A的Python脚本"或者"用户B的R语言程序"是罪魁祸首。</li>
+                <li><strong>告警不"狼来了"：</strong>只有当内存连续几分钟持续爆炸时，它才会来找你，避免了因为瞬间波动带来的无效骚扰。</li>
                 <li><strong>信息全面：</strong>推送来的小报告图文并茂（开玩笑的，是文字详实），内存、Swap、负载……关键信息一应俱全，让你对服务器状态心中有数。</li>
                 <li><strong>不刷屏，很清净：</strong>就算服务器内存一直很高，它也很懂事地每10分钟最多提醒你一次，给你留出足够的时间去从容处理。</li>
             </ul>
+
             <p>希望这个小工具能让你在管理服务器时，也能多一分从容和优雅。</p>
-        </article>
-      
-      <footer>
-        <p>&copy; 2025</p>
-      </footer>
-    </main>
-  </div>
+
+            <a href="../../../index.html" class="home-link">RETURN_TO_BLOG_INDEX</a>
+        </div>
+
+        <footer>
+            <p>// END_OF_TRANSMISSION // &copy; 2025 XZG. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'COPIED!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'COPY';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 </html>

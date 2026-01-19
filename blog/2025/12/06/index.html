@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web 开发全景梳理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .diagram-connector {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 24px;
+            background-color: #cbd5e1;
+        }
+        .diagram-arrow::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid #cbd5e1;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shrink-0 z-10">
+        <div class="flex items-center gap-3">
+            <div class="text-blue-600">
+                <i data-lucide="network" class="w-8 h-8"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">Web 开发全景梳理</h1>
+                <p class="text-sm text-slate-500">从浏览器到服务器的完整技术栈解析</p>
+            </div>
+        </div>
+        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-full text-base font-medium flex items-center gap-2 transition-colors">
+            <i data-lucide="play-circle" class="w-4 h-4"></i>
+            模拟请求流程
+        </button>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Left Panel: Diagram -->
+        <div class="w-7/12 bg-slate-50 overflow-y-auto p-8 relative">
+            <div class="max-w-3xl mx-auto space-y-8 pb-12">
+                
+                <!-- Section 1: Client -->
+                <div class="relative">
+                    <div class="bg-blue-50/80 border border-blue-100 rounded-2xl p-6 relative">
+                        <!-- Label -->
+                        <div class="absolute -left-12 top-1/2 -translate-y-1/2 -rotate-90 text-sm text-slate-400 font-medium tracking-widest whitespace-nowrap">
+                            前端 / 客户端
+                        </div>
+                        
+                        <div class="flex items-center gap-2 mb-4 text-blue-800 font-semibold">
+                            <i data-lucide="monitor" class="w-5 h-5"></i>
+                            <h2>浏览器 & 客户端 (The Client)</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-white p-4 rounded-xl shadow-sm border-2 border-blue-400 cursor-pointer hover:shadow-md transition-all group" data-key="browser">
+                                <div class="flex flex-col items-center gap-2 text-center">
+                                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                        <i data-lucide="chrome" class="w-6 h-6"></i>
+                                    </div>
+                                    <div class="font-bold text-slate-700 text-base">浏览器</div>
+                                    <div class="text-xs text-slate-400">Chrome/Edge</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all group" data-key="html-css-js">
+                                <div class="flex flex-col items-center gap-2 text-center">
+                                    <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+                                        <i data-lucide="code-2" class="w-6 h-6"></i>
+                                    </div>
+                                    <div class="font-bold text-slate-700 text-base">HTML/CSS/JS</div>
+                                    <div class="text-xs text-slate-400">基础三件套</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all group" data-key="frameworks">
+                                <div class="flex flex-col items-center gap-2 text-center">
+                                    <div class="w-10 h-10 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center">
+                                        <i data-lucide="layout" class="w-6 h-6"></i>
+                                    </div>
+                                    <div class="font-bold text-slate-700 text-base">前端框架</div>
+                                    <div class="text-xs text-slate-400">React/Vue</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Arrow -->
+                    <div class="h-8 relative diagram-arrow">
+                        <div class="diagram-connector h-full"></div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Network -->
+                <div class="relative">
+                    <div class="bg-purple-50/80 border border-purple-100 rounded-2xl p-6 relative">
+                        <div class="flex items-center gap-2 mb-4 text-purple-800 font-semibold">
+                            <i data-lucide="globe-2" class="w-5 h-5"></i>
+                            <h2>互联网基础设施 (The Network)</h2>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:border-purple-300 hover:shadow-md transition-all" data-key="dns">
+                                <div class="flex flex-col items-center gap-2 text-center">
+                                    <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center">
+                                        <i data-lucide="tag" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="font-bold text-slate-700 text-base">域名 & DNS</div>
+                                    <div class="text-xs text-slate-400">地址解析</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:border-purple-300 hover:shadow-md transition-all" data-key="http">
+                                <div class="flex flex-col items-center gap-2 text-center">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+                                        <i data-lucide="arrow-left-right" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="font-bold text-slate-700 text-base">HTTP/HTTPS</div>
+                                    <div class="text-xs text-slate-400">通信协议</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:border-purple-300 hover:shadow-md transition-all" data-key="cdn">
+                                <div class="flex flex-col items-center gap-2 text-center">
+                                    <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+                                        <i data-lucide="zap" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="font-bold text-slate-700 text-base">CDN</div>
+                                    <div class="text-xs text-slate-400">内容分发</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Arrow -->
+                    <div class="h-8 relative diagram-arrow">
+                        <div class="diagram-connector h-full"></div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Server -->
+                <div class="relative">
+                    <div class="bg-green-50/80 border border-green-100 rounded-2xl p-6 relative">
+                        <div class="flex items-center gap-2 mb-4 text-green-800 font-semibold">
+                            <i data-lucide="server" class="w-5 h-5"></i>
+                            <h2>服务端架构 (The Server)</h2>
+                        </div>
+                        
+                        <!-- Top Layer: Servers -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-green-100/50 p-4 rounded-xl border border-green-200 cursor-pointer hover:bg-green-100 transition-colors" data-key="web-server">
+                                <div class="flex flex-col items-center gap-2 text-center">
+                                    <div class="w-8 h-8 rounded bg-orange-500 text-white flex items-center justify-center shadow-sm">
+                                        <i data-lucide="door-open" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-800 text-base">Web 服务器 (网关)</div>
+                                        <div class="text-xs text-slate-500 mt-0.5">Nginx / Apache</div>
+                                        <div class="text-[10px] text-green-600 mt-1">处理静态文件，反向代理</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-green-100/50 p-4 rounded-xl border border-green-200 cursor-pointer hover:bg-green-100 transition-colors" data-key="app-server">
+                                <div class="flex flex-col items-center gap-2 text-center">
+                                    <div class="w-8 h-8 rounded bg-slate-600 text-white flex items-center justify-center shadow-sm">
+                                        <i data-lucide="settings" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-800 text-base">应用服务器 (逻辑)</div>
+                                        <div class="text-xs text-slate-500 mt-0.5">Django / Node.js / Java</div>
+                                        <div class="text-[10px] text-green-600 mt-1">处理业务逻辑，计算</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Layer: Data -->
+                        <div class="bg-white rounded-xl p-4 border border-green-100">
+                            <div class="text-sm text-center font-bold text-green-700 mb-3">数据存储层</div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col items-center text-center cursor-pointer hover:border-green-300 transition-colors" data-key="db-sql">
+                                    <i data-lucide="database" class="w-5 h-5 text-indigo-600 mb-1"></i>
+                                    <div class="text-sm font-bold text-slate-700">关系型数据库</div>
+                                    <div class="text-[10px] text-slate-400">MySQL/Postgres</div>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col items-center text-center cursor-pointer hover:border-green-300 transition-colors" data-key="db-nosql">
+                                    <i data-lucide="file-json" class="w-5 h-5 text-green-600 mb-1"></i>
+                                    <div class="text-sm font-bold text-slate-700">NoSQL</div>
+                                    <div class="text-[10px] text-slate-400">MongoDB</div>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col items-center text-center cursor-pointer hover:border-green-300 transition-colors" data-key="db-cache">
+                                    <i data-lucide="zap" class="w-5 h-5 text-red-500 mb-1"></i>
+                                    <div class="text-sm font-bold text-slate-700">缓存</div>
+                                    <div class="text-[10px] text-slate-400">Redis</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: DevOps -->
+                <div class="mt-8 pt-4 border-t border-slate-200">
+                     <div class="flex items-center gap-2 mb-3 text-slate-500 text-base font-semibold">
+                        <i data-lucide="hammer" class="w-4 h-4"></i>
+                        <span>支撑体系 (DEVOPS & INFRA)</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium border border-slate-200 cursor-pointer hover:bg-slate-200 hover:border-slate-300 transition-colors" data-key="linux">Linux / OS</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium border border-slate-200 cursor-pointer hover:bg-slate-200 hover:border-slate-300 transition-colors" data-key="docker">Docker / 容器</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium border border-slate-200 cursor-pointer hover:bg-slate-200 hover:border-slate-300 transition-colors" data-key="git">Git / 版本控制</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium border border-slate-200 cursor-pointer hover:bg-slate-200 hover:border-slate-300 transition-colors" data-key="cloud">AWS / 阿里云</span>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium border border-slate-200 cursor-pointer hover:bg-slate-200 hover:border-slate-300 transition-colors" data-key="cicd">CI/CD 自动化</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right Panel: Detail View -->
+        <div class="w-5/12 bg-white border-l border-slate-200 flex flex-col">
+            <!-- Top Banner Image Area -->
+            <div class="h-48 bg-gradient-to-br from-blue-900 to-slate-800 relative overflow-hidden shrink-0">
+                <div class="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1481487484168-9b995ecc168d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')] bg-cover bg-center"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-blue-900/90 to-transparent"></div>
+                
+                <div class="absolute bottom-6 left-6 text-white">
+                    <div class="text-sm font-medium text-blue-300 uppercase tracking-wider mb-1">前端 / Client Side</div>
+                    <h2 class="text-4xl font-bold">Web 浏览器</h2>
+                </div>
+                
+                <!-- Decorative Icon -->
+                <div class="absolute top-6 right-6 text-white/10">
+                    <i data-lucide="monitor" class="w-32 h-32"></i>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-8 overflow-y-auto">
+                <p class="text-slate-600 leading-relaxed mb-8 text-lg">
+                    浏览器是用户进入互联网的窗口。它的核心职责是向服务器发送请求，接收代码（HTML/CSS/JS），并将代码渲染成用户可见的图形界面。
+                </p>
+
+                <!-- Analogy Box -->
+                <div class="bg-blue-50 rounded-xl p-5 border border-blue-100 mb-8">
+                    <div class="flex items-center gap-2 text-blue-700 font-semibold mb-2">
+                        <i data-lucide="lightbulb" class="w-4 h-4"></i>
+                        <span class="text-base">通俗理解</span>
+                    </div>
+                    <p class="text-base text-blue-900 italic leading-relaxed">
+                        就像是"餐厅的服务员和菜单"。你（用户）坐在这里看菜单（页面），点菜（发送请求），最后服务员把做好的菜（数据）端上来给你享用。
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="flex items-center gap-2 text-base font-bold text-slate-800 mb-4">
+                            <i data-lucide="wrench" class="w-4 h-4 text-green-500"></i>
+                            常见工具/技术
+                        </h3>
+                        <ul class="space-y-2">
+                            <li class="flex items-center gap-2 text-base text-slate-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                                Chrome (V8引擎)
+                            </li>
+                            <li class="flex items-center gap-2 text-base text-slate-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                                Firefox
+                            </li>
+                            <li class="flex items-center gap-2 text-base text-slate-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                Safari (WebKit)
+                            </li>
+                            <li class="flex items-center gap-2 text-base text-slate-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                                Edge
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="flex items-center gap-2 text-base font-bold text-slate-800 mb-4">
+                            <i data-lucide="zap" class="w-4 h-4 text-orange-500"></i>
+                            核心概念
+                        </h3>
+                        <ul class="space-y-2">
+                            <li class="flex items-center gap-2 text-base text-slate-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-orange-400"></span>
+                                DOM 渲染
+                            </li>
+                            <li class="flex items-center gap-2 text-base text-slate-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                                JavaScript 引擎
+                            </li>
+                            <li class="flex items-center gap-2 text-base text-slate-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                                本地存储 (Cookies/LocalStorage)
+                            </li>
+                            <li class="flex items-center gap-2 text-base text-slate-600">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                                DevTools 调试器
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>uv管理Python环境极简教程 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        h1 {
+            font-size: 2em;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            margin: 0;
+            color: #00ffff;
+        }
+
+        .date {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .date::before {
+            content: "// ";
+        }
+
+        .content {
+            padding: 40px;
+            color: #eee;
+        }
+
+        h2 {
+            color: #00ffff;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        h3 {
+            color: #00ff00;
+            font-size: 1.2em;
+            margin: 25px 0 10px 0;
+        }
+
+        p {
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+
+        ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        a {
+            color: #00ff00;
+            text-decoration: none;
+            border-bottom: 1px dashed #00ff00;
+            transition: all 0.3s;
+        }
+
+        a:hover {
+            color: #00ffff;
+            border-bottom-color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn { opacity: 1; }
+        .copy-btn:hover { background: #1a1a1a; color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.8); }
+        .copy-btn.copied { background: #00ffff; color: #1a1a1a; }
+
+        pre {
+            background: #111;
+            padding: 35px 15px 15px 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #333;
+            margin: 0;
+        }
+
+        code {
+            color: #00ff00;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background: #000;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .back-link:hover {
+            background: #00ff00;
+            color: #1a1a1a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            padding: 20px 40px;
+            text-align: center;
+            background: #000;
+            border-top: 1px solid #00ff00;
+            color: #666;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>[ARTICLE] uv管理Python环境极简教程</h1>
+            <div class="date">2025-12-07</div>
+        </header>
+        <main class="content">
+            <p>用AI写Python代码的时候，经常需要安装各种包。传统的pip + venv组合用起来还行，但是速度太慢了。uv是Rust写的，安装包的速度能快10-100倍，体验提升非常明显。</p>
+
+            <h2>安装uv</h2>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># Linux/Mac
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell), 更推荐WSL
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code></pre>
+            </div>
+            <p>安装完记得重启终端，或者 <code>source ~/.bashrc</code>。</p>
+
+            <h2>配置镜像源</h2>
+            <p>国内访问PyPI比较慢，可以配置国内镜像：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 临时使用镜像
+uv add --index-url https://pypi.tuna.tsinghua.edu.cn/simple requests
+
+# 或者设置环境变量（推荐）
+export UV_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
+
+# 永久设置，加到 ~/.bashrc 或 ~/.zshrc
+echo 'export UV_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"' >> ~/.bashrc</code></pre>
+            </div>
+            <p>常用国内镜像：</p>
+            <ul>
+                <li>清华：<code>https://pypi.tuna.tsinghua.edu.cn/simple</code></li>
+                <li>阿里云：<code>https://mirrors.aliyun.com/pypi/simple</code></li>
+                <li>中科大：<code>https://pypi.mirrors.ustc.edu.cn/simple</code></li>
+            </ul>
+            <p>我一般直接设置环境变量，一劳永逸。</p>
+
+            <h2>安装Python</h2>
+            <p>uv本身是Rust写的，不依赖Python。如果你的系统里没有Python，或者想用uv管理Python版本：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 安装最新稳定版Python
+uv python install
+
+# 安装指定版本
+uv python install 3.12
+uv python install 3.11
+
+# 查看可安装的版本
+uv python list --all-versions
+
+# 查看已安装的版本
+uv python list</code></pre>
+            </div>
+            <p>装完之后，uv会自动使用对应的Python版本。</p>
+
+            <h2>运行代码</h2>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 运行Python脚本
+uv run python main.py
+
+# 运行Python模块
+uv run python -m pytest
+uv run python -m http.server 3001
+
+# 指定Python版本运行
+uv run --python 3.12 python main.py
+uv run --python 3.11 python -m http.server 3001
+
+# 直接运行命令行工具
+uv run black .</code></pre>
+            </div>
+            <p>注意：用 <code>uv run</code> 而不是 <code>uv python</code>。<code>uv python</code> 是管理Python版本的，<code>uv run</code> 才是运行代码的。</p>
+            <p><code>uv run</code> 会自动激活虚拟环境，不需要手动 <code>source .venv/bin/activate</code>。如果没有指定版本，uv会使用项目固定的版本（<code>.python-version</code>文件）或系统默认版本。</p>
+
+            <h2>创建项目</h2>
+            <p>如果需要开发一个python项目, 建议一开始就用uv做环境管理</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 新建项目目录并初始化
+uv init my-project
+cd my-project
+
+# 或者在现有目录初始化
+cd existing-project
+uv init</code></pre>
+            </div>
+            <p>初始化后会生成 <code>pyproject.toml</code>，这是项目配置文件，类似于 <code>package.json</code>。</p>
+
+            <h2>管理依赖</h2>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 添加依赖
+uv add requests
+uv add pandas numpy
+
+# 添加开发依赖
+uv add --dev pytest black
+
+# 移除依赖
+uv remove requests
+
+# 同步依赖（根据pyproject.toml安装所有包）
+uv sync</code></pre>
+            </div>
+            <p>我一般用 <code>uv add</code> 添加包，它会自动更新 <code>pyproject.toml</code> 和 <code>uv.lock</code>，比手动编辑方便。</p>
+
+            <h2>切换Python版本</h2>
+            <p>如果项目需要特定Python版本：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 为当前项目固定Python版本
+uv python pin 3.12
+
+# 查看项目使用的版本
+uv python find</code></pre>
+            </div>
+            <p>固定版本后，会在项目目录生成 <code>.python-version</code> 文件，uv会自动使用这个版本。</p>
+
+            <h2>迁移已有项目</h2>
+            <p>如果项目里已经有 <code>requirements.txt</code>：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 从requirements.txt导入
+uv add -r requirements.txt</code></pre>
+            </div>
+
+            <h2>快速执行脚本</h2>
+            <p>如果只是想临时跑个脚本，不想创建项目：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 直接运行，自动安装依赖
+uv run --with requests script.py
+
+# 或者用uvx运行命令行工具
+uvx black .
+uvx ruff check .</code></pre>
+            </div>
+
+            <h2>常用命令速查</h2>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>uv init              # 初始化项目
+uv add &lt;包名&gt;         # 添加依赖
+uv remove &lt;包名&gt;      # 移除依赖
+uv sync              # 同步依赖
+uv run &lt;命令&gt;        # 在虚拟环境中运行
+uv python install    # 安装Python
+uv pip install       # 兼容pip的安装方式</code></pre>
+            </div>
+            <p>基本上掌握 <code>uv init</code>、<code>uv add</code>、<code>uv run</code> 这三个就够日常使用了。官方文档在 <a href="https://docs.astral.sh/uv/">https://docs.astral.sh/uv/</a>，遇到问题可以去查。</p>
+
+            <a href="../../../index.html" class="back-link">Return_To_Blog_Index</a>
+        </main>
+        <footer>
+            <p>© 2025 Geektastic! Terminal Blog | Powered by Pure HTML</p>
+        </footer>
+    </div>
+    <script>
+function copyCode(btn) {
+    const code = btn.nextElementSibling.querySelector('code').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'COPIED!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = 'COPY';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+    </script>
+</body>
+</html>
+

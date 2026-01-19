@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科研人员科学上网指南 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 5px #00ff00;
+            letter-spacing: 2px;
+        }
+
+        .date {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        p {
+            margin-bottom: 20px;
+            color: #eee;
+        }
+
+        a {
+            color: #00ffff;
+            text-decoration: none;
+            text-shadow: 0 0 3px #00ffff;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        img {
+            max-width: 100%;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            margin: 15px 0;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
+        pre {
+            background: #0d0d0d;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 15px;
+            padding-top: 35px;
+            overflow-x: auto;
+            margin: 0;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        code {
+            font-family: 'Roboto Mono', monospace;
+            color: #00ff00;
+            font-size: 0.9em;
+        }
+
+        .home-link {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 25px;
+            background: #00ff00;
+            color: #1a1a1a;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid #00ff00;
+        }
+
+        .home-link:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.8);
+            text-decoration: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            border-top: 1px dashed #00ff00;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>[ARTICLE] 科研人员科学上网指南</h1>
+            <div class="date">// 2025-12-09</div>
+        </header>
+
+        <div class="content">
+            <p>作为一个科研人员，免不了需要科学上网，方便获取最新的研究进展。我用的是PandaFan，从2021年11月20日付费开始，已经用了差不多4年。因为价格昂贵（学术套餐5欧/月），因此也相对来说比较稳定。注册地址是<a href="https://PandaFan.sh">https://PandaFan.sh</a>，如果可以，可以填写我的推荐码, 185780, 在你第一次付费的时候，我可以获得10%的佣金。</p>
+
+            <img src="images/register.png" alt="注册">
+
+            <p>他们提供了Windows/MacOS平台的官方客户端下载，和其他平台的配置方法。</p>
+
+            <img src="images/client.png" alt="客户端">
+
+            <p>Windows/MacOS的官方客户端的使用方法比较简单，只需要安装登录即可。之后，我们需要点击右下角的...，选择设置，开启增强模式，也就是TUN模式，也叫做虚拟网卡模式。</p>
+
+            <img src="images/setting.png" alt="设置TUN">
+
+            <p>如果不开启虚拟网卡，使用Cursor的时候会出现模型不可用的情况</p>
+
+            <img src="images/cursor.png" alt="模型不可用">
+
+            <p>在Linux服务器上，我们可以通过Clash来进行流量转发，提高从GitHub下载数据的速度。</p>
+
+            <img src="images/linux.png" alt="linux服务器">
+
+            <p>准备好基础配置信息</p>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>mkdir -p ~/.config/mihomo
+# 复制上面截图的配置文件的地址
+curl 'https://getconf.oss-accelerate.aliyuncs.com/clash/你的/配置文件' -o ~/.config/mihomo/config.yaml
+# 下载geoip
+curl https://r2.dlbun.com/panda/dl/mmdb/geoip-jan-8.metadb -o ~/.config/mihomo/geoip.metadb</code></pre></div>
+
+            <p>从<a href="https://github.com/MetaCubeX/mihomo/releases">https://github.com/MetaCubeX/mihomo/releases</a>获取clash的下载地址。</p>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code># 如果下载不成功，可以本地上传
+wget https://github.com/MetaCubeX/mihomo/releases/download/v1.19.17/mihomo-linux-amd64-v1-go123-v1.19.17.gz
+# 解压缩
+gunzip  mihomo-linux-amd64-v1-go123-v1.19.17.gz
+mv mihomo-linux-amd64-* mihomo
+chmod +x mihomo
+./mihomo</code></pre></div>
+
+            <p>运行的时候如果出现如下错误，说明服务器上的7890和7891端口被占用了，需要用vim或者nano编辑配置文件，也就是 ~/.config/mihomo/config.yaml，将最开头的7890和7891改成其他的，例如7892,7893</p>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>ERRO[2025-12-09T10:04:15.982104810+08:00] Start HTTP server error: listen tcp :7890: bind: address already in use
+ERRO[2025-12-09T10:04:15.982138157+08:00] Start HTTP server error: listen tcp :7890: bind: address already in use
+INFO[2025-12-09T10:04:15.982390708+08:00] SOCKS proxy listening at: [::]:7891</code></pre></div>
+
+            <p>后续就可以通过如下代码，设置http_proxy/https_proxy，来进行流量转发。注意，我用的是7892，这是因为我的7890被用了</p>
+
+<div class="code-block"><button class="copy-btn" onclick="copyCode(this)">COPY</button>
+<pre><code>export http_proxy=http://127.0.0.1:7892
+export https_proxy=http://127.0.0.1:7892</code></pre></div>
+
+            <p>下载示意图</p>
+
+            <img src="images/download.png" alt="download">
+
+            <a href="../../../index.html" class="home-link">RETURN_TO_BLOG_INDEX</a>
+        </div>
+
+        <footer>
+            <p>// END_OF_TRANSMISSION // &copy; 2025 XZG. All rights reserved.</p>
+        </footer>
+    </div>
+    <script>
+        function copyCode(btn) {
+            const code = btn.nextElementSibling.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'COPIED!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'COPY';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

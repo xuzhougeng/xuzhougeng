@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git极简教程 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        h1 {
+            font-size: 2em;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            margin: 0;
+            color: #00ffff;
+        }
+
+        .date {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .date::before {
+            content: "// ";
+        }
+
+        .content {
+            padding: 40px;
+            color: #eee;
+        }
+
+        h2 {
+            color: #00ffff;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        h3 {
+            color: #00ff00;
+            font-size: 1.2em;
+            margin: 25px 0 10px 0;
+        }
+
+        p {
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+
+        a {
+            color: #00ff00;
+            text-decoration: none;
+            border-bottom: 1px dashed #00ff00;
+            transition: all 0.3s;
+        }
+
+        a:hover {
+            color: #00ffff;
+            border-bottom-color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        ul {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn { opacity: 1; }
+        .copy-btn:hover { background: #1a1a1a; color: #00ff00; box-shadow: 0 0 10px rgba(0, 255, 0, 0.8); }
+        .copy-btn.copied { background: #00ffff; color: #1a1a1a; }
+
+        pre {
+            background: #111;
+            padding: 35px 15px 15px 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #333;
+            margin: 0;
+        }
+
+        code {
+            color: #00ff00;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background: #000;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .back-link:hover {
+            background: #00ff00;
+            color: #1a1a1a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            padding: 20px 40px;
+            text-align: center;
+            background: #000;
+            border-top: 1px solid #00ff00;
+            color: #666;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>[ARTICLE] Git极简教程</h1>
+            <div class="date">2025-12-08</div>
+        </header>
+        <main class="content">
+            <p>使用AI编程的时候，我觉得最重要的就是版本控制，也就是在AI把你代码搞得一团糟后，你可以迅速的恢复到之前的版本，这就是为什么我们需要学习使用git对项目进行版本管理。</p>
+            <p>虽然git的使用可以很复杂，但是常用的、需要记忆的，就那么几个，复杂的，可以用直接问AI.</p>
+
+            <h2>安装</h2>
+            <p>Linux/Mac用户基本都自带git，没有的话：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># Ubuntu/Debian
+sudo apt install git
+# Mac
+brew install git</code></pre>
+            </div>
+            <p>Windows用户推荐使用WSL, 除非是Windows10 以前的版本，那么只能去 <a href="https://git-scm.com/downloads">https://git-scm.com/downloads</a> 下载安装包。</p>
+
+            <h2>初始配置</h2>
+            <p>安装完第一件事，设置用户名和邮箱，这个会出现在你的每次提交记录里：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git config --global user.name "你的名字"
+git config --global user.email "你的邮箱"</code></pre>
+            </div>
+
+            <h2>日常使用</h2>
+
+            <h3>克隆项目</h3>
+            <p>从GitHub下载别人的项目：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git clone https://github.com/用户名/项目名.git
+# 例如
+git clone https://github.com/xuzhougeng/</code></pre>
+            </div>
+            <p>如果下载太慢，可以参考推荐部分我写的科学上网配置，设置代理。</p>
+
+            <h3>新建项目</h3>
+            <p>在现有文件夹里初始化Git：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cd 你的项目目录
+git init</code></pre>
+            </div>
+            <p>我一般新建项目第一件事就是加 <code>.gitignore</code>，省得后面把不该传的东西传上去了，比如说下面这些：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 忽略所有 .log 文件
+*.log
+
+# 忽略 node_modules 目录
+node_modules/
+
+# 忽略 Python 虚拟环境
+venv/
+__pycache__/
+
+# 忽略编译产物
+*.o
+*.pyc
+
+# 忽略 IDE 配置
+.vscode/
+.idea/
+
+# 忽略敏感文件
+.env
+config.local.yaml</code></pre>
+            </div>
+            <p>GitHub上有现成的模板可以参考：<a href="https://github.com/github/gitignore">https://github.com/github/gitignore</a> 也可以让AI生成。</p>
+
+            <h3>提交代码</h3>
+            <p>这是最常用的三连：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git add .                    # 把所有改动加到暂存区
+git commit -m "描述你改了什么"  # 提交到本地仓库
+git push                     # 推送到远程仓库</code></pre>
+            </div>
+            <p>我一般习惯用 <code>git add .</code> 全加，如果只想加某个文件就 <code>git add 文件名</code>。</p>
+
+            <h3>拉取更新</h3>
+            <p>同步远程仓库的最新代码：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git pull</code></pre>
+            </div>
+
+            <h3>查看状态</h3>
+            <p>不知道当前什么情况的时候，先看看：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git status   # 看哪些文件改了
+git log      # 看提交历史</code></pre>
+            </div>
+
+            <h2>分支操作</h2>
+            <p>多人协作或者想试验新功能的时候会用到：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git branch           # 查看所有分支
+git branch 新分支名   # 创建分支
+git checkout 分支名   # 切换分支
+git merge 分支名      # 合并分支到当前分支</code></pre>
+            </div>
+            <p>我个人比较喜欢用 <code>git checkout -b 新分支名</code>，创建并切换一步到位。</p>
+
+            <h2>常见问题</h2>
+
+            <h3>提交错了想撤回</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git reset --soft HEAD~1  # 撤回上一次提交，改动保留</code></pre>
+            </div>
+
+            <h3>想放弃本地改动</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git checkout -- 文件名   # 放弃单个文件的改动
+git checkout -- .       # 放弃所有改动</code></pre>
+            </div>
+
+            <h3>远程仓库地址</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git remote -v                              # 查看当前远程地址
+git remote set-url origin 新地址           # 修改远程地址
+git remote add origin 地址                 # 添加远程仓库</code></pre>
+            </div>
+
+            <h2>关联GitHub</h2>
+            <p>第一次推送到GitHub需要先在GitHub上创建仓库，然后：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git remote add origin https://github.com/用户名/项目名.git
+git branch -M main
+git push -u origin main</code></pre>
+            </div>
+            <p>之后就可以直接 <code>git push</code> 了。</p>
+            <p>基本上掌握这些就够日常使用了，遇到复杂情况再去搜具体命令。</p>
+
+            <h2>推荐阅读</h2>
+            <ul>
+                <li><a href="https://xuzhougeng.top/blog/2025/12/09/index.html">科研人员科学上网指南</a></li>
+                <li><a href="https://xuzhougeng.top/blog/2025/12/10/index.html">Clash配置</a></li>
+            </ul>
+
+            <a href="../../../index.html" class="back-link">Return_To_Blog_Index</a>
+        </main>
+        <footer>
+            <p>© 2025 Geektastic! Terminal Blog | Powered by Pure HTML</p>
+        </footer>
+    </div>
+    <script>
+function copyCode(btn) {
+    const code = btn.nextElementSibling.querySelector('code').innerText;
+    navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'COPIED!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = 'COPY';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+    </script>
+</body>
+</html>
