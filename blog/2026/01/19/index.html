@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>相对安全的Claude Code/Codex/Gemini的使用方法 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        h1 {
+            font-size: 2em;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            margin: 0;
+            color: #00ffff;
+        }
+
+        .date {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .date::before {
+            content: "// ";
+        }
+
+        .content {
+            padding: 40px;
+            color: #eee;
+        }
+
+        h2 {
+            color: #00ffff;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        h3 {
+            color: #00ff00;
+            font-size: 1.2em;
+            margin: 25px 0 10px 0;
+        }
+
+        p {
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+
+        ul,
+        ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        a {
+            color: #00ff00;
+            text-decoration: none;
+            border-bottom: 1px dashed #00ff00;
+            transition: all 0.3s;
+        }
+
+        a:hover {
+            color: #00ffff;
+            border-bottom-color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            display: block;
+            overflow-x: auto;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #00ff00;
+            padding: 10px 12px;
+            text-align: left;
+            color: #eee;
+        }
+
+        table th {
+            background: #000;
+            color: #00ffff;
+        }
+
+        table tr:nth-child(even) td {
+            background: #1b1b1b;
+        }
+
+        code {
+            color: #00ff00;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.95em;
+        }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
+        pre {
+            padding-top: 35px;
+            margin: 0;
+            background: #000;
+            padding: 35px 20px 20px 20px;
+            border-radius: 4px;
+            border: 1px solid #00ff00;
+            overflow-x: auto;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background: #000;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .back-link:hover {
+            background: #00ff00;
+            color: #1a1a1a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            padding: 20px 40px;
+            text-align: center;
+            background: #000;
+            border-top: 1px solid #00ff00;
+            color: #666;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>[ARTICLE] 相对安全的Claude Code/Codex/Gemini的使用方法</h1>
+            <div class="date">2026-01-19</div>
+        </header>
+        <main class="content">
+            <p>本工具借助 <a href="https://github.com/MetaCubeX/mihomo/releases">mihomo</a> 的 dialer-proxy 功能，通过中转节点连接固定的美国家庭带宽，用于稳定访问 AI 服务（Gemini、Codex、Claude 等）。</p>
+
+            <h2>准备工作</h2>
+            <p>你需要准备两样东西：</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>类型</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>中转代理</td>
+                        <td>用于连接美国节点，普通代理即可</td>
+                    </tr>
+                    <tr>
+                        <td>美国家庭带宽</td>
+                        <td>固定 IP 的美国住宅代理</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>生成配置文件</h2>
+            <p>访问 <a href="https://xuzhougeng.top/tools/dialer-proxy/">https://xuzhougeng.top/tools/dialer-proxy/</a>，填入你的代理信息，生成 mihomo 配置文件并保存。</p>
+
+            <h2>安装</h2>
+            <ol>
+                <li>
+                    下载 <code>function.sh</code> 到本地：
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                        <pre><code>wget https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2026/01/19/function.sh
+# 或者
+curl -o function.sh https://raw.githubusercontent.com/xuzhougeng/xuzhougeng/refs/heads/main/blog/2026/01/19/function.sh</code></pre>
+                    </div>
+                </li>
+                <li>
+                    在 shell 配置文件中加载：
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                        <pre><code># Bash (~/.bashrc)
+source /path/to/function.sh
+
+# Zsh (~/.zshrc)
+source /path/to/function.sh</code></pre>
+                    </div>
+                </li>
+                <li>
+                    设置代理环境变量：
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                        <pre><code>export http_proxy="http://127.0.0.1:7890"
+export https_proxy="http://127.0.0.1:7890"</code></pre>
+                    </div>
+                </li>
+            </ol>
+
+            <h2>使用方法</h2>
+
+            <h3>启动/停止代理</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 启动 mihomo（需指定配置文件路径）
+start_proxy /path/to/config.yaml
+
+# 停止 mihomo
+stop_proxy</code></pre>
+            </div>
+
+            <h3>节点管理</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 查看当前使用的中继节点
+show_relay
+
+# 自动测速并切换到最快的中转节点
+select_fastest_relay</code></pre>
+            </div>
+
+            <h3>查看日志</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 查看最近 50 行日志（默认）
+proxy_logs
+
+# 查看最近 100 行日志
+proxy_logs 100
+
+# 实时跟踪日志
+proxy_logs_follow</code></pre>
+            </div>
+
+            <h3>使用 AI 工具</h3>
+            <p>直接调用即可，函数会自动检查代理状态：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>gemini "your prompt"
+codex "your prompt"
+claude "your prompt"</code></pre>
+            </div>
+            <p>如果代理未启动或环境变量未设置，会提示相应错误。</p>
+
+            <h2>常见问题</h2>
+            <p><strong>Q: 提示 "missing proxy env"</strong></p>
+            <p>设置 <code>http_proxy</code> 和 <code>https_proxy</code> 环境变量。</p>
+
+            <p><strong>Q: 提示 "proxy not reachable"</strong></p>
+            <p>检查 mihomo 是否正常运行，或执行 <code>start_proxy</code> 启动。</p>
+
+            <p><strong>Q: 提示 "mihomo not found"</strong></p>
+            <p>从 <a href="https://github.com/MetaCubeX/mihomo/releases">mihomo releases</a> 下载并安装。</p>
+
+            <a href="../../../index.html" class="back-link">Return_To_Blog_Index</a>
+        </main>
+        <footer>
+            <p>© 2026 Geektastic! Terminal Blog | Powered by Pure HTML</p>
+        </footer>
+    </div>
+    <script>
+    function copyCode(btn) {
+        const code = btn.nextElementSibling.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'COPIED!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = 'COPY';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+    </script>
+</body>
+</html>
