@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dialer-Proxy 规则生成器</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero__intro">
+        <p class="eyebrow">Dialer-Proxy Generator</p>
+        <h1>双跳代理规则生成器</h1>
+        <p class="lede">
+          配置中转代理和目标代理，自动生成带 dialer-proxy 的 Clash 配置。适用于需要通过中转服务器访问目标代理的场景。
+        </p>
+        <div class="hero__actions">
+          <button id="generateYamlBtn" class="btn btn-primary">生成配置</button>
+          <button id="loadExampleBtn" class="btn btn-ghost">加载案例</button>
+          <button id="downloadYamlBtn" class="btn btn-ghost">下载文件</button>
+          <button id="themeToggle" class="btn btn-ghost">切换明/暗</button>
+        </div>
+        <p class="tiny">只在浏览器本地处理，不会上传到服务器。可直接点击"生成配置"查看示例。</p>
+      </div>
+      <div class="hero__panel">
+        <div class="hero__panel__inner">
+          <p class="panel-label">使用说明</p>
+          <ul>
+            <li>左侧粘贴中转代理的 YAML 配置（第一跳）</li>
+            <li>右侧手动填写目标 SOCKS5 代理信息（第二跳）</li>
+            <li>生成的配置会自动添加 dialer-proxy 字段</li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <div class="card__header">
+          <div>
+            <p class="eyebrow">第一跳 - 中转代理</p>
+            <h2>Relay Proxies (YAML)</h2>
+            <p class="subtle">粘贴中转代理的 YAML 配置，支持 ss、vmess、trojan 等</p>
+          </div>
+          <div class="chip" id="relaySummary">等待输入</div>
+        </div>
+        <textarea id="relayInput" class="raw-input" rows="15" placeholder="粘贴中转代理配置，例如：&#10;&#10;  - name: &quot;relay-hk-01&quot;&#10;    type: ss&#10;    server: relay1.example.com&#10;    port: 443&#10;    cipher: aes-256-gcm&#10;    password: &quot;password1&quot;&#10;&#10;  - name: &quot;relay-hk-02&quot;&#10;    type: vmess&#10;    server: relay2.example.com&#10;    port: 443&#10;    uuid: xxx-xxx-xxx&#10;    alterId: 0&#10;    cipher: auto"></textarea>
+        <div class="card__footer">
+          <div class="hint">支持标准 Clash YAML 格式</div>
+          <button id="parseRelayBtn" class="btn btn-primary">解析中转代理</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card__header">
+          <div>
+            <p class="eyebrow">第二跳 - 目标代理</p>
+            <h2>Target Proxy (手动填写)</h2>
+            <p class="subtle">填写目标 SOCKS5 代理信息</p>
+          </div>
+        </div>
+        <div class="form-grid">
+          <label>节点名称
+            <input id="targetName" type="text" placeholder="target-socks5" value="target-socks5">
+          </label>
+          <label>类型
+            <select id="targetType">
+              <option value="socks5">SOCKS5</option>
+              <option value="http">HTTP</option>
+            </select>
+          </label>
+          <label>服务器地址
+            <input id="targetServer" type="text" placeholder="target.example.com（留空则使用示例）">
+          </label>
+          <label>端口
+            <input id="targetPort" type="number" placeholder="1080（留空则使用示例）" min="1" max="65535">
+          </label>
+          <label>用户名（可选）
+            <input id="targetUsername" type="text" placeholder="user">
+          </label>
+          <label>密码（可选）
+            <input id="targetPassword" type="text" placeholder="pass">
+          </label>
+        </div>
+        <div style="margin-top: 16px;">
+          <label>中转代理/组名称
+            <input id="dialerProxy" type="text" placeholder="relay-group" value="relay-group">
+            <small class="hint" style="margin-top: 4px;">dialer-proxy 字段的值，指定通过哪个代理/组连接</small>
+          </label>
+        </div>
+      </section>
+
+      <section class="card span-2">
+        <div class="card__header">
+          <div>
+            <p class="eyebrow">中转代理列表</p>
+            <h2>已解析的中转节点</h2>
+          </div>
+          <button id="clearRelayBtn" class="btn btn-ghost">清空列表</button>
+        </div>
+        <div id="relayContainer" class="relay-list">
+          <div class="hint">解析后的中转代理会显示在这里</div>
+        </div>
+      </section>
+
+      <section class="card span-2">
+        <div class="card__header">
+          <div>
+            <p class="eyebrow">输出</p>
+            <h2>生成的 Clash 配置</h2>
+          </div>
+          <div class="actions">
+            <button id="copyYamlBtn" class="btn btn-primary">复制配置</button>
+          </div>
+        </div>
+        <textarea id="yamlOutput" class="yaml-output" rows="20" readonly placeholder="点击"生成配置"后出现结果"></textarea>
+      </section>
+    </main>
+  </div>
+
+  <!-- Custom Modal Dialog -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal-dialog">
+      <div class="modal-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <h3 class="modal-title" id="modalTitle">提示</h3>
+      <p class="modal-message" id="modalMessage">消息内容</p>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" class="btn btn-ghost">取消</button>
+        <button id="modalConfirmBtn" class="btn btn-primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
