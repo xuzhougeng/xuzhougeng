@@ -203,7 +203,7 @@ _proxy_parse_port() {
     return 1
   fi
 
-  grep -E '^mixed-port:|^port:' "$config" 2>/dev/null | head -n1 | sed 's/.*: *//'
+  grep -E '^mixed-port:|^port:' "$config" 2>/dev/null | head -n1 | sed 's/.*: *//; s/ *#.*//'
 }
 
 show_relay() {
