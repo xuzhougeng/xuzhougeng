@@ -29,13 +29,6 @@ source /path/to/function.sh
 source /path/to/function.sh
 ```
 
-3. 设置代理环境变量：
-
-```bash
-export http_proxy="http://127.0.0.1:7890"
-export https_proxy="http://127.0.0.1:7890"
-```
-
 ## 使用方法
 
 ### 启动/停止代理
