@@ -20,6 +20,55 @@ _proxy_require_env() {
   return 0
 }
 
+_proxy_auto_setup() {
+  if [ -n "${http_proxy:-}" ] && [ -n "${https_proxy:-}" ]; then
+    return 0
+  fi
+
+  local port pidfile portfile pid
+  pidfile="$(_proxy_pidfile)"
+  portfile="$(_proxy_portfile)"
+
+  if [ ! -f "$portfile" ]; then
+    return 1
+  fi
+
+  port=$(cat "$portfile" 2>/dev/null)
+  if [ -z "$port" ]; then
+    return 1
+  fi
+
+  if [ -f "$pidfile" ]; then
+    pid=$(cat "$pidfile" 2>/dev/null)
+    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+      if _proxy_check_port "127.0.0.1" "$port"; then
+        export http_proxy="http://127.0.0.1:${port}"
+        export https_proxy="http://127.0.0.1:${port}"
+        export HTTP_PROXY="$http_proxy"
+        export HTTPS_PROXY="$https_proxy"
+        return 0
+      fi
+    fi
+  fi
+
+  return 1
+}
+
+_proxy_check_port() {
+  local host="$1"
+  local port="$2"
+
+  if command -v nc >/dev/null 2>&1; then
+    nc -z -w 1 "$host" "$port" >/dev/null 2>&1 && return 0
+  elif command -v timeout >/dev/null 2>&1 && command -v bash >/dev/null 2>&1; then
+    timeout 1 bash -c "cat < /dev/null > /dev/tcp/${host}/${port}" >/dev/null 2>&1 && return 0
+  elif command -v bash >/dev/null 2>&1; then
+    bash -c "echo >/dev/tcp/${host}/${port}" >/dev/null 2>&1 && return 0
+  fi
+
+  return 1
+}
+
 _proxy_is_up() {
   local proxy_url proxy_no_scheme proxy_no_creds proxy_hostport proxy_host proxy_port
 
@@ -35,16 +84,7 @@ _proxy_is_up() {
     return 1
   fi
 
-  local rc=1
-  if command -v nc >/dev/null 2>&1; then
-    nc -z -w 1 "$proxy_host" "$proxy_port" >/dev/null 2>&1 && rc=0
-  elif command -v timeout >/dev/null 2>&1 && command -v bash >/dev/null 2>&1; then
-    timeout 1 bash -c "cat < /dev/null > /dev/tcp/${proxy_host}/${proxy_port}" >/dev/null 2>&1 && rc=0
-  else
-    (echo >"/dev/tcp/${proxy_host}/${proxy_port}") >/dev/null 2>&1 && rc=0
-  fi
-
-  if [ $rc -ne 0 ]; then
+  if ! _proxy_check_port "$proxy_host" "$proxy_port"; then
     echo "proxy not reachable at ${proxy_host}:${proxy_port}; please enable it" >&2
     return 1
   fi
@@ -53,19 +93,34 @@ _proxy_is_up() {
 }
 
 gemini() {
-  _proxy_require_env || return 1
+  if ! _proxy_require_env 2>/dev/null; then
+    if ! _proxy_auto_setup; then
+      echo "error: proxy not configured and not running; run start_proxy first" >&2
+      return 1
+    fi
+  fi
   _proxy_is_up || return 1
   command gemini "$@"
 }
 
 codex() {
-  _proxy_require_env || return 1
+  if ! _proxy_require_env 2>/dev/null; then
+    if ! _proxy_auto_setup; then
+      echo "error: proxy not configured and not running; run start_proxy first" >&2
+      return 1
+    fi
+  fi
   _proxy_is_up || return 1
   command codex "$@"
 }
 
 claude() {
-  _proxy_require_env || return 1
+  if ! _proxy_require_env 2>/dev/null; then
+    if ! _proxy_auto_setup; then
+      echo "error: proxy not configured and not running; run start_proxy first" >&2
+      return 1
+    fi
+  fi
   _proxy_is_up || return 1
   command claude "$@"
 }
@@ -99,7 +154,7 @@ select_fastest_relay() {
     encoded=$(printf '%s' "$node" | jq -sRr @uri)
     delay=$(curl -s "$api/proxies/$encoded" | jq -r '.history[-1].delay // 0')
 
-    if ! [[ "$delay" =~ ^[0-9]+$ ]] || [ "$delay" -le 0 ] || [ "$delay" -ge 99999 ]; then
+    if ! echo "$delay" | grep -qE '^[0-9]+$' || [ "$delay" -le 0 ] || [ "$delay" -ge 99999 ]; then
       echo "  $node: timeout/unavailable"
       continue
     fi
@@ -117,7 +172,7 @@ select_fastest_relay() {
     return 1
   fi
 
-  echo ""
+  echo
   echo "[ok] fastest node: $best_node (${best_delay}ms)"
 
   local payload
@@ -130,11 +185,25 @@ select_fastest_relay() {
 }
 
 _proxy_pidfile() {
-  echo "/tmp/mihomo.pid"
+  echo "/tmp/mihomo-${USER}.pid"
 }
 
 _proxy_logfile() {
-  echo "/tmp/mihomo.log"
+  echo "/tmp/mihomo-${USER}.log"
+}
+
+_proxy_portfile() {
+  echo "/tmp/mihomo-${USER}.port"
+}
+
+_proxy_parse_port() {
+  local config="$1"
+
+  if ! command -v grep >/dev/null 2>&1; then
+    return 1
+  fi
+
+  grep -E '^mixed-port:|^port:' "$config" 2>/dev/null | head -n1 | sed 's/.*: *//'
 }
 
 show_relay() {
@@ -176,9 +245,10 @@ proxy_logs_follow() {
 
 start_proxy() {
   local config="$1"
-  local pidfile logfile pid
+  local pidfile logfile portfile pid port new_pid
   pidfile="$(_proxy_pidfile)"
   logfile="$(_proxy_logfile)"
+  portfile="$(_proxy_portfile)"
 
   if ! command -v mihomo >/dev/null 2>&1; then
     echo "error: mihomo not found; install from https://github.com/MetaCubeX/mihomo/releases" >&2
@@ -193,6 +263,12 @@ start_proxy() {
     return 1
   fi
 
+  port=$(_proxy_parse_port "$config")
+  if [ -z "$port" ]; then
+    echo "error: cannot parse port from config (need mixed-port or port)" >&2
+    return 1
+  fi
+
   if [ -f "$pidfile" ]; then
     pid=$(cat "$pidfile" 2>/dev/null)
     if [ -n "$pid" ] && kill -0 "$pid" >/dev/null 2>&1; then
@@ -202,12 +278,34 @@ start_proxy() {
   fi
 
   nohup mihomo -f "$config" >"$logfile" 2>&1 &
-  echo $! > "$pidfile"
+  new_pid=$!
+  echo "$new_pid" > "$pidfile"
+  echo "$port" > "$portfile"
+
+  sleep 1
+  if ! kill -0 "$new_pid" 2>/dev/null; then
+    echo "error: mihomo failed to start, check $logfile" >&2
+    rm -f "$pidfile" "$portfile"
+    return 1
+  fi
+
+  if ! _proxy_check_port "127.0.0.1" "$port"; then
+    echo "error: proxy port $port not reachable after start" >&2
+    return 1
+  fi
+
+  export http_proxy="http://127.0.0.1:${port}"
+  export https_proxy="http://127.0.0.1:${port}"
+  export HTTP_PROXY="$http_proxy"
+  export HTTPS_PROXY="$https_proxy"
+
+  echo "proxy started (pid $new_pid, port $port)"
 }
 
 stop_proxy() {
-  local pidfile pid
+  local pidfile portfile pid i
   pidfile="$(_proxy_pidfile)"
+  portfile="$(_proxy_portfile)"
 
   if [ ! -f "$pidfile" ]; then
     echo "error: pidfile not found; proxy may not be running" >&2
@@ -222,10 +320,25 @@ stop_proxy() {
 
   if ! kill -0 "$pid" >/dev/null 2>&1; then
     echo "error: process not running (pid $pid)" >&2
-    rm -f "$pidfile"
+    rm -f "$pidfile" "$portfile"
     return 1
   fi
 
   kill "$pid" >/dev/null 2>&1
-  rm -f "$pidfile"
+
+  i=0
+  while kill -0 "$pid" 2>/dev/null && [ $i -lt 20 ]; do
+    sleep 0.5
+    i=$((i + 1))
+  done
+
+  if kill -0 "$pid" 2>/dev/null; then
+    echo "warning: process did not exit gracefully, sending SIGKILL" >&2
+    kill -9 "$pid" 2>/dev/null
+    sleep 1
+  fi
+
+  rm -f "$pidfile" "$portfile"
+  unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+  echo "proxy stopped"
 }
