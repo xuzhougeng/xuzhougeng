@@ -1,604 +1,933 @@
-// 规则定义
-const RULES_DEF = {
-  '过滤': [
-    { name: 'AdBlock', defaultAction: 'REJECT' },
-    { name: 'HTTPDNS', defaultAction: 'REJECT' },
-  ],
-  '国际流媒体': [
-    { name: 'Netflix', defaultAction: 'Proxy' },
-    { name: 'YouTube', defaultAction: 'Proxy' },
-    { name: 'Spotify', defaultAction: 'Proxy' },
-    { name: 'Disney Plus', defaultAction: 'Proxy' },
-    { name: 'Max', defaultAction: 'Proxy' },
-    { name: 'Amazon', defaultAction: 'Proxy' },
-    { name: 'Apple TV', defaultAction: 'Proxy' },
-    { name: 'Hulu', defaultAction: 'Proxy' },
-    { name: 'BBC iPlayer', defaultAction: 'Proxy' },
-    { name: 'Bahamut', defaultAction: 'Proxy' },
-  ],
-  '国内流媒体': [
-    { name: 'Bilibili', defaultAction: 'DIRECT' },
-    { name: 'IQIYI', defaultAction: 'DIRECT' },
-    { name: 'Youku', defaultAction: 'DIRECT' },
-    { name: 'Tencent Video', defaultAction: 'DIRECT' },
-    { name: 'Netease Music', defaultAction: 'DIRECT' },
-  ],
-  '社交通讯': [
-    { name: 'Telegram', defaultAction: 'Proxy' },
-    { name: 'Discord', defaultAction: 'Proxy' },
-    { name: 'TikTok', defaultAction: 'Proxy' },
-  ],
-  '服务': [
-    { name: 'AI Suite', defaultAction: 'Proxy' },
-    { name: 'Microsoft', defaultAction: 'Proxy' },
-    { name: 'Apple', defaultAction: 'Proxy' },
-    { name: 'Google FCM', defaultAction: 'Proxy' },
-    { name: 'Steam', defaultAction: 'DIRECT' },
-    { name: 'PayPal', defaultAction: 'Proxy' },
-    { name: 'Scholar', defaultAction: 'Proxy' },
-    { name: 'miHoYo', defaultAction: 'DIRECT' },
-  ],
-  '通用': [
-    { name: 'Special', defaultAction: 'DIRECT' },
-    { name: 'PROXY', defaultAction: 'Proxy' },
-    { name: 'Domestic', defaultAction: 'DIRECT' },
-    { name: 'Domestic IPs', defaultAction: 'DIRECT' },
-    { name: 'LAN', defaultAction: 'DIRECT' },
-  ],
-};
+import { RULES_DEF } from "../shared/mihomo/provider-catalog.mjs";
+import { coreAiRelay, extendedAiRelay, renderRulePackLines } from "../shared/mihomo/ai-rule-packs.mjs";
+import { parseYamlProxies, buildTargetProxyNode } from "../shared/mihomo/relay-parser.mjs";
+import {
+  buildRuleTargetOptions,
+  createDefaultClashmateState,
+  createDefaultTargetProxyDraft,
+  rewriteCustomRuleTargets,
+} from "../shared/mihomo/clashmate-state.mjs";
+import { buildClashmateConfig } from "../shared/mihomo/clashmate-builder.mjs";
 
-// URL 映射
-const PROVIDER_URLS = {
-  AdBlock: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/AdBlock.yaml',
-  HTTPDNS: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/HTTPDNS.yaml',
-  Special: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Special.yaml',
-  PROXY: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Proxy.yaml',
-  Domestic: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Domestic.yaml',
-  'Domestic IPs': 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Domestic%20IPs.yaml',
-  LAN: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/LAN.yaml',
-  Netflix: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Netflix.yaml',
-  Spotify: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Spotify.yaml',
-  YouTube: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/YouTube.yaml',
-  Max: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Max.yaml',
-  Bilibili: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Bilibili.yaml',
-  IQIYI: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/IQIYI.yaml',
-  'Netease Music': 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Netease%20Music.yaml',
-  'Tencent Video': 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Tencent%20Video.yaml',
-  Youku: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Youku.yaml',
-  Amazon: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Amazon.yaml',
-  'Apple TV': 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Apple%20TV.yaml',
-  Bahamut: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Bahamut.yaml',
-  'BBC iPlayer': 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/BBC%20iPlayer.yaml',
-  'Disney Plus': 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Disney%20Plus.yaml',
-  Hulu: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Media/Hulu.yaml',
-  Telegram: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Telegram.yaml',
-  Discord: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Discord.yaml',
-  Steam: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Steam.yaml',
-  TikTok: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/TikTok.yaml',
-  PayPal: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/PayPal.yaml',
-  Microsoft: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Microsoft.yaml',
-  'AI Suite': 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/AI%20Suite.yaml',
-  Apple: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Apple.yaml',
-  'Google FCM': 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Google%20FCM.yaml',
-  Scholar: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Scholar.yaml',
-  miHoYo: 'https://raw.dler.io/dler-io/Rules/main/Clash/Provider/miHoYo.yaml',
+const yaml = globalThis.jsyaml;
+
+if (!yaml) {
+  throw new Error("jsyaml is required for ClashMate");
+}
+
+const RULE_PACKS = {
+  coreAiRelay: {
+    label: "AI 核心规则",
+    description: "OpenAI / Claude 等核心 AI 域名集合。",
+    pack: coreAiRelay,
+  },
+  extendedAiRelay: {
+    label: "AI 扩展规则",
+    description: "在核心规则之外额外覆盖 Copilot、Gemini、Perplexity 等域名。",
+    pack: extendedAiRelay,
+  },
 };
 
 const $ = id => document.getElementById(id);
 
-let originalConfig = null;
-let proxyNames = []; // 包含获取的节点 + 手动添加的节点
-let fetchedProxyNames = []; // 仅从URL/文件获取的节点名
-let proxyGroups = [];
-let manualProxies = []; // 手动添加的节点
+const state = createDefaultClashmateState();
+const uiState = {
+  relayYamlText: "",
+  packTargets: {
+    coreAiRelay: state.aiRelayGroup,
+    extendedAiRelay: state.aiRelayGroup,
+  },
+};
 
-// 获取远程配置
-const fetchConfig = async url => {
-  const proxies = [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+function escapeHtml(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
+function defaultProviderTarget(rule) {
+  if (rule.defaultAction === "REJECT") {
+    return "REJECT";
+  }
+
+  if (rule.defaultAction === "DIRECT") {
+    return "DIRECT";
+  }
+
+  return "Proxy";
+}
+
+function normalizeRuleLine(line) {
+  const trimmed = String(line ?? "").trim();
+  if (!trimmed || trimmed.startsWith("#")) {
+    return null;
+  }
+
+  return trimmed.replace(/^-+\s*/, "");
+}
+
+function indentBlock(text, indentSize = 2) {
+  const padding = " ".repeat(indentSize);
+  return String(text ?? "")
+    .split(/\r?\n/)
+    .map(line => (line ? `${padding}${line}` : line))
+    .join("\n");
+}
+
+function getUpstreamProxyNames() {
+  return state.upstreamProxies.map(proxy => String(proxy?.name ?? "").trim()).filter(Boolean);
+}
+
+function createDefaultOrdinaryGroups(proxyNames = []) {
+  return [
+    { name: "Auto", type: "url-test", proxies: [...proxyNames] },
+    { name: "Proxy", type: "select", proxies: [...proxyNames] },
   ];
+}
+
+function createCustomOrdinaryGroup(proxyNames = []) {
+  return {
+    name: `Group${Math.max(1, state.ordinaryGroups.length - 1)}`,
+    type: "select",
+    proxies: [...proxyNames],
+  };
+}
+
+function buildAllRuleTargetOptions() {
+  const options = buildRuleTargetOptions({
+    ordinaryGroups: state.ordinaryGroups,
+    aiRelayGroup: state.aiRelayGroup,
+  });
+
+  if (!options.includes(state.relayGroup)) {
+    options.push(state.relayGroup);
+  }
+
+  return options.filter(Boolean);
+}
+
+function setStatus(id, type, message) {
+  const element = $(id);
+  element.hidden = false;
+  element.className = `status ${type}`;
+  element.textContent = message;
+}
+
+function clearStatus(id) {
+  const element = $(id);
+  element.hidden = true;
+  element.className = "status";
+  element.textContent = "";
+}
+
+function resetOutput() {
+  $("resultError").hidden = true;
+  $("resultError").textContent = "";
+  $("summaryOutput").hidden = true;
+  $("summaryOutput").textContent = "";
+  $("yamlOutput").hidden = true;
+  $("yamlOutput").textContent = "";
+  $("copyBtn").hidden = true;
+  $("downloadBtn").hidden = true;
+}
+
+function applyBaseConfig(config) {
+  $("cfgPort").value = config.port ?? 7893;
+  $("cfgSocksPort").value = config["socks-port"] ?? 7894;
+  $("cfgAllowLan").value = config["allow-lan"] === false ? "false" : "true";
+  $("cfgMode").value = config.mode ?? "rule";
+  $("cfgLogLevel").value = config["log-level"] ?? "info";
+  $("cfgController").value = config["external-controller"] ?? "0.0.0.0:9090";
+}
+
+function collectBaseConfig() {
+  return {
+    port: Number.parseInt($("cfgPort").value, 10) || 7893,
+    "socks-port": Number.parseInt($("cfgSocksPort").value, 10) || 7894,
+    "allow-lan": $("cfgAllowLan").value === "true",
+    mode: $("cfgMode").value,
+    "log-level": $("cfgLogLevel").value,
+    "external-controller": $("cfgController").value.trim() || "0.0.0.0:9090",
+  };
+}
+
+function showGeneratedSections() {
+  ["groupsSection", "relaySection", "targetsSection", "rulesSection", "outputSection"].forEach(id => {
+    $(id).hidden = false;
+  });
+}
+
+function initializeStateFromConfig(config) {
+  const nextState = createDefaultClashmateState();
+  const upstreamProxies = Array.isArray(config.proxies)
+    ? config.proxies.map(proxy => structuredClone(proxy))
+    : [];
+  const upstreamProxyNames = upstreamProxies.map(proxy => String(proxy?.name ?? "").trim()).filter(Boolean);
+  nextState.originalConfig = structuredClone(config);
+  nextState.upstreamProxies = upstreamProxies;
+  nextState.ordinaryGroups = createDefaultOrdinaryGroups(upstreamProxyNames);
+  nextState.targetProxies = [createDefaultTargetProxyDraft(nextState.relayGroup)];
+
+  Object.assign(state, nextState);
+
+  uiState.relayYamlText = "";
+  uiState.packTargets = {
+    coreAiRelay: nextState.aiRelayGroup,
+    extendedAiRelay: nextState.aiRelayGroup,
+  };
+
+  applyBaseConfig(config);
+  $("relayYamlInput").value = "";
+  $("customRulesInput").value = "";
+  clearStatus("relayStatus");
+  resetOutput();
+  showGeneratedSections();
+  renderAll();
+}
+
+async function fetchConfig(url) {
+  const proxies = [
+    inputUrl => `https://api.allorigins.win/raw?url=${encodeURIComponent(inputUrl)}`,
+    inputUrl => `https://corsproxy.io/?${encodeURIComponent(inputUrl)}`,
+  ];
+
   for (const makeUrl of proxies) {
     try {
-      const res = await fetch(makeUrl(url));
-      if (res.ok) return await res.text();
+      const response = await fetch(makeUrl(url));
+      if (response.ok) {
+        return await response.text();
+      }
     } catch {}
   }
-  const direct = await fetch(url);
-  if (direct.ok) return await direct.text();
-  throw new Error('无法获取配置');
-};
 
-// 更新所有节点名列表
-const updateProxyNames = () => {
-  proxyNames = [...fetchedProxyNames, ...manualProxies.map(p => p.name)];
-};
-
-// 处理配置文本
-const processConfig = text => {
-  const config = jsyaml.load(text);
-  if (!config?.proxies?.length) {
-    throw new Error('未找到节点');
+  const directResponse = await fetch(url);
+  if (directResponse.ok) {
+    return await directResponse.text();
   }
-  
-  originalConfig = config;
-  fetchedProxyNames = config.proxies.map(p => p.name);
-  updateProxyNames();
-  
-  // 默认创建 Auto 组
-  proxyGroups = [{
-    name: 'Auto',
-    type: 'url-test',
-    proxies: [...proxyNames],
-  }];
 
-  // 填充基础配置到输入框
-  if (config.port) $('cfgPort').value = config.port;
-  if (config['socks-port']) $('cfgSocksPort').value = config['socks-port'];
-  if (config['allow-lan'] !== undefined) $('cfgAllowLan').value = config['allow-lan'] ? 'true' : 'false';
-  if (config.mode) $('cfgMode').value = config.mode;
-  if (config['log-level']) $('cfgLogLevel').value = config['log-level'];
-  if (config['external-controller']) $('cfgController').value = config['external-controller'];
+  throw new Error("无法获取配置");
+}
 
-  renderProxyList();
-  renderManualProxies();
-  renderGroups();
-  renderRules();
-  
-  $('manualProxySection').hidden = false;
-  $('groupsSection').hidden = false;
-  $('rulesSection').hidden = false;
-  $('outputSection').hidden = false;
-  
-  return proxyNames.length;
-};
+function processConfig(text) {
+  const config = yaml.load(text);
+  if (!config?.proxies?.length) {
+    throw new Error("未找到节点");
+  }
 
-// 渲染节点列表
-const renderProxyList = () => {
-  $('proxyList').hidden = false;
-  $('proxyList').innerHTML = proxyNames.map(n => 
-    `<span class="proxy-tag">${n}</span>`
-  ).join('');
-};
+  initializeStateFromConfig(config);
+  return state.upstreamProxies.length;
+}
 
-// 渲染代理组
-const renderGroups = () => {
-  const container = $('groupsContainer');
-  container.innerHTML = '';
-  
-  proxyGroups.forEach((g, idx) => {
-    const div = document.createElement('div');
-    div.className = 'group-item';
-    
-    const isAuto = g.name === 'Auto' && idx === 0;
-    
-    div.innerHTML = `
-      <div class="group-header">
-        <input type="text" class="group-name" value="${g.name}" placeholder="组名" ${isAuto ? 'readonly' : ''}>
-        <select class="group-type">
-          <option value="url-test" ${g.type === 'url-test' ? 'selected' : ''}>url-test</option>
-          <option value="select" ${g.type === 'select' ? 'selected' : ''}>select</option>
-          <option value="fallback" ${g.type === 'fallback' ? 'selected' : ''}>fallback</option>
-          <option value="load-balance" ${g.type === 'load-balance' ? 'selected' : ''}>load-balance</option>
-        </select>
-        <button class="btn-sm select-all-proxies">全选</button>
-        <button class="btn-sm invert-proxies">反选</button>
-        ${!isAuto ? '<button class="btn-sm btn-danger del-group">删除</button>' : ''}
+function renderProxyList() {
+  const proxyList = $("proxyList");
+  proxyList.hidden = false;
+  proxyList.innerHTML = state.upstreamProxies
+    .map(proxy => `<span class="proxy-tag">${escapeHtml(proxy.name ?? "(未命名)")}</span>`)
+    .join("");
+}
+
+function rewriteReferencedTargets(renameMap) {
+  const normalizedEntries = Object.entries(renameMap).filter(([oldName, newName]) => oldName && newName && oldName !== newName);
+  if (!normalizedEntries.length) {
+    return;
+  }
+
+  state.customRules = rewriteCustomRuleTargets(state.customRules, Object.fromEntries(normalizedEntries));
+  $("customRulesInput").value = state.customRules.join("\n");
+
+  normalizedEntries.forEach(([oldName, newName]) => {
+    Object.entries(state.selectedProviders).forEach(([providerName, target]) => {
+      if (target === oldName) {
+        state.selectedProviders[providerName] = newName;
+      }
+    });
+
+    Object.keys(uiState.packTargets).forEach(packName => {
+      if (uiState.packTargets[packName] === oldName) {
+        uiState.packTargets[packName] = newName;
+      }
+    });
+  });
+}
+
+function renderOrdinaryGroups() {
+  const container = $("groupsContainer");
+  const upstreamProxyNames = getUpstreamProxyNames();
+
+  container.innerHTML = state.ordinaryGroups
+    .map((group, index) => {
+      const isReserved = group.name === "Auto" || group.name === "Proxy";
+      return `
+        <div class="group-item" data-group-index="${index}">
+          <div class="group-header">
+            <input
+              type="text"
+              class="group-name"
+              value="${escapeHtml(group.name)}"
+              placeholder="组名"
+              ${isReserved ? "readonly" : ""}
+            >
+            <select class="group-type">
+              <option value="url-test" ${group.type === "url-test" ? "selected" : ""}>url-test</option>
+              <option value="select" ${group.type === "select" ? "selected" : ""}>select</option>
+              <option value="fallback" ${group.type === "fallback" ? "selected" : ""}>fallback</option>
+              <option value="load-balance" ${group.type === "load-balance" ? "selected" : ""}>load-balance</option>
+            </select>
+            <button class="btn-sm select-all-proxies">全选</button>
+            <button class="btn-sm invert-proxies">反选</button>
+            ${isReserved ? "" : '<button class="btn-sm btn-danger del-group">删除</button>'}
           </div>
-      <div class="group-proxies">
-        ${proxyNames.map(p => `
-          <label class="proxy-checkbox ${g.proxies.includes(p) ? 'selected' : ''}">
-            <input type="checkbox" value="${p}" ${g.proxies.includes(p) ? 'checked' : ''}>
-            ${p}
-            </label>
-        `).join('')}
+          <div class="group-proxies">
+            ${upstreamProxyNames
+              .map(
+                proxyName => `
+                  <label class="proxy-checkbox ${group.proxies.includes(proxyName) ? "selected" : ""}">
+                    <input type="checkbox" value="${escapeHtml(proxyName)}" ${group.proxies.includes(proxyName) ? "checked" : ""}>
+                    ${escapeHtml(proxyName)}
+                  </label>
+                `
+              )
+              .join("")}
+          </div>
         </div>
       `;
-    
-    // 绑定事件
-    const nameInput = div.querySelector('.group-name');
-    nameInput.addEventListener('input', e => {
-      proxyGroups[idx].name = e.target.value;
-      renderRules();
-      renderManualProxies();
-    });
-    
-    const typeSelect = div.querySelector('.group-type');
-    typeSelect.addEventListener('change', e => {
-      proxyGroups[idx].type = e.target.value;
-    });
-    
-    const delBtn = div.querySelector('.del-group');
-    if (delBtn) {
-      delBtn.addEventListener('click', () => {
-        proxyGroups.splice(idx, 1);
-        renderGroups();
-        renderRules();
-        renderManualProxies();
+    })
+    .join("");
+
+  state.ordinaryGroups.forEach((group, index) => {
+    const root = container.querySelector(`[data-group-index="${index}"]`);
+    if (!root) {
+      return;
+    }
+
+    const nameInput = root.querySelector(".group-name");
+    if (!nameInput.readOnly) {
+      nameInput.addEventListener("input", event => {
+        const oldName = state.ordinaryGroups[index].name;
+        const nextName = event.target.value.trim();
+        state.ordinaryGroups[index].name = nextName;
+        rewriteReferencedTargets({ [oldName]: nextName });
+        renderRulePacks();
+        renderProviders();
+        resetOutput();
       });
     }
-    
-    // 全选
-    div.querySelector('.select-all-proxies').addEventListener('click', () => {
-      proxyGroups[idx].proxies = [...proxyNames];
-      div.querySelectorAll('.proxy-checkbox').forEach(label => {
-        label.classList.add('selected');
-        label.querySelector('input').checked = true;
-      });
+
+    root.querySelector(".group-type").addEventListener("change", event => {
+      state.ordinaryGroups[index].type = event.target.value;
+      resetOutput();
     });
-    
-    // 反选
-    div.querySelector('.invert-proxies').addEventListener('click', () => {
-      div.querySelectorAll('.proxy-checkbox').forEach(label => {
-        const checkbox = label.querySelector('input');
-        checkbox.checked = !checkbox.checked;
-        label.classList.toggle('selected', checkbox.checked);
+
+    const deleteButton = root.querySelector(".del-group");
+    if (deleteButton) {
+      deleteButton.addEventListener("click", () => {
+        const oldName = state.ordinaryGroups[index].name;
+        state.ordinaryGroups.splice(index, 1);
+        rewriteReferencedTargets({ [oldName]: "Proxy" });
+        renderOrdinaryGroups();
+        renderRulePacks();
+        renderProviders();
+        resetOutput();
       });
-      proxyGroups[idx].proxies = proxyNames.filter(p => 
-        div.querySelector(`input[value="${p}"]`).checked
+    }
+
+    root.querySelector(".select-all-proxies").addEventListener("click", () => {
+      state.ordinaryGroups[index].proxies = [...upstreamProxyNames];
+      renderOrdinaryGroups();
+      resetOutput();
+    });
+
+    root.querySelector(".invert-proxies").addEventListener("click", () => {
+      state.ordinaryGroups[index].proxies = upstreamProxyNames.filter(
+        proxyName => !state.ordinaryGroups[index].proxies.includes(proxyName)
       );
+      renderOrdinaryGroups();
+      resetOutput();
     });
-    
-    // 节点复选框
-    div.querySelectorAll('.proxy-checkbox').forEach(label => {
-      const checkbox = label.querySelector('input');
-      label.addEventListener('click', e => {
-        e.preventDefault();
-        checkbox.checked = !checkbox.checked;
-        label.classList.toggle('selected', checkbox.checked);
-        
+
+    root.querySelectorAll(".proxy-checkbox").forEach(label => {
+      const checkbox = label.querySelector("input");
+      label.addEventListener("click", event => {
+        event.preventDefault();
         const proxyName = checkbox.value;
-        if (checkbox.checked) {
-          if (!proxyGroups[idx].proxies.includes(proxyName)) {
-            proxyGroups[idx].proxies.push(proxyName);
-          }
+        const proxies = new Set(state.ordinaryGroups[index].proxies);
+
+        if (proxies.has(proxyName)) {
+          proxies.delete(proxyName);
         } else {
-          proxyGroups[idx].proxies = proxyGroups[idx].proxies.filter(x => x !== proxyName);
+          proxies.add(proxyName);
         }
+
+        state.ordinaryGroups[index].proxies = upstreamProxyNames.filter(name => proxies.has(name));
+        renderOrdinaryGroups();
+        resetOutput();
       });
     });
-    
-    container.appendChild(div);
   });
-};
+}
 
-// 新建分组
-$('addGroupBtn').addEventListener('click', () => {
-  proxyGroups.push({
-    name: `Group${proxyGroups.length}`,
-    type: 'select',
-    proxies: [...proxyNames],
-  });
-  renderGroups();
-  renderRules();
-});
+function renderRelaySection() {
+  $("relayGroupName").value = state.relayGroup;
+  $("relayGroupType").value = state.relayGroupType;
+  $("relayYamlInput").value = uiState.relayYamlText;
 
-// 渲染手动添加的节点
-const renderManualProxies = () => {
-  const container = $('manualProxiesContainer');
-  container.innerHTML = '';
-  
-  if (manualProxies.length === 0) return;
-  
-  // 可用的 dialer-proxy 选项
-  const availableDialers = ['', 'DIRECT', ...proxyGroups.map(g => g.name).filter(Boolean), ...fetchedProxyNames];
-  
-  manualProxies.forEach((mp, idx) => {
-    const div = document.createElement('div');
-    div.className = 'manual-proxy-item';
-    
-    div.innerHTML = `
-      <div class="proxy-header">
-        <strong>节点 #${idx + 1}</strong>
-        <select class="mp-type">
-          <option value="socks5" ${mp.type === 'socks5' ? 'selected' : ''}>SOCKS5</option>
-          <option value="http" ${mp.type === 'http' ? 'selected' : ''}>HTTP</option>
-          <option value="trojan" ${mp.type === 'trojan' ? 'selected' : ''}>Trojan</option>
-          <option value="ss" ${mp.type === 'ss' ? 'selected' : ''}>Shadowsocks</option>
-        </select>
-        <button class="btn-sm btn-danger del-manual">删除</button>
-      </div>
-      <div class="field-group">
-        <label>名称 <input type="text" class="mp-name" value="${mp.name}" placeholder="MyProxy"></label>
-        <label>服务器 <input type="text" class="mp-server" value="${mp.server}" placeholder="192.168.1.1"></label>
-        <label>端口 <input type="number" class="mp-port" value="${mp.port}" placeholder="1080"></label>
-        <label>用户名 <input type="text" class="mp-username" value="${mp.username || ''}" placeholder="可选"></label>
-        <label>密码 <input type="text" class="mp-password" value="${mp.password || ''}" placeholder="可选"></label>
-        <label>dialer-proxy
-          <select class="mp-dialer">
-            ${availableDialers.map(d => `<option value="${d}" ${d === (mp.dialerProxy || '') ? 'selected' : ''}>${d || '无'}</option>`).join('')}
-          </select>
-        </label>
-      </div>
-    `;
-    
-    // 绑定事件
-    div.querySelector('.mp-type').addEventListener('change', e => {
-      manualProxies[idx].type = e.target.value;
-    });
-    
-    div.querySelector('.mp-dialer').addEventListener('change', e => {
-      manualProxies[idx].dialerProxy = e.target.value;
-    });
-    
-    div.querySelector('.del-manual').addEventListener('click', () => {
-      manualProxies.splice(idx, 1);
-      updateProxyNames();
-      renderProxyList();
-      renderManualProxies();
-      renderGroups();
-    });
-    
-    const nameInput = div.querySelector('.mp-name');
-    nameInput.addEventListener('input', e => {
-      const oldName = manualProxies[idx].name;
-      const newName = e.target.value;
-      manualProxies[idx].name = newName;
-      
-      // 更新代理组中的引用
-      proxyGroups.forEach(g => {
-        const oldIdx = g.proxies.indexOf(oldName);
-        if (oldIdx !== -1) {
-          g.proxies[oldIdx] = newName;
-        }
+  const relayList = $("relayList");
+  if (!state.relayProxies.length) {
+    relayList.hidden = true;
+    relayList.innerHTML = "";
+    return;
+  }
+
+  relayList.hidden = false;
+  relayList.innerHTML = state.relayProxies
+    .map(
+      proxy => `
+        <article class="proxy-card">
+          <strong>${escapeHtml(proxy.name ?? "(未命名)")}</strong>
+          <div class="proxy-card-meta">
+            <span>${escapeHtml(proxy.type ?? "unknown")}</span>
+            <span>${escapeHtml(proxy.server ?? "")}</span>
+            <span>${escapeHtml(proxy.port ?? "")}</span>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+}
+
+function renderTargetProxies() {
+  $("aiRelayGroupName").value = state.aiRelayGroup;
+
+  const container = $("targetsContainer");
+  if (!state.targetProxies.length) {
+    container.innerHTML = `<div class="empty-state">尚未创建目标节点。点击“新建目标节点”添加一个目标出口。</div>`;
+    return;
+  }
+
+  container.innerHTML = state.targetProxies
+    .map(
+      (proxy, index) => `
+        <article class="target-proxy-item" data-target-index="${index}">
+          <div class="target-proxy-header">
+            <strong>目标节点 #${index + 1}</strong>
+            <button class="btn-sm btn-danger" data-target-delete="${index}">删除</button>
+          </div>
+          <div class="target-grid">
+            <label>
+              <span>名称</span>
+              <input type="text" data-target-field="name" value="${escapeHtml(proxy.name)}" placeholder="target-us">
+            </label>
+            <label>
+              <span>类型</span>
+              <input type="text" data-target-field="type" value="${escapeHtml(proxy.type)}" placeholder="socks5">
+            </label>
+            <label>
+              <span>服务器</span>
+              <input type="text" data-target-field="server" value="${escapeHtml(proxy.server)}" placeholder="target.example.com">
+            </label>
+            <label>
+              <span>端口</span>
+              <input type="number" data-target-field="port" value="${escapeHtml(proxy.port)}" placeholder="1080">
+            </label>
+            <label>
+              <span>用户名</span>
+              <input type="text" data-target-field="username" value="${escapeHtml(proxy.username ?? "")}" placeholder="可选">
+            </label>
+            <label>
+              <span>密码</span>
+              <input type="text" data-target-field="password" value="${escapeHtml(proxy.password ?? "")}" placeholder="可选">
+            </label>
+            <label>
+              <span>dialer-proxy</span>
+              <input type="text" value="${escapeHtml(proxy["dialer-proxy"] ?? "")}" readonly>
+            </label>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+  state.targetProxies.forEach((proxy, index) => {
+    const card = container.querySelector(`[data-target-index="${index}"]`);
+    if (!card) {
+      return;
+    }
+
+    card.querySelectorAll("[data-target-field]").forEach(input => {
+      input.addEventListener("input", event => {
+        const field = event.target.dataset.targetField;
+        state.targetProxies[index][field] = event.target.value;
+        resetOutput();
       });
-      
-      updateProxyNames();
-      renderProxyList();
-      renderGroups();
     });
-    
-    div.querySelector('.mp-server').addEventListener('input', e => {
-      manualProxies[idx].server = e.target.value;
-    });
-    
-    div.querySelector('.mp-port').addEventListener('input', e => {
-      manualProxies[idx].port = e.target.value;
-    });
-    
-    div.querySelector('.mp-username').addEventListener('input', e => {
-      manualProxies[idx].username = e.target.value;
-    });
-    
-    div.querySelector('.mp-password').addEventListener('input', e => {
-      manualProxies[idx].password = e.target.value;
-    });
-    
-    container.appendChild(div);
-  });
-};
 
-// 新建手动节点
-$('addManualProxyBtn').addEventListener('click', () => {
-  const newProxy = {
-    name: `Manual${manualProxies.length + 1}`,
-    type: 'socks5',
-    server: '',
-    port: '',
-    username: '',
-    password: '',
-    dialerProxy: '',
-  };
-  manualProxies.push(newProxy);
-  updateProxyNames();
-  renderProxyList();
-  renderManualProxies();
-  renderGroups();
-});
+    card.querySelector(`[data-target-delete="${index}"]`).addEventListener("click", () => {
+      state.targetProxies.splice(index, 1);
+      renderTargetProxies();
+      resetOutput();
+    });
 
-// 获取所有可用的代理选项
-const getProxyOptions = () => {
-  const options = ['DIRECT', 'REJECT'];
-  proxyGroups.forEach(g => {
-    if (g.name && !options.includes(g.name)) {
-      options.push(g.name);
+    if (!proxy["dialer-proxy"]) {
+      state.targetProxies[index]["dialer-proxy"] = state.relayGroup;
     }
   });
-  return options;
-};
+}
 
-// 渲染规则
-const renderRules = () => {
-  const options = getProxyOptions();
-  
-  let html = '';
-  Object.entries(RULES_DEF).forEach(([category, rules]) => {
-    html += `<div class="rule-category"><h3>${category}</h3>`;
-    rules.forEach(rule => {
-      const defaultVal = rule.defaultAction === 'REJECT' ? 'REJECT' 
-        : rule.defaultAction === 'DIRECT' ? 'DIRECT' 
-        : options.find(o => o !== 'DIRECT' && o !== 'REJECT') || 'DIRECT';
-      
-      html += `
-        <div class="rule-row">
+function renderRulePacks() {
+  const options = buildAllRuleTargetOptions();
+  const optionsMarkup = target =>
+    options
+      .map(option => `<option value="${escapeHtml(option)}" ${option === target ? "selected" : ""}>${escapeHtml(option)}</option>`)
+      .join("");
+
+  const container = $("builtInRulePacks");
+  container.innerHTML = Object.entries(RULE_PACKS)
+    .map(([packName, metadata]) => {
+      const enabled = Boolean(state.selectedRulePacks[packName]);
+      const selectedTarget = options.includes(uiState.packTargets[packName]) ? uiState.packTargets[packName] : state.aiRelayGroup;
+      uiState.packTargets[packName] = selectedTarget;
+
+      return `
+        <div class="rule-pack-row">
           <label>
-            <input type="checkbox" data-rule="${rule.name}">
-            ${rule.name}
+            <input type="checkbox" data-pack-toggle="${packName}" ${enabled ? "checked" : ""}>
+            <span>
+              ${escapeHtml(metadata.label)}
+              <small>${escapeHtml(metadata.description)}</small>
+            </span>
           </label>
-          <select data-rule-select="${rule.name}">
-            ${options.map(o => `<option value="${o}" ${o === defaultVal ? 'selected' : ''}>${o}</option>`).join('')}
+          <select data-pack-target="${packName}">
+            ${optionsMarkup(selectedTarget)}
+          </select>
+        </div>
+      `;
+    })
+    .join("");
+
+  Object.keys(RULE_PACKS).forEach(packName => {
+    const toggle = container.querySelector(`[data-pack-toggle="${packName}"]`);
+    const select = container.querySelector(`[data-pack-target="${packName}"]`);
+
+    toggle.addEventListener("change", event => {
+      state.selectedRulePacks[packName] = event.target.checked;
+      resetOutput();
+    });
+
+    select.addEventListener("change", event => {
+      uiState.packTargets[packName] = event.target.value;
+      resetOutput();
+    });
+  });
+}
+
+function renderProviders() {
+  const options = buildAllRuleTargetOptions();
+  const optionMarkup = selected =>
+    options
+      .map(option => `<option value="${escapeHtml(option)}" ${option === selected ? "selected" : ""}>${escapeHtml(option)}</option>`)
+      .join("");
+
+  let html = "";
+  Object.entries(RULES_DEF).forEach(([category, rules]) => {
+    html += `<div class="rule-category"><h3>${escapeHtml(category)}</h3>`;
+    rules.forEach(rule => {
+      const enabled = Object.hasOwn(state.selectedProviders, rule.name);
+      const selectedTarget = options.includes(state.selectedProviders[rule.name])
+        ? state.selectedProviders[rule.name]
+        : defaultProviderTarget(rule);
+
+      if (enabled) {
+        state.selectedProviders[rule.name] = selectedTarget;
+      }
+
+      html += `
+        <div class="rule-row" data-provider-row="${escapeHtml(rule.name)}">
+          <label>
+            <input type="checkbox" data-provider-check="${escapeHtml(rule.name)}" ${enabled ? "checked" : ""}>
+            ${escapeHtml(rule.name)}
+          </label>
+          <select data-provider-target="${escapeHtml(rule.name)}">
+            ${optionMarkup(selectedTarget)}
           </select>
         </div>
       `;
     });
-    html += '</div>';
+    html += "</div>";
   });
-  
-  $('rulesContainer').innerHTML = html;
-};
 
-// 全选/清空
-$('selectAll').addEventListener('click', () => {
-  document.querySelectorAll('[data-rule]').forEach(cb => cb.checked = true);
-});
+  const container = $("rulesContainer");
+  container.innerHTML = html;
 
-$('selectNone').addEventListener('click', () => {
-  document.querySelectorAll('[data-rule]').forEach(cb => cb.checked = false);
-});
+  Object.values(RULES_DEF)
+    .flat()
+    .forEach(rule => {
+      const check = container.querySelector(`[data-provider-check="${rule.name}"]`);
+      const select = container.querySelector(`[data-provider-target="${rule.name}"]`);
 
-// URL 获取
-$('fetchBtn').addEventListener('click', async () => {
-  const url = $('configUrl').value.trim();
-  if (!url) return;
+      check.addEventListener("change", event => {
+        if (event.target.checked) {
+          state.selectedProviders[rule.name] = select.value;
+        } else {
+          delete state.selectedProviders[rule.name];
+        }
+        resetOutput();
+      });
 
-  $('fetchBtn').disabled = true;
-  $('proxyStatus').hidden = false;
-  $('proxyStatus').className = 'status';
-  $('proxyStatus').textContent = '正在获取...';
+      select.addEventListener("change", event => {
+        state.selectedProviders[rule.name] = event.target.value;
+        check.checked = true;
+        resetOutput();
+      });
+    });
+}
+
+function renderAll() {
+  renderProxyList();
+  renderOrdinaryGroups();
+  renderRelaySection();
+  renderTargetProxies();
+  renderRulePacks();
+  renderProviders();
+}
+
+function syncRelayGroupReferences(oldName, nextName) {
+  state.targetProxies = state.targetProxies.map(proxy => ({
+    ...proxy,
+    "dialer-proxy": nextName,
+  }));
+  rewriteReferencedTargets({ [oldName]: nextName });
+}
+
+function syncAiRelayReferences(oldName, nextName) {
+  rewriteReferencedTargets({ [oldName]: nextName });
+}
+
+function parseRelayYamlText(text) {
+  const trimmed = String(text ?? "").trim();
+  const candidates = [text];
+
+  if (trimmed.startsWith("-")) {
+    candidates.unshift(`proxies:\n${indentBlock(text, 2)}`);
+  }
+
+  for (const candidate of candidates) {
+    const proxies = parseYamlProxies(candidate);
+    if (proxies.length) {
+      return proxies;
+    }
+  }
+
+  return [];
+}
+
+function reconstructRelayProxy(raw) {
+  const parsed = yaml.load(`proxies:\n${raw}`);
+  const proxy = parsed?.proxies?.[0];
+
+  if (!proxy || typeof proxy !== "object") {
+    throw new Error("Relay YAML 中存在无法识别的节点");
+  }
+
+  return proxy;
+}
+
+function buildPreparedTargetProxies() {
+  return state.targetProxies
+    .map(proxy => {
+      const normalized = buildTargetProxyNode({
+        ...proxy,
+        dialerProxy: state.relayGroup,
+      });
+      normalized["dialer-proxy"] = state.relayGroup;
+      return normalized;
+    })
+    .filter(proxy => proxy.name && proxy.type && proxy.server && proxy.port);
+}
+
+function buildPreparedOrdinaryGroups() {
+  return state.ordinaryGroups.map(group => ({
+    name: String(group?.name ?? "").trim(),
+    type: String(group?.type ?? "").trim() || "select",
+    proxies: Array.isArray(group?.proxies) ? group.proxies.map(proxyName => String(proxyName ?? "").trim()).filter(Boolean) : [],
+  }));
+}
+
+function materializeRulePacks() {
+  const selectedRulePacks = Object.fromEntries(Object.keys(RULE_PACKS).map(packName => [packName, false]));
+  const extraLines = [];
+  const enabledTargets = [];
+
+  Object.entries(RULE_PACKS).forEach(([packName, metadata]) => {
+    if (!state.selectedRulePacks[packName]) {
+      return;
+    }
+
+    const target = uiState.packTargets[packName] || state.aiRelayGroup;
+    enabledTargets.push({ packName, target });
+
+    if (target === state.aiRelayGroup) {
+      selectedRulePacks[packName] = true;
+      return;
+    }
+
+    renderRulePackLines(metadata.pack, target).forEach(line => {
+      const normalized = normalizeRuleLine(line);
+      if (normalized) {
+        extraLines.push(normalized);
+      }
+    });
+  });
+
+  return { selectedRulePacks, extraLines, enabledTargets };
+}
+
+function renderSummary(summary, context) {
+  const providerTargets = Object.entries(summary.providerTargets);
+  const builtInPacks = context.enabledTargets.length
+    ? context.enabledTargets.map(item => `${RULE_PACKS[item.packName].label} -> ${item.target}`).join(", ")
+    : "无";
+  const providerSummary = providerTargets.length
+    ? providerTargets.map(([name, target]) => `${name} -> ${target}`).join(", ")
+    : "无";
+
+  $("summaryOutput").hidden = false;
+  $("summaryOutput").textContent = [
+    `上游节点: ${summary.proxyPools.upstream.length}`,
+    `Relay 节点: ${summary.proxyPools.relay.length}`,
+    `目标节点: ${summary.proxyPools.target.length}`,
+    `保留组: ${summary.groups.ordinary.join(", ")}`,
+    `Relay 组: ${summary.groups.relay} (${context.relayGroupType})`,
+    `目标组: ${summary.groups.aiRelay}`,
+    `内置规则包: ${builtInPacks}`,
+    `Providers: ${providerSummary}`,
+    `自定义规则: ${summary.customRuleCount}`,
+    `总规则数: ${summary.ruleCount}`,
+    context.ignoredTargets > 0 ? `已忽略未填写完整的目标节点: ${context.ignoredTargets}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function handleFetch() {
+  const url = $("configUrl").value.trim();
+  if (!url) {
+    return;
+  }
+
+  $("fetchBtn").disabled = true;
+  setStatus("proxyStatus", "", "正在获取...");
 
   try {
     const text = await fetchConfig(url);
     const count = processConfig(text);
-    $('proxyStatus').className = 'status success';
-    $('proxyStatus').textContent = `✓ 获取到 ${count} 个节点`;
-  } catch (err) {
-    $('proxyStatus').className = 'status error';
-    $('proxyStatus').textContent = `✗ ${err.message}`;
+    setStatus("proxyStatus", "success", `✓ 获取到 ${count} 个上游节点`);
+  } catch (error) {
+    setStatus("proxyStatus", "error", `✗ ${error.message}`);
   } finally {
-    $('fetchBtn').disabled = false;
+    $("fetchBtn").disabled = false;
   }
-});
+}
 
-// 文件上传
-$('fileInput').addEventListener('change', e => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  
-  $('proxyStatus').hidden = false;
-  $('proxyStatus').className = 'status';
-  $('proxyStatus').textContent = '正在读取文件...';
-  
+function handleFileUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  setStatus("proxyStatus", "", "正在读取文件...");
+
   const reader = new FileReader();
-  reader.onload = evt => {
+  reader.onload = loadEvent => {
     try {
-      const count = processConfig(evt.target.result);
-      $('proxyStatus').className = 'status success';
-      $('proxyStatus').textContent = `✓ 从文件读取 ${count} 个节点`;
-    } catch (err) {
-      $('proxyStatus').className = 'status error';
-      $('proxyStatus').textContent = `✗ ${err.message}`;
+      const count = processConfig(loadEvent.target.result);
+      setStatus("proxyStatus", "success", `✓ 从文件读取 ${count} 个上游节点`);
+    } catch (error) {
+      setStatus("proxyStatus", "error", `✗ ${error.message}`);
     }
   };
   reader.readAsText(file);
-});
+  event.target.value = "";
+}
 
-// 生成配置
-$('generateBtn').addEventListener('click', () => {
-  if (!originalConfig) return;
+function handleRelayParse() {
+  uiState.relayYamlText = $("relayYamlInput").value;
 
-  // 收集基础配置
-  const baseConfig = {
-    port: parseInt($('cfgPort').value) || 7893,
-    'socks-port': parseInt($('cfgSocksPort').value) || 7894,
-    'allow-lan': $('cfgAllowLan').value === 'true',
-    mode: $('cfgMode').value,
-    'log-level': $('cfgLogLevel').value,
-    'external-controller': $('cfgController').value || '0.0.0.0:9090',
-  };
+  if (!uiState.relayYamlText.trim()) {
+    state.relayProxies = [];
+    clearStatus("relayStatus");
+    renderRelaySection();
+    resetOutput();
+    return;
+  }
 
-  // 收集选中的规则
-  const selectedRules = [];
-  document.querySelectorAll('[data-rule]:checked').forEach(cb => {
-    const name = cb.dataset.rule;
-    const action = document.querySelector(`[data-rule-select="${name}"]`).value;
-    selectedRules.push({ name, action });
-  });
+  try {
+    const proxies = parseRelayYamlText(uiState.relayYamlText);
+    if (!proxies.length) {
+      throw new Error("未解析到任何 Relay 节点");
+    }
 
-  // 构建手动添加的节点
-  const manualProxyNodes = manualProxies
-    .filter(mp => mp.name && mp.server && mp.port)
-    .map(mp => {
-      const node = {
-        name: mp.name,
-        type: mp.type,
-        server: mp.server,
-        port: parseInt(mp.port),
-      };
-      if (mp.username) node.username = mp.username;
-      if (mp.password) node.password = mp.password;
-      if (mp.dialerProxy) node['dialer-proxy'] = mp.dialerProxy;
-      if (mp.type === 'socks5' || mp.type === 'trojan') {
-        node.udp = true;
-      }
-      return node;
-    });
+    state.relayProxies = proxies.map(proxy => reconstructRelayProxy(proxy.raw));
+    renderRelaySection();
+    setStatus("relayStatus", "success", `✓ 解析到 ${state.relayProxies.length} 个 Relay 节点`);
+    resetOutput();
+  } catch (error) {
+    setStatus("relayStatus", "error", `✗ ${error.message}`);
+  }
+}
 
-  // 合并原始节点和手动节点
-  const allProxies = [...originalConfig.proxies, ...manualProxyNodes];
+function handleRelayClear() {
+  uiState.relayYamlText = "";
+  state.relayProxies = [];
+  $("relayYamlInput").value = "";
+  renderRelaySection();
+  clearStatus("relayStatus");
+  resetOutput();
+}
 
-  // 构建 proxy-groups
-  const finalGroups = proxyGroups.filter(g => g.name && g.proxies.length).map(g => {
-    const base = {
-      name: g.name,
-      type: g.type,
-      proxies: g.proxies,
+function handleGenerate() {
+  if (!state.originalConfig || typeof state.originalConfig !== "object") {
+    return;
+  }
+
+  resetOutput();
+
+  try {
+    const preparedTargets = buildPreparedTargetProxies();
+    const ignoredTargets = state.targetProxies.length - preparedTargets.length;
+    const { selectedRulePacks, extraLines, enabledTargets } = materializeRulePacks();
+    const buildState = {
+      ...state,
+      originalConfig: {
+        ...structuredClone(state.originalConfig),
+        ...collectBaseConfig(),
+      },
+      ordinaryGroups: buildPreparedOrdinaryGroups(),
+      upstreamProxies: state.upstreamProxies.map(proxy => structuredClone(proxy)),
+      relayProxies: state.relayProxies.map(proxy => structuredClone(proxy)),
+      targetProxies: preparedTargets,
+      selectedProviders: { ...state.selectedProviders },
+      selectedRulePacks,
+      customRules: [...state.customRules, ...extraLines],
     };
-    if (g.type === 'url-test' || g.type === 'fallback') {
-      base.url = 'http://www.gstatic.com/generate_204';
-      base.interval = 300;
-    }
-    return base;
-  });
 
-  // 构建 rule-providers
-  const ruleProviders = {};
-  selectedRules.forEach(r => {
-    if (PROVIDER_URLS[r.name]) {
-      ruleProviders[r.name] = {
-        type: 'http',
-        behavior: 'classical',
-        url: PROVIDER_URLS[r.name],
-        path: `./Rules/${r.name.replace(/\s+/g, '_')}`,
-        interval: 86400,
-      };
-    }
-  });
+    const { config, summary } = buildClashmateConfig(buildState);
 
-  // 构建 rules
-  const rules = selectedRules
-    .filter(r => PROVIDER_URLS[r.name])
-    .map(r => `RULE-SET,${r.name},${r.action}`);
-  rules.push('GEOIP,CN,DIRECT');
-  rules.push('MATCH,Auto');
+    $("yamlOutput").hidden = false;
+    $("yamlOutput").textContent = yaml.dump(config, { lineWidth: -1 });
+    $("copyBtn").hidden = false;
+    $("downloadBtn").hidden = false;
+    renderSummary(summary, {
+      enabledTargets,
+      ignoredTargets,
+      relayGroupType: buildState.relayGroupType,
+    });
+  } catch (error) {
+    $("resultError").hidden = false;
+    $("resultError").textContent = error.message;
+  }
+}
 
-  // 组装配置（基础配置放在最前面）
-  const config = {
-    ...baseConfig,
-    ...originalConfig,
-    ...baseConfig, // 再次覆盖，确保基础配置优先
-    proxies: allProxies,
-    'proxy-groups': finalGroups,
-    'rule-providers': ruleProviders,
-    rules,
-  };
-
-  const yaml = jsyaml.dump(config, { lineWidth: -1 });
-  
-  $('yamlOutput').textContent = yaml;
-  $('yamlOutput').hidden = false;
-  $('copyBtn').hidden = false;
-  $('downloadBtn').hidden = false;
+$("fetchBtn").addEventListener("click", handleFetch);
+$("fileInput").addEventListener("change", handleFileUpload);
+$("configUrl").addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    handleFetch();
+  }
 });
 
-// 复制
-$('copyBtn').addEventListener('click', async () => {
-  const yaml = $('yamlOutput').textContent;
-  await navigator.clipboard.writeText(yaml);
-  $('copyBtn').textContent = '已复制';
-  setTimeout(() => $('copyBtn').textContent = '复制', 1500);
+$("addGroupBtn").addEventListener("click", () => {
+  state.ordinaryGroups.push(createCustomOrdinaryGroup(getUpstreamProxyNames()));
+  renderOrdinaryGroups();
+  renderRulePacks();
+  renderProviders();
+  resetOutput();
 });
 
-// 下载
-$('downloadBtn').addEventListener('click', () => {
-  const yaml = $('yamlOutput').textContent;
-  const blob = new Blob([yaml], { type: 'text/yaml' });
+$("relayGroupName").addEventListener("input", event => {
+  const nextName = event.target.value.trim();
+  const oldName = state.relayGroup;
+  state.relayGroup = nextName;
+  syncRelayGroupReferences(oldName, nextName);
+  renderTargetProxies();
+  renderRulePacks();
+  renderProviders();
+  resetOutput();
+});
+
+$("relayGroupType").addEventListener("change", event => {
+  state.relayGroupType = event.target.value;
+  resetOutput();
+});
+
+$("relayYamlInput").addEventListener("input", event => {
+  uiState.relayYamlText = event.target.value;
+  resetOutput();
+});
+
+$("parseRelayBtn").addEventListener("click", handleRelayParse);
+$("clearRelayBtn").addEventListener("click", handleRelayClear);
+
+$("aiRelayGroupName").addEventListener("input", event => {
+  const nextName = event.target.value.trim();
+  const oldName = state.aiRelayGroup;
+  state.aiRelayGroup = nextName;
+  syncAiRelayReferences(oldName, nextName);
+  renderRulePacks();
+  renderProviders();
+  resetOutput();
+});
+
+$("addTargetBtn").addEventListener("click", () => {
+  state.targetProxies.push(createDefaultTargetProxyDraft(state.relayGroup));
+  renderTargetProxies();
+  resetOutput();
+});
+
+$("customRulesInput").addEventListener("input", event => {
+  state.customRules = event.target.value
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean);
+  resetOutput();
+});
+
+$("selectAllProviders").addEventListener("click", () => {
+  Object.values(RULES_DEF)
+    .flat()
+    .forEach(rule => {
+      state.selectedProviders[rule.name] = state.selectedProviders[rule.name] || defaultProviderTarget(rule);
+    });
+  renderProviders();
+  resetOutput();
+});
+
+$("clearProviders").addEventListener("click", () => {
+  state.selectedProviders = {};
+  renderProviders();
+  resetOutput();
+});
+
+$("generateBtn").addEventListener("click", handleGenerate);
+
+["cfgPort", "cfgSocksPort", "cfgAllowLan", "cfgMode", "cfgLogLevel", "cfgController"].forEach(id => {
+  $(id).addEventListener("input", resetOutput);
+  $(id).addEventListener("change", resetOutput);
+});
+
+$("copyBtn").addEventListener("click", async () => {
+  await navigator.clipboard.writeText($("yamlOutput").textContent);
+  $("copyBtn").textContent = "已复制";
+  setTimeout(() => {
+    $("copyBtn").textContent = "复制";
+  }, 1500);
+});
+
+$("downloadBtn").addEventListener("click", () => {
+  const blob = new Blob([$("yamlOutput").textContent], { type: "text/yaml" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'config.yaml';
-  a.click();
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "config.yaml";
+  anchor.click();
   URL.revokeObjectURL(url);
 });
 
-// Enter 键
-$('configUrl').addEventListener('keydown', e => e.key === 'Enter' && $('fetchBtn').click());
+resetOutput();

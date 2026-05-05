@@ -24,8 +24,13 @@ body {
   line-height: 1.5;
 }
 
+code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
 .container {
-  max-width: 900px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 32px 20px;
 }
@@ -89,6 +94,58 @@ header h1 {
   color: var(--text-dim);
   font-size: 0.85rem;
   margin-bottom: 12px;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.config-grid label,
+.stacked-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.config-grid label span,
+.stacked-field span {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.config-grid input,
+.config-grid select,
+.stacked-field textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: var(--surface);
+}
+
+.config-grid input:focus,
+.config-grid select:focus,
+.stacked-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.stacked-field textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  font-family: var(--mono);
+}
+
+.inline-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
 }
 
 /* 帮助说明框 */
@@ -268,6 +325,34 @@ header h1 {
   color: var(--error);
 }
 
+.proxy-cards {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.proxy-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.proxy-card strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.proxy-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
 /* 节点列表 */
 .proxy-list {
   margin-top: 12px;
@@ -314,6 +399,11 @@ header h1 {
   font-weight: 600;
 }
 
+.group-header input[readonly] {
+  color: var(--text-dim);
+  background: #f8fafc;
+}
+
 .group-header select {
   padding: 8px 12px;
   border: 1px solid var(--border);
@@ -325,52 +415,6 @@ header h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-}
-
-/* 手动添加节点 */
-.manual-proxy-item {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
-}
-
-.manual-proxy-item .proxy-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-.manual-proxy-item input,
-.manual-proxy-item select {
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 0.85rem;
-  background: var(--surface);
-}
-
-.manual-proxy-item input { flex: 1; min-width: 100px; }
-
-.manual-proxy-item .field-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 8px;
-}
-
-.manual-proxy-item .field-group label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-}
-
-.manual-proxy-item .field-group input {
-  width: 100%;
 }
 
 .proxy-checkbox {
@@ -399,6 +443,25 @@ header h1 {
 .proxy-checkbox input { display: none; }
 
 /* 规则列表 */
+.rules-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.subcard {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.subcard h3 {
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
 .rule-category {
   margin-bottom: 16px;
 }
@@ -447,7 +510,108 @@ header h1 {
   accent-color: var(--accent);
 }
 
+.rule-pack-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.rule-pack-row:last-child {
+  border-bottom: none;
+}
+
+.rule-pack-row label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.rule-pack-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.rule-pack-row small {
+  display: block;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.rule-pack-row select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: var(--surface);
+  align-self: center;
+}
+
+.empty-state {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+
+.target-proxy-item {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.target-proxy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.target-proxy-header strong {
+  font-size: 0.95rem;
+}
+
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.target-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.target-grid input,
+.target-grid select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: var(--surface);
+}
+
+.target-grid input[readonly] {
+  color: var(--text-dim);
+  background: #f8fafc;
+}
+
 /* 输出 */
+.summary-block,
 .code-block {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -462,8 +626,14 @@ header h1 {
   margin-top: 12px;
 }
 
+.summary-block {
+  color: var(--text);
+}
+
 @media (max-width: 640px) {
   .url-input-group { flex-direction: column; }
   .card-header { flex-wrap: wrap; }
   .rule-row { flex-wrap: wrap; }
+  .rule-pack-row { grid-template-columns: 1fr; }
+  .target-proxy-header { align-items: flex-start; flex-direction: column; }
 }

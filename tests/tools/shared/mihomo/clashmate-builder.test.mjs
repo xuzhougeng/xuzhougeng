@@ -51,8 +51,16 @@ function createBaseState() {
   return state;
 }
 
-test("buildClashmateConfig assembles reserved groups, keeps pools isolated, and preserves unrelated config keys", () => {
-  const result = buildClashmateConfig(createBaseState());
+test("buildClashmateConfig assembles ordinary strategy groups, relay type, and reserved pools", () => {
+  const state = createBaseState();
+  state.ordinaryGroups.push({
+    name: "Streaming",
+    type: "fallback",
+    proxies: ["upstream-jp"],
+  });
+  state.relayGroupType = "url-test";
+
+  const result = buildClashmateConfig(state);
   const { config, summary } = result;
 
   assert.equal(config["mixed-port"], 7890);
@@ -67,17 +75,34 @@ test("buildClashmateConfig assembles reserved groups, keeps pools isolated, and 
 
   assert.deepEqual(
     config["proxy-groups"].map(group => group.name),
-    ["Auto", "Proxy", "Relay-Group", "AI-Relay"]
+    ["Auto", "Proxy", "Streaming", "Relay-Group", "AI-Relay"]
   );
 
   const autoGroup = config["proxy-groups"].find(group => group.name === "Auto");
   const proxyGroup = config["proxy-groups"].find(group => group.name === "Proxy");
+  const streamingGroup = config["proxy-groups"].find(group => group.name === "Streaming");
   const relayGroup = config["proxy-groups"].find(group => group.name === "Relay-Group");
   const aiRelayGroup = config["proxy-groups"].find(group => group.name === "AI-Relay");
 
+  assert.equal(autoGroup.type, "url-test");
+  assert.equal(autoGroup.url, "http://www.gstatic.com/generate_204");
+  assert.equal(autoGroup.interval, 300);
   assert.deepEqual(autoGroup.proxies, ["upstream-hk", "upstream-jp"]);
+
+  assert.equal(proxyGroup.type, "select");
   assert.deepEqual(proxyGroup.proxies, ["upstream-hk", "upstream-jp"]);
+
+  assert.equal(streamingGroup.type, "fallback");
+  assert.equal(streamingGroup.url, "http://www.gstatic.com/generate_204");
+  assert.equal(streamingGroup.interval, 300);
+  assert.deepEqual(streamingGroup.proxies, ["upstream-jp"]);
+
+  assert.equal(relayGroup.type, "url-test");
+  assert.equal(relayGroup.url, "http://www.gstatic.com/generate_204");
+  assert.equal(relayGroup.interval, 300);
   assert.deepEqual(relayGroup.proxies, ["relay-a", "relay-b"]);
+
+  assert.equal(aiRelayGroup.type, "select");
   assert.deepEqual(aiRelayGroup.proxies, ["target-us"]);
 
   assert.deepEqual(summary.proxyPools, {
@@ -86,14 +111,15 @@ test("buildClashmateConfig assembles reserved groups, keeps pools isolated, and 
     target: ["target-us"],
   });
   assert.deepEqual(summary.groups, {
-    ordinary: ["Auto", "Proxy"],
+    ordinary: ["Auto", "Proxy", "Streaming"],
     relay: "Relay-Group",
     aiRelay: "AI-Relay",
   });
 });
 
 test("buildClashmateConfig orders rules as custom, built-in AI lines, provider lines, GEOIP, then MATCH", () => {
-  const { config, summary } = buildClashmateConfig(createBaseState());
+  const result = buildClashmateConfig(createBaseState());
+  const { config, summary } = result;
   const customIndex = config.rules.indexOf("DOMAIN-SUFFIX,internal.example,DIRECT");
   const builtInRuleIndex = config.rules.indexOf("DOMAIN-SUFFIX,ai.com,AI-Relay");
   const providerIndex = config.rules.indexOf("RULE-SET,AdBlock,REJECT");
@@ -199,8 +225,12 @@ test("buildClashmateConfig normalizes partial state objects instead of throwing 
   assert.throws(
     () =>
       buildClashmateConfig({
-        ordinaryGroups: ["Auto", "Proxy"],
+        ordinaryGroups: [
+          { name: "Auto", type: "url-test", proxies: [] },
+          { name: "Proxy", type: "select", proxies: [] },
+        ],
         relayGroup: "Relay-Group",
+        relayGroupType: "select",
         aiRelayGroup: "AI-Relay",
         selectedRulePacks: {
           coreAiRelay: false,
@@ -208,5 +238,34 @@ test("buildClashmateConfig normalizes partial state objects instead of throwing 
         },
       }),
     /Auto and Proxy require at least one upstream proxy/i
+  );
+});
+
+test("buildClashmateConfig rejects duplicate ordinary group names", () => {
+  const state = createBaseState();
+  state.ordinaryGroups.push({
+    name: "Proxy",
+    type: "select",
+    proxies: ["upstream-hk"],
+  });
+
+  assert.throws(
+    () => buildClashmateConfig(state),
+    /duplicate group name.*Proxy/i
+  );
+});
+
+test("buildClashmateConfig rejects collisions between ordinary, relay, and AI group names", () => {
+  const state = createBaseState();
+  state.relayGroup = "Streaming";
+  state.ordinaryGroups.push({
+    name: "Streaming",
+    type: "select",
+    proxies: ["upstream-hk"],
+  });
+
+  assert.throws(
+    () => buildClashmateConfig(state),
+    /duplicate group name.*Streaming/i
   );
 });

@@ -6,6 +6,9 @@ const RULE_PACKS = {
   coreAiRelay,
   extendedAiRelay,
 };
+const TESTABLE_GROUP_TYPES = new Set(["url-test", "fallback"]);
+const LOAD_BALANCE_GROUP_TYPE = "load-balance";
+const RELAY_TEST_URL = "http://www.gstatic.com/generate_204";
 
 function normalizeArray(value) {
   return Array.isArray(value) ? value : [];
@@ -117,12 +120,52 @@ function buildBuiltInRuleLines(state) {
   return { enabledRulePacks, lines };
 }
 
+function normalizeGroupName(value) {
+  return String(value ?? "").trim();
+}
+
+function normalizeOrdinaryGroups(ordinaryGroups) {
+  return normalizeArray(ordinaryGroups)
+    .map(group => {
+      if (typeof group === "string") {
+        return {
+          name: normalizeGroupName(group),
+          type: group === "Auto" ? "url-test" : "select",
+          proxies: [],
+        };
+      }
+
+      return {
+        name: normalizeGroupName(group?.name),
+        type: normalizeGroupName(group?.type) || (normalizeGroupName(group?.name) === "Auto" ? "url-test" : "select"),
+        proxies: normalizeArray(group?.proxies).map(proxyName => String(proxyName ?? "").trim()).filter(Boolean),
+      };
+    })
+    .filter(group => group.name);
+}
+
+function decorateProxyGroup(group) {
+  const nextGroup = {
+    ...group,
+  };
+
+  if (TESTABLE_GROUP_TYPES.has(nextGroup.type)) {
+    nextGroup.url = RELAY_TEST_URL;
+    nextGroup.interval = 300;
+  }
+
+  if (nextGroup.type === LOAD_BALANCE_GROUP_TYPE) {
+    nextGroup.strategy = "consistent-hashing";
+  }
+
+  return nextGroup;
+}
+
 function validateRelayGraph(state) {
   const normalizedState = state ?? {};
-  const ordinaryGroups = Array.isArray(normalizedState.ordinaryGroups)
-    ? normalizedState.ordinaryGroups.map(name => String(name).trim()).filter(Boolean)
-    : [];
+  const ordinaryGroups = normalizeOrdinaryGroups(normalizedState.ordinaryGroups);
   const relayGroup = String(normalizedState.relayGroup ?? "").trim();
+  const relayGroupType = String(normalizedState.relayGroupType ?? "").trim() || "select";
   const aiRelayGroup = String(normalizedState.aiRelayGroup ?? "").trim();
   const upstreamProxies = normalizeArray(normalizedState.upstreamProxies);
   const relayProxies = normalizeArray(normalizedState.relayProxies);
@@ -132,6 +175,7 @@ function validateRelayGraph(state) {
   const targetNames = targetProxies.map(normalizeProxyName).filter(Boolean);
   const { enabledRulePacks, lines: builtInLines } = buildBuiltInRuleLines(state);
   const customRules = normalizeArray(normalizedState.customRules).map(rule => String(rule).trim()).filter(Boolean);
+  const ordinaryGroupNames = ordinaryGroups.map(group => group.name);
   const allowedProviderTargets = new Set(
     buildRuleTargetOptions({
       ordinaryGroups,
@@ -153,7 +197,7 @@ function validateRelayGraph(state) {
     directRelayRuleReference ||
     aiRelayReferenced;
 
-  if (!ordinaryGroups.length || ordinaryGroups[0] !== "Auto" || !ordinaryGroups.includes("Proxy")) {
+  if (!ordinaryGroupNames.length || ordinaryGroupNames[0] !== "Auto" || !ordinaryGroupNames.includes("Proxy")) {
     throw new Error("ordinaryGroups must include reserved groups Auto and Proxy");
   }
 
@@ -163,6 +207,14 @@ function validateRelayGraph(state) {
 
   if (!aiRelayGroup) {
     throw new Error("aiRelayGroup is required");
+  }
+
+  const seenGroupNames = new Set();
+  for (const groupName of [...ordinaryGroupNames, relayGroup, aiRelayGroup]) {
+    if (seenGroupNames.has(groupName)) {
+      throw new Error(`duplicate group name "${groupName}"`);
+    }
+    seenGroupNames.add(groupName);
   }
 
   if (!upstreamNames.length) {
@@ -186,7 +238,9 @@ function validateRelayGraph(state) {
 
   return {
     ordinaryGroups,
+    ordinaryGroupNames,
     relayGroup,
+    relayGroupType,
     aiRelayGroup,
     upstreamNames,
     relayNames,
@@ -199,18 +253,24 @@ function validateRelayGraph(state) {
   };
 }
 
-function buildProxyGroups({ ordinaryGroups, relayGroup, aiRelayGroup, upstreamNames, relayNames, targetNames }) {
+function buildProxyGroups({ ordinaryGroups, relayGroup, relayGroupType, aiRelayGroup, upstreamNames, relayNames, targetNames }) {
   return [
-    ...ordinaryGroups.map(groupName => ({
-      name: groupName,
-      type: "select",
-      proxies: upstreamNames,
-    })),
-    {
+    ...ordinaryGroups.map(group =>
+      decorateProxyGroup({
+        name: group.name,
+        type: group.type,
+        proxies: group.proxies.length
+          ? group.proxies
+          : group.name === "Auto" || group.name === "Proxy"
+            ? upstreamNames
+            : [],
+      })
+    ),
+    decorateProxyGroup({
       name: relayGroup,
-      type: "select",
+      type: relayGroupType,
       proxies: relayNames,
-    },
+    }),
     {
       name: aiRelayGroup,
       type: "select",
@@ -247,7 +307,7 @@ export function buildClashmateConfig(state) {
     ...validated.builtInLines,
     ...validated.providerRuleLines,
     "GEOIP,CN,DIRECT",
-    `MATCH,${validated.ordinaryGroups[0]}`,
+    `MATCH,${validated.ordinaryGroupNames[0]}`,
   ];
 
   const config = {
@@ -267,7 +327,7 @@ export function buildClashmateConfig(state) {
         target: validated.targetNames,
       },
       groups: {
-        ordinary: validated.ordinaryGroups,
+        ordinary: validated.ordinaryGroupNames,
         relay: validated.relayGroup,
         aiRelay: validated.aiRelayGroup,
       },

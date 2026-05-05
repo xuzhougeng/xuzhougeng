@@ -37,66 +37,102 @@
         <div id="proxyList" class="proxy-list" hidden></div>
       </section>
 
-      <!-- Step 1.5: 手动添加节点 -->
-      <section class="card" id="manualProxySection" hidden>
-        <div class="card-header">
-          <span class="step">+</span>
-          <h2>手动添加节点</h2>
-          <button id="addManualProxyBtn" class="btn-sm">+ 新建节点</button>
-        </div>
-        <p class="hint">可手动添加节点（支持 dialer-proxy 配置代理链）。添加后会出现在节点列表中。</p>
-        <div id="manualProxiesContainer"></div>
-      </section>
-
-      <!-- Step 2: 自定义 proxy-groups -->
+      <!-- Step 2: 普通代理组 -->
       <section class="card" id="groupsSection" hidden>
         <div class="card-header">
           <span class="step">2</span>
-          <h2>自定义代理组</h2>
+          <h2>普通代理组</h2>
           <button id="addGroupBtn" class="btn-sm">+ 新建分组</button>
         </div>
-        <p class="hint">默认已创建 Auto 组（包含所有节点）。可添加自定义分组。</p>
-        
-        <details class="help-box">
-          <summary>📖 代理组类型说明</summary>
-          <div class="help-content">
-            <dl>
-              <dt><strong>url-test</strong></dt>
-              <dd>自动测速选择延迟最低的节点。定期向指定 URL 发请求，自动切换到最快的可用节点。</dd>
-              
-              <dt><strong>select</strong></dt>
-              <dd>手动选择。用户在客户端手动选择使用哪个节点，不会自动切换。</dd>
-              
-              <dt><strong>fallback</strong></dt>
-              <dd>故障转移。按列表顺序使用第一个可用节点，当前节点不可用时自动切换到下一个。</dd>
-              
-              <dt><strong>load-balance</strong></dt>
-              <dd>负载均衡。将请求分散到多个节点，可以选择轮询或一致性哈希策略。</dd>
-            </dl>
-          </div>
-        </details>
-        
+        <p class="hint">保留组 <code>Auto</code> 和 <code>Proxy</code> 会基于上游节点生成。你也可以添加自定义普通组并选择策略和成员。</p>
         <div id="groupsContainer"></div>
       </section>
 
-      <!-- Step 3: 为规则分配 proxy-group -->
-      <section class="card" id="rulesSection" hidden>
+      <!-- Step 3: Relay 节点 -->
+      <section class="card" id="relaySection" hidden>
         <div class="card-header">
           <span class="step">3</span>
-          <h2>规则分配</h2>
-          <div class="header-actions">
-            <button class="btn-sm" id="selectAll">全选规则</button>
-            <button class="btn-sm" id="selectNone">清空</button>
-          </div>
+          <h2>Relay 双跳节点</h2>
         </div>
-        <p class="hint">勾选要使用的规则，并为每条规则选择代理组</p>
-        <div id="rulesContainer"></div>
+        <p class="hint">上游订阅节点会进入保留的 <code>Auto</code> / <code>Proxy</code> 组。这里导入第二跳 relay 节点并定义 Relay 组。</p>
+        <div class="config-grid">
+          <label>
+            <span>Relay 组名</span>
+            <input type="text" id="relayGroupName" value="Relay-Group" placeholder="Relay-Group">
+          </label>
+          <label>
+            <span>Relay 组类型</span>
+            <select id="relayGroupType">
+              <option value="select">select</option>
+              <option value="url-test">url-test</option>
+              <option value="fallback">fallback</option>
+              <option value="load-balance">load-balance</option>
+            </select>
+          </label>
+        </div>
+        <label class="stacked-field">
+          <span>Relay YAML</span>
+          <textarea id="relayYamlInput" rows="9" placeholder="粘贴包含 proxies: 的 Mihomo/Clash YAML，或直接粘贴代理列表"></textarea>
+        </label>
+        <div class="inline-actions">
+          <button id="parseRelayBtn" class="btn-primary">解析 Relay</button>
+          <button id="clearRelayBtn" class="btn-sm">清空 Relay</button>
+        </div>
+        <div id="relayStatus" class="status" hidden></div>
+        <div id="relayList" class="proxy-cards" hidden></div>
       </section>
 
-      <!-- Step 4: 生成 -->
-      <section class="card" id="outputSection" hidden>
+      <!-- Step 4: 目标节点 -->
+      <section class="card" id="targetsSection" hidden>
         <div class="card-header">
           <span class="step">4</span>
+          <h2>目标节点</h2>
+          <button id="addTargetBtn" class="btn-sm">+ 新建目标节点</button>
+        </div>
+        <p class="hint">目标节点会自动绑定到 Relay 组作为 <code>dialer-proxy</code>，用于构建 <code>AI-Relay</code> 出口池。</p>
+        <div class="config-grid">
+          <label>
+            <span>目标组名</span>
+            <input type="text" id="aiRelayGroupName" value="AI-Relay" placeholder="AI-Relay">
+          </label>
+        </div>
+        <div id="targetsContainer"></div>
+      </section>
+
+      <!-- Step 5: 规则 -->
+      <section class="card" id="rulesSection" hidden>
+        <div class="card-header">
+          <span class="step">5</span>
+          <h2>规则分配</h2>
+          <div class="header-actions">
+            <button class="btn-sm" id="selectAllProviders">全选 Providers</button>
+            <button class="btn-sm" id="clearProviders">清空 Providers</button>
+          </div>
+        </div>
+        <p class="hint">规则包支持直接指向保留组、Relay 组或目标组。内置 AI 规则默认启用。</p>
+
+        <div class="rules-layout">
+          <section class="subcard">
+            <h3>内置 AI 规则包</h3>
+            <div id="builtInRulePacks"></div>
+          </section>
+
+          <section class="subcard">
+            <h3>Rule Providers</h3>
+            <div id="rulesContainer"></div>
+          </section>
+        </div>
+
+        <label class="stacked-field">
+          <span>自定义规则</span>
+          <textarea id="customRulesInput" rows="8" placeholder="每行一条 Mihomo 规则，例如：&#10;DOMAIN-SUFFIX,internal.example,DIRECT"></textarea>
+        </label>
+      </section>
+
+      <!-- Step 6: 生成 -->
+      <section class="card" id="outputSection" hidden>
+        <div class="card-header">
+          <span class="step">6</span>
           <h2>生成配置</h2>
           <div class="header-actions">
             <button id="generateBtn" class="btn-primary">生成</button>
@@ -146,13 +182,14 @@
             </label>
           </div>
         </details>
-        
+
+        <div id="resultError" class="status error" hidden></div>
+        <pre id="summaryOutput" class="summary-block" hidden></pre>
         <pre id="yamlOutput" class="code-block" hidden></pre>
       </section>
     </main>
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
-
