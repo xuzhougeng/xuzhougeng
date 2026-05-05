@@ -1,5 +1,11 @@
+import { parseYamlProxies } from "../shared/mihomo/relay-parser.mjs";
+import { buildDialerProxyConfig } from "../shared/mihomo/dialer-proxy-builder.mjs";
+
+const yaml = globalThis.jsyaml;
+
 const state = {
   relayProxies: [],
+  relayProxyObjects: [],
   targetProxy: {
     name: "target-socks5",
     type: "socks5",
@@ -39,6 +45,20 @@ const refs = {
 };
 
 const THEME_KEY = "dialer-proxy-theme";
+const EXAMPLE_RELAY_YAML = `  - name: "relay-hk-01"
+    type: ss
+    server: relay1.example.com
+    port: 443
+    cipher: aes-256-gcm
+    password: "password1"
+
+  - name: "relay-hk-02"
+    type: vmess
+    server: relay2.example.com
+    port: 443
+    uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+    alterId: 0
+    cipher: auto`;
 
 // Modal dialog functions
 function showModal(title, message, confirmText = "使用示例生成", cancelText = "去填写数据") {
@@ -122,75 +142,195 @@ function escapeHtml(str = "") {
     .replace(/"/g, "&quot;");
 }
 
-function parseYamlProxies(yamlText) {
-  const lines = yamlText.split(/\r?\n/);
-  const proxies = [];
-  let currentProxy = null;
-  let inProxiesSection = false;
+function normalizeRelayYamlInput(yamlText) {
+  const raw = String(yamlText ?? "");
+  const trimmed = raw.trim();
 
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // 跳过空行和注释
-    if (!trimmed || trimmed.startsWith("#")) {
-      if (currentProxy) {
-        currentProxy.raw += line + "\n";
-      }
-      continue;
-    }
-
-    // 检测 proxies: 部分开始
-    if (trimmed === "proxies:") {
-      inProxiesSection = true;
-      continue;
-    }
-
-    // 检测新节点开始（以 - name: 或 - {开头）
-    if (trimmed.startsWith("- name:") || trimmed.startsWith("-name:") || trimmed.match(/^-\s*\{/)) {
-      if (currentProxy && currentProxy.name) {
-        proxies.push(currentProxy);
-      }
-      currentProxy = { raw: line + "\n" };
-
-      // 提取 name
-      const nameMatch = trimmed.match(/^-\s*name:\s*["']?([^"'\n]+)["']?/);
-      if (nameMatch) {
-        currentProxy.name = nameMatch[1].trim();
-      }
-    } else if (currentProxy) {
-      currentProxy.raw += line + "\n";
-
-      // 提取其他字段
-      if (trimmed.startsWith("type:")) {
-        const typeMatch = trimmed.match(/type:\s*["']?(\S+)["']?/);
-        if (typeMatch) currentProxy.type = typeMatch[1];
-      } else if (trimmed.startsWith("server:")) {
-        const serverMatch = trimmed.match(/server:\s*["']?([^"'\n]+)["']?/);
-        if (serverMatch) currentProxy.server = serverMatch[1].trim();
-      } else if (trimmed.startsWith("port:")) {
-        const portMatch = trimmed.match(/port:\s*(\d+)/);
-        if (portMatch) currentProxy.port = portMatch[1];
-      }
-    } else if (inProxiesSection && (trimmed.startsWith("-") || line.match(/^\s{2,}-/))) {
-      // 也可能是 "  - name:" 这种格式
-      if (currentProxy && currentProxy.name) {
-        proxies.push(currentProxy);
-      }
-      currentProxy = { raw: line + "\n" };
-
-      const nameMatch = trimmed.match(/^-\s*name:\s*["']?([^"'\n]+)["']?/);
-      if (nameMatch) {
-        currentProxy.name = nameMatch[1].trim();
-      }
-    }
+  if (!trimmed) {
+    return "";
   }
 
-  // 添加最后一个节点
-  if (currentProxy && currentProxy.name) {
-    proxies.push(currentProxy);
+  if (/^proxies:\s*(?:$|\r?\n)/.test(trimmed)) {
+    return raw;
   }
 
-  return proxies;
+  if (/^-\s*(?:name:|\{)/.test(trimmed)) {
+    return `proxies:\n${raw}`;
+  }
+
+  return raw;
+}
+
+function materializeRelayProxyObjects(yamlText) {
+  if (!yaml?.load) {
+    return null;
+  }
+
+  try {
+    const document = yaml.load(normalizeRelayYamlInput(yamlText));
+    const proxies = Array.isArray(document?.proxies)
+      ? document.proxies
+      : Array.isArray(document)
+        ? document
+        : null;
+
+    if (!Array.isArray(proxies)) {
+      return null;
+    }
+
+    return proxies
+      .filter(proxy => proxy && typeof proxy === "object" && !Array.isArray(proxy))
+      .map(proxy => structuredClone(proxy));
+  } catch (_) {
+    return null;
+  }
+}
+
+function cloneRelayProxyMetadata(proxies) {
+  return proxies.map(proxy => ({ ...proxy }));
+}
+
+function serializeYamlScalar(value) {
+  if (value === null) {
+    return "null";
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? String(value) : "null";
+  }
+
+  const text = String(value ?? "");
+  if (text === "") {
+    return '""';
+  }
+
+  if (/^[A-Za-z0-9_.\/-]+$/.test(text) && !/^(true|false|null|~)$/i.test(text)) {
+    return text;
+  }
+
+  return `"${text
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, "\\n")}"`;
+}
+
+function serializeYamlValue(value, indent = "") {
+  if (Array.isArray(value)) {
+    if (!value.length) {
+      return `${indent}[]`;
+    }
+
+    return value
+      .map((item) => {
+        if (item && typeof item === "object" && !Array.isArray(item)) {
+          const entries = Object.entries(item);
+          if (!entries.length) {
+            return `${indent}- {}`;
+          }
+
+          const [firstKey, firstValue] = entries[0];
+          const firstLine = serializeYamlKeyValue(firstKey, firstValue, indent, true);
+          const rest = entries
+            .slice(1)
+            .map(([key, nestedValue]) => serializeYamlKeyValue(key, nestedValue, `${indent}  `, false))
+            .join("\n");
+
+          return rest ? `${firstLine}\n${rest}` : firstLine;
+        }
+
+        return `${indent}- ${serializeYamlScalar(item)}`;
+      })
+      .join("\n");
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value);
+    if (!entries.length) {
+      return `${indent}{}`;
+    }
+
+    return entries
+      .map(([key, nestedValue]) => serializeYamlKeyValue(key, nestedValue, indent, false))
+      .join("\n");
+  }
+
+  return `${indent}${serializeYamlScalar(value)}`;
+}
+
+function serializeYamlKeyValue(key, value, indent, listItem) {
+  const prefix = listItem ? `${indent}- ${key}:` : `${indent}${key}:`;
+
+  if (Array.isArray(value)) {
+    if (!value.length) {
+      return `${prefix} []`;
+    }
+
+    return `${prefix}\n${serializeYamlValue(value, `${indent}  `)}`;
+  }
+
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value);
+    if (!entries.length) {
+      return `${prefix} {}`;
+    }
+
+    return `${prefix}\n${serializeYamlValue(value, `${indent}  `)}`;
+  }
+
+  return `${prefix} ${serializeYamlScalar(value)}`;
+}
+
+function serializeConfig(config) {
+  if (yaml?.dump) {
+    return yaml.dump(config, {
+      lineWidth: -1,
+      noRefs: true,
+    });
+  }
+
+  return serializeYamlValue(config);
+}
+
+function getRelayYamlBlocksForOutput() {
+  if (state.relayProxies.length) {
+    return state.relayProxies
+      .map(proxy => String(proxy?.raw ?? "").trimEnd())
+      .filter(Boolean);
+  }
+
+  return parseYamlProxies(normalizeRelayYamlInput(EXAMPLE_RELAY_YAML))
+    .map(proxy => String(proxy?.raw ?? "").trimEnd())
+    .filter(Boolean);
+}
+
+function buildYamlWithRawRelayBlocks(config, relayYamlBlocks) {
+  const targetProxy = config.proxies.at(-1);
+  const sections = [
+    `port: ${serializeYamlScalar(config.port)}`,
+    `socks-port: ${serializeYamlScalar(config["socks-port"])}`,
+    `allow-lan: ${serializeYamlScalar(config["allow-lan"])}`,
+    `mode: ${serializeYamlScalar(config.mode)}`,
+    `log-level: ${serializeYamlScalar(config["log-level"])}`,
+    `external-controller: ${serializeYamlScalar(config["external-controller"])}`,
+    "proxies:",
+  ];
+
+  if (relayYamlBlocks.length) {
+    sections.push(relayYamlBlocks.join("\n\n"));
+  }
+
+  if (targetProxy) {
+    sections.push(serializeYamlValue([targetProxy], "  "));
+  }
+
+  sections.push(`proxy-groups:\n${serializeYamlValue(config["proxy-groups"], "  ")}`);
+  sections.push(`rules:\n${serializeYamlValue(config.rules, "  ")}`);
+
+  return sections.join("\n");
 }
 
 function renderRelayProxies() {
@@ -228,6 +368,7 @@ function renderRelayProxies() {
         if (!item) return;
         const idx = Number(item.dataset.index);
         state.relayProxies.splice(idx, 1);
+        state.relayProxyObjects.splice(idx, 1);
         renderRelayProxies();
       });
     });
@@ -243,256 +384,35 @@ function updateTargetFromInputs() {
   state.targetProxy.dialerProxy = refs.dialerProxy.value.trim() || "relay-group";
 }
 
-function yamlSafe(value) {
-  if (value === undefined || value === null || value === "") return '""';
-  const str = String(value);
-  if (/[^a-zA-Z0-9_.-]/.test(str) || /^\d/.test(str)) {
-    return `"${str.replace(/"/g, '\\"')}"`;
-  }
-  return str;
-}
-
-function generateTargetProxyYaml() {
-  const lines = [
-    `  - name: ${yamlSafe(state.targetProxy.name)}`,
-    `    type: ${state.targetProxy.type}`,
-    `    server: ${yamlSafe(state.targetProxy.server)}`,
-    `    port: ${state.targetProxy.port}`
-  ];
-
-  if (state.targetProxy.username) {
-    lines.push(`    username: ${yamlSafe(state.targetProxy.username)}`);
+function getRelayProxiesForOutput() {
+  if (state.relayProxyObjects.length) {
+    return state.relayProxyObjects;
   }
 
-  if (state.targetProxy.password) {
-    lines.push(`    password: ${yamlSafe(state.targetProxy.password)}`);
-  }
-
-  lines.push(`    dialer-proxy: ${yamlSafe(state.targetProxy.dialerProxy)}`);
-
-  return lines.join("\n");
+  return materializeRelayProxyObjects(EXAMPLE_RELAY_YAML)
+    ?? parseYamlProxies(normalizeRelayYamlInput(EXAMPLE_RELAY_YAML));
 }
 
 function buildFullYaml() {
-  // 如果没有中转代理，添加示例
-  let relayYaml;
-  let relayNames;
-  if (state.relayProxies.length === 0) {
-    relayYaml = `  # 示例中转代理（请替换为实际配置）
-  - name: "relay-hk-01"
-    type: ss
-    server: relay1.example.com
-    port: 443
-    cipher: aes-256-gcm
-    password: "password1"
+  const relayProxies = getRelayProxiesForOutput();
+  const { config } = buildDialerProxyConfig({
+    relayProxies,
+    targetProxy: {
+      name: state.targetProxy.name,
+      type: state.targetProxy.type,
+      server: state.targetProxy.server,
+      port: state.targetProxy.port,
+      username: state.targetProxy.username,
+      password: state.targetProxy.password,
+      "dialer-proxy": state.targetProxy.dialerProxy,
+    },
+  });
 
-  - name: "relay-hk-02"
-    type: vmess
-    server: relay2.example.com
-    port: 443
-    uuid: xxx-xxx-xxx
-    alterId: 0
-    cipher: auto`;
-    relayNames = ["relay-hk-01", "relay-hk-02"];
-  } else {
-    relayYaml = state.relayProxies.map(p => p.raw.trimEnd()).join("\n\n");
-    relayNames = state.relayProxies.map(p => yamlSafe(p.name));
+  if (!yaml?.load) {
+    return buildYamlWithRawRelayBlocks(config, getRelayYamlBlocksForOutput());
   }
 
-  const allProxyNames = [...relayNames, yamlSafe(state.targetProxy.name)];
-  const targetYaml = generateTargetProxyYaml();
-
-  const proxyGroup = [
-    `  - name: ${yamlSafe(state.targetProxy.dialerProxy)}`,
-    `    type: select`,
-    `    proxies:`,
-    ...relayNames.map(name => `      - ${name}`)
-  ];
-
-  const lines = [
-    `# Dialer-Proxy 配置`,
-    `# 生成时间: ${new Date().toLocaleString("zh-CN")}`,
-    ``,
-    `# ================== 基础设置 ==================`,
-    `port: 1990               # HTTP 代理端口`,
-    `socks-port: 1991         # SOCKS5 代理端口`,
-    `allow-lan: true          # 是否允许局域网连接`,
-    `mode: rule               # 规则模式：rule / global / direct`,
-    `log-level: info          # 日志级别：info / warning / error / debug`,
-    `external-controller: 127.0.0.1:1993   # 控制接口`,
-    ``,
-    `# ================== 代理节点 ==================`,
-    `proxies:`,
-    `  # 中转代理（第一跳）`,
-    relayYaml,
-    ``,
-    `  # 目标代理（第二跳）- 通过中转出去`,
-    targetYaml,
-    ``,
-    `# ================== 代理组 ==================`,
-    `proxy-groups:`,
-    proxyGroup.join("\n"),
-    ``,
-    `  - name: Proxy`,
-    `    type: select`,
-    `    proxies:`,
-    ...allProxyNames.map(name => `      - ${name}`)
-  ];
-
-  // 分流规则中使用目标代理名称，这样流量会自动通过 dialer-proxy 链路
-  const ruleTarget = yamlSafe(state.targetProxy.name);
-
-  lines.push(
-    ``,
-    `# ================== 分流规则 ==================`,
-    `# 规则中使用目标代理 (${state.targetProxy.name})，流量会自动通过 dialer-proxy 链路`,
-    `# 链路: 客户端 -> ${state.targetProxy.name} -> (relay-group中选择的中转) -> 目标服务器`,
-    `rules:`,
-    `  # > Augment`,
-    `  - DOMAIN-SUFFIX,augment.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,augmentcode.com,${ruleTarget}`,
-    ``,
-    `  # > ChatGPT`,
-    `  - DOMAIN-SUFFIX,ai.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,chatgpt.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,openai.com,${ruleTarget}`,
-    ``,
-    `  # > Chat GPT API & CDN`,
-    `  - DOMAIN,chat.openai.com.cdn.cloudflare.net,${ruleTarget}`,
-    `  - DOMAIN,openaiapi-site.azureedge.net,${ruleTarget}`,
-    `  - DOMAIN,openaicom-api-bdcpf8c6d2e9atf6.z01.azurefd.net,${ruleTarget}`,
-    `  - DOMAIN,openaicomproductionae4b.blob.core.windows.net,${ruleTarget}`,
-    `  - DOMAIN,production-openaicom-storage.azureedge.net,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,cdn.oaistatic.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,oaiusercontent.com,${ruleTarget}`,
-    `  - DOMAIN,o33249.ingest.sentry.io,${ruleTarget}`,
-    ``,
-    `  # > Cerebras`,
-    `  - DOMAIN-SUFFIX,cerebras.ai,${ruleTarget}`,
-    ``,
-    `  # > Chorus`,
-    `  - DOMAIN-SUFFIX,chorus.sh,${ruleTarget}`,
-    ``,
-    `  # > Claude`,
-    `  - DOMAIN-SUFFIX,anthropic.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,claude.ai,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,claude.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,claudeusercontent.com,${ruleTarget}`,
-    ``,
-    `  # > Cloudflare AI Gateway`,
-    `  - DOMAIN,gateway.ai.cloudflare.com,${ruleTarget}`,
-    ``,
-    `  # > Copilot`,
-    `  - DOMAIN-SUFFIX,githubcopilot.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,microsoftonline.com,${ruleTarget}`,
-    `  - DOMAIN,copilot.microsoft.com,${ruleTarget}`,
-    ``,
-    `  # > Cursor`,
-    `  - DOMAIN-SUFFIX,cursor.sh,${ruleTarget}`,
-    ``,
-    `  # > DIA`,
-    `  - DOMAIN-SUFFIX,diabrowser.engineering,${ruleTarget}`,
-    ``,
-    `  # > Dify.AI`,
-    `  - DOMAIN-SUFFIX,dify.ai,${ruleTarget}`,
-    ``,
-    `  # > GitHub`,
-    `  - DOMAIN-SUFFIX,github.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,githubusercontent.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,github.io,${ruleTarget}`,
-    ``,
-    `  # > Google AI Studio`,
-    `  - DOMAIN-KEYWORD,alkalimakersuite-pa.clients6.google.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,aistudio.google.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,makersuite.google.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,generativeai.google,${ruleTarget}`,
-    `  - DOMAIN,ai.google.dev,${ruleTarget}`,
-    `  - DOMAIN,alkalicore-pa.clients6.google.com,${ruleTarget}`,
-    `  - DOMAIN,waa-pa.clients6.google.com,${ruleTarget}`,
-    ``,
-    `  # > Google DeepMind`,
-    `  - DOMAIN-SUFFIX,deepmind.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,deepmind.google,${ruleTarget}`,
-    ``,
-    `  # > Google Generative Language API`,
-    `  - DOMAIN-SUFFIX,generativelanguage.googleapis.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,geller-pa.googleapis.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,proactivebackend-pa.googleapis.com,${ruleTarget}`,
-    ``,
-    `  # > Google Gemini`,
-    `  - DOMAIN-SUFFIX,aisandbox-pa.googleapis.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,apis.google.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,bard.google.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,gemini.google.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,robinfrontend-pa.googleapis.com,${ruleTarget}`,
-    ``,
-    `  # > Google Cloud & APIs`,
-    `  - DOMAIN-SUFFIX,google.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,googleapis.com,${ruleTarget}`,
-    ``,
-    `  # > Google NotebookLM`,
-    `  - DOMAIN-SUFFIX,notebooklm.google,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,notebooklm.google.com,${ruleTarget}`,
-    ``,
-    `  # > Grok`,
-    `  - DOMAIN-SUFFIX,x.ai,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,grok.com,${ruleTarget}`,
-    ``,
-    `  # > Groq`,
-    `  - DOMAIN-SUFFIX,groq.com,${ruleTarget}`,
-    ``,
-    `  # > Jasper`,
-    `  - DOMAIN-SUFFIX,clipdrop.co,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,jasper.ai,${ruleTarget}`,
-    ``,
-    `  # > JetBrains`,
-    `  - DOMAIN-SUFFIX,jetbrains.ai,${ruleTarget}`,
-    ``,
-    `  # > Meta AI`,
-    `  - DOMAIN-SUFFIX,meta.ai,${ruleTarget}`,
-    ``,
-    `  # > OpenArt`,
-    `  - DOMAIN-SUFFIX,openart.ai,${ruleTarget}`,
-    ``,
-    `  # > OpenRouter`,
-    `  - DOMAIN-SUFFIX,openrouter.ai,${ruleTarget}`,
-    ``,
-    `  # > Perplexity AI`,
-    `  - DOMAIN-SUFFIX,perplexity.ai,${ruleTarget}`,
-    ``,
-    `  # > PubMed / NCBI`,
-    `  - DOMAIN-SUFFIX,ncbi.nlm.nih.gov,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,nlm.nih.gov,${ruleTarget}`,
-    ``,
-    `  # > POE`,
-    `  - DOMAIN-SUFFIX,poe.com,${ruleTarget}`,
-    ``,
-    `  # > Siri`,
-    `  - DOMAIN-SUFFIX,apple-relay.apple.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,apple-relay.fastly-edge.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,apple-relay.cloudflare.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,guzzoni.apple.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,cp4.cloudflare.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,gspe1-ssl.ls.apple.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,smoot.apple.com,${ruleTarget}`,
-    ``,
-    `  # > Sora`,
-    `  - DOMAIN-SUFFIX,sora.com,${ruleTarget}`,
-    `  - DOMAIN,sora-cdn.oaistatic.com,${ruleTarget}`,
-    ``,
-    `  # > Windsurf`,
-    `  - DOMAIN-SUFFIX,windsurf.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,codeium.com,${ruleTarget}`,
-    `  - DOMAIN-SUFFIX,codeiumdata.com,${ruleTarget}`,
-    ``,
-    `  # > Zed`,
-    `  - DOMAIN-SUFFIX,zed.dev,${ruleTarget}`,
-    ``,
-    `  # > Final Rule`,
-    `  - MATCH,DIRECT`
-  );
-
-  return lines.join("\n");
+  return serializeConfig(config);
 }
 
 function handleParseRelay() {
@@ -502,18 +422,20 @@ function handleParseRelay() {
     return;
   }
 
-  const parsed = parseYamlProxies(raw);
+  const parsed = parseYamlProxies(normalizeRelayYamlInput(raw));
   if (!parsed.length) {
     refs.relaySummary.textContent = "未识别到节点";
     return;
   }
 
   state.relayProxies = parsed;
+  state.relayProxyObjects = materializeRelayProxyObjects(raw) ?? cloneRelayProxyMetadata(parsed);
   renderRelayProxies();
 }
 
 function handleClearRelay() {
   state.relayProxies = [];
+  state.relayProxyObjects = [];
   refs.relayInput.value = "";
   renderRelayProxies();
 }
@@ -629,29 +551,10 @@ function handleDownload() {
 }
 
 function handleLoadExample() {
-  // 示例中转代理 YAML
-  const exampleRelayYaml = `  - name: "relay-hk-01"
-    type: ss
-    server: relay1.example.com
-    port: 443
-    cipher: aes-256-gcm
-    password: "password1"
+  refs.relayInput.value = EXAMPLE_RELAY_YAML;
 
-  - name: "relay-hk-02"
-    type: vmess
-    server: relay2.example.com
-    port: 443
-    uuid: a1b2c3d4-e5f6-7890-abcd-ef1234567890
-    alterId: 0
-    cipher: auto`;
-
-  // 填充中转代理输入框
-  refs.relayInput.value = exampleRelayYaml;
-
-  // 解析中转代理
   handleParseRelay();
 
-  // 填充目标代理表单
   refs.targetName.value = "target-socks5";
   refs.targetType.value = "socks5";
   refs.targetServer.value = "target.example.com";
@@ -660,10 +563,8 @@ function handleLoadExample() {
   refs.targetPassword.value = "pass";
   refs.dialerProxy.value = "relay-group";
 
-  // 更新状态
   updateTargetFromInputs();
 
-  // 提示用户
   refs.loadExampleBtn.textContent = "已加载";
   setTimeout(() => (refs.loadExampleBtn.textContent = "加载案例"), 1500);
 }

@@ -41,13 +41,13 @@
           <div>
             <p class="eyebrow">第一跳 - 中转代理</p>
             <h2>Relay Proxies (YAML)</h2>
-            <p class="subtle">粘贴中转代理的 YAML 配置，支持 ss、vmess、trojan 等</p>
+            <p class="subtle">粘贴中转代理的 YAML 配置，支持直接粘贴 bare list 或带 <code>proxies:</code> 的 Clash 片段</p>
           </div>
           <div class="chip" id="relaySummary">等待输入</div>
         </div>
         <textarea id="relayInput" class="raw-input" rows="15" placeholder="粘贴中转代理配置，例如：&#10;&#10;  - name: &quot;relay-hk-01&quot;&#10;    type: ss&#10;    server: relay1.example.com&#10;    port: 443&#10;    cipher: aes-256-gcm&#10;    password: &quot;password1&quot;&#10;&#10;  - name: &quot;relay-hk-02&quot;&#10;    type: vmess&#10;    server: relay2.example.com&#10;    port: 443&#10;    uuid: xxx-xxx-xxx&#10;    alterId: 0&#10;    cipher: auto"></textarea>
         <div class="card__footer">
-          <div class="hint">支持标准 Clash YAML 格式</div>
+          <div class="hint">支持 bare list 和标准 Clash `proxies:` YAML 格式</div>
           <button id="parseRelayBtn" class="btn btn-primary">解析中转代理</button>
         </div>
       </section>
@@ -119,6 +119,7 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <!-- Custom Modal Dialog -->
   <div id="modalOverlay" class="modal-overlay hidden">
     <div class="modal-dialog">
@@ -138,6 +139,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
