@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>给 Clash Verge 用户的 AI 分流方案：用 ClashMate 做本地直连和二次跳转 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        h1 {
+            font-size: 2em;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            margin: 0;
+            color: #00ffff;
+        }
+
+        .date {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .date::before {
+            content: "// ";
+        }
+
+        .content {
+            padding: 40px;
+            color: #eee;
+        }
+
+        h2 {
+            color: #00ffff;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        h3 {
+            color: #00ff00;
+            font-size: 1.2em;
+            margin: 25px 0 10px 0;
+        }
+
+        p {
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+
+        ul,
+        ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        a {
+            color: #00ff00;
+            text-decoration: none;
+            border-bottom: 1px dashed #00ff00;
+            transition: all 0.3s;
+        }
+
+        a:hover {
+            color: #00ffff;
+            border-bottom-color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            display: block;
+            overflow-x: auto;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #00ff00;
+            padding: 10px 12px;
+            text-align: left;
+            color: #eee;
+        }
+
+        table th {
+            background: #000;
+            color: #00ffff;
+        }
+
+        table tr:nth-child(even) td {
+            background: #1b1b1b;
+        }
+
+        code {
+            color: #00ff00;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.95em;
+        }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
+        pre {
+            padding-top: 35px;
+            margin: 0;
+            background: #000;
+            padding: 35px 20px 20px 20px;
+            border-radius: 4px;
+            border: 1px solid #00ff00;
+            overflow-x: auto;
+            color: #eee;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background: #000;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .back-link:hover {
+            background: #00ff00;
+            color: #1a1a1a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            padding: 20px 40px;
+            text-align: center;
+            background: #000;
+            border-top: 1px solid #00ff00;
+            color: #666;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>[ARTICLE] 给 Clash Verge 用户的 AI 分流方案：用 ClashMate 做本地直连和二次跳转</h1>
+            <div class="date">2026-05-25</div>
+        </header>
+        <main class="content">
+            <p>如果你已经在用 Clash Verge，最常见的做法通常是：导入订阅、切到 <code>Rule</code> 模式、然后给不同网站分配不同的代理组。这个方法对日常上网完全够用，但对 <code>Codex</code>、<code>ChatGPT</code>、<code>Claude</code> 这类 AI 工具来说，很多时候还差最后一步。</p>
+
+            <p>问题往往不在于“能不能出海”，而在于“AI 流量是不是走了一条稳定、可控、和普通流量分开的链路”。</p>
+
+            <p>我这次把原来的 <code>ClashMate</code> 和 <code>Dialer-Proxy</code> 两个工具重新整理了一遍，本质上是给 Mihomo / Clash Verge 做了一层规则适配器：</p>
+
+            <ol>
+                <li>普通流量继续按原有规则分流</li>
+                <li>AI 流量单独命中一条二次代理链路</li>
+                <li>最终输出还是一份可以直接导入 Clash Verge 的 Mihomo 配置</li>
+            </ol>
+
+            <h2>为什么单纯“AI 走代理”还不够</h2>
+            <p>很多人一开始的配置思路其实很直接：</p>
+            <ol>
+                <li>建一个叫 <code>AI</code> 的组</li>
+                <li>把美国节点放进去</li>
+                <li>再把 <code>AI Suite</code>、<code>OpenAI</code>、<code>Claude</code> 之类的规则指到这个组</li>
+            </ol>
+
+            <p>这当然能用，但它隐含了一个假设：AI 流量和普通出海流量可以共用同一类出口。</p>
+
+            <p>实际使用里，这个假设不一定成立。对 Clash Verge 用户来说，常见问题反而是：</p>
+            <ol>
+                <li>日常浏览和 AI 请求混在一起，不容易单独调试</li>
+                <li>某些 AI 服务希望走一条固定出口，而不是和其它普通代理共享同一组节点</li>
+                <li>你可能已经有一套中转节点，但 AI 流量还需要再接一个目标代理，这时单层代理组就不够描述了</li>
+            </ol>
+
+            <p>所以这次工具升级的重点不是“再加几个域名规则”，而是把规则结构升级成两层：</p>
+            <ol>
+                <li>第一层处理普通分流</li>
+                <li>第二层处理 AI 的二次跳转</li>
+            </ol>
+
+            <h2>这套方案的核心结构</h2>
+            <p>现在的 <code>ClashMate</code> 生成的不是单纯的“规则列表”，而是一套明确分层的 Mihomo 配置。</p>
+
+            <p>最核心的流量路径可以写成这样：</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>普通流量 -> Auto / Proxy / 自定义普通组
+
+AI 流量
+  -> AI-Relay
+  -> Target Proxy
+  -> Relay-Group
+  -> Relay Proxy
+  -> 最终出口</code></pre>
+            </div>
+
+            <p>这里面有 4 个关键角色：</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>角色</th>
+                        <th>作用</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>Auto</code> / <code>Proxy</code></td>
+                        <td>处理普通上游节点分流</td>
+                    </tr>
+                    <tr>
+                        <td><code>Relay-Group</code></td>
+                        <td>第一跳中转组</td>
+                    </tr>
+                    <tr>
+                        <td><code>Target Proxy</code></td>
+                        <td>真正承接 AI 流量的目标代理节点</td>
+                    </tr>
+                    <tr>
+                        <td><code>AI-Relay</code></td>
+                        <td>AI 规则命中的目标组</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>对应到实际配置，就是：</p>
+            <ol>
+                <li>你先导入原来的上游订阅节点</li>
+                <li>这些节点继续服务普通流量</li>
+                <li>再额外导入一组 relay 节点</li>
+                <li>然后定义一个 target 节点，并通过 <code>dialer-proxy</code> 指向 <code>Relay-Group</code></li>
+                <li>最后让 <code>OpenAI</code> / <code>Anthropic</code> 之类规则命中 <code>AI-Relay</code></li>
+            </ol>
+
+            <p>这样做的好处是，AI 流量和普通流量彻底分开了。你不用再把所有问题都归结为“这个美国节点好不好用”，而是能明确区分：</p>
+            <ol>
+                <li>普通规则有没有命中</li>
+                <li>AI 规则有没有命中</li>
+                <li>Relay 有没有问题</li>
+                <li>Target 有没有问题</li>
+            </ol>
+
+            <h2>现在两个工具分别负责什么</h2>
+            <p>这次我没有把两个工具简单合并成一个大页面，而是让它们各自做清楚自己的事。</p>
+
+            <h3>ClashMate</h3>
+            <p>现在的 <code>ClashMate</code> 是主入口，负责生成最终可导入 Clash Verge 的 Mihomo 配置：</p>
+            <ol>
+                <li>导入上游订阅</li>
+                <li>编辑普通代理组</li>
+                <li>配置 relay 和 target</li>
+                <li>启用内置 AI 规则包</li>
+                <li>生成最终 YAML</li>
+            </ol>
+            <p>入口：<a href="https://xuzhougeng.top/tools/clashmate/">https://xuzhougeng.top/tools/clashmate/</a></p>
+
+            <h3>Dialer-Proxy</h3>
+            <p><code>Dialer-Proxy</code> 继续保留，但它现在更像一个 standalone 的双跳配置生成器，适合这些场景：</p>
+            <ol>
+                <li>你只想快速验证 relay + target 这条链路</li>
+                <li>你暂时不需要完整的普通流量分流</li>
+                <li>你只想单独生成一份 AI 双跳配置</li>
+            </ol>
+            <p>入口：<a href="https://xuzhougeng.top/tools/dialer-proxy/">https://xuzhougeng.top/tools/dialer-proxy/</a></p>
+
+            <h2>给 Clash Verge 用户的最短使用步骤</h2>
+            <p>如果你已经会用 Clash Verge，这套工具的实际用法并不复杂。</p>
+
+            <h3>1. 先导入上游节点</h3>
+            <p>打开 <code>ClashMate</code>，把你现有订阅地址或者 YAML 文件导进去。</p>
+            <p>这一步导入的是普通上游节点，它们还是给日常流量用的。</p>
+
+            <h3>2. 处理普通代理组</h3>
+            <p>保留默认的 <code>Auto</code> 和 <code>Proxy</code>，如果你有需要，可以再加自己的普通组，比如：</p>
+            <ol>
+                <li><code>Streaming</code></li>
+                <li><code>Work</code></li>
+                <li><code>Browser</code></li>
+            </ol>
+            <p>这部分仍然是普通 Mihomo 分流逻辑，没有什么特别的。</p>
+
+            <h3>3. 配置 Relay</h3>
+            <p>在 relay 区域里粘贴第一跳中转节点，可以是：</p>
+            <ol>
+                <li>bare list</li>
+                <li>带 <code>proxies:</code> 的 Clash / Mihomo YAML</li>
+            </ol>
+            <p>然后指定 <code>Relay-Group</code> 的名字和类型。</p>
+
+            <h3>4. 配置 Target</h3>
+            <p>再创建一个或多个 target 节点。</p>
+            <p>这些节点会自动带上 <code>dialer-proxy</code>，并指向 <code>Relay-Group</code>。它们不会混进普通组，而是专门给 <code>AI-Relay</code> 使用。</p>
+
+            <h3>5. 启用 AI 规则包</h3>
+            <p>我建议第一步只开 <code>Core AI Relay</code>。</p>
+            <p>这个规则包主要覆盖：</p>
+            <ol>
+                <li><code>OpenAI</code></li>
+                <li><code>ChatGPT</code></li>
+                <li><code>Anthropic</code></li>
+                <li><code>Claude</code></li>
+            </ol>
+            <p><code>Extended AI Relay</code> 也可以开，但它会覆盖更多 AI 相关站点和服务，第一次使用没必要一上来全开。</p>
+
+            <h3>6. 生成 YAML 并导入 Clash Verge</h3>
+            <p>配置完成后，直接生成 YAML，导入 <code>Clash Verge</code> 即可。</p>
+            <p>对于 Clash Verge 用户，最关键的其实就两点：</p>
+            <ol>
+                <li>导入生成后的配置</li>
+                <li>保持 <code>Rule</code> 模式</li>
+            </ol>
+            <p>工具输出的已经是 Mihomo 配置，不需要你再手工拼 <code>dialer-proxy</code> 或者自己维护那一大串 AI 域名规则。</p>
+
+            <h2>这篇文章更适合哪类人</h2>
+            <p>这套方案最适合下面这类 Clash Verge 用户：</p>
+            <ol>
+                <li>已经有订阅节点，但 AI 流量想单独走一条链路</li>
+                <li>想把 <code>OpenAI</code> / <code>Anthropic</code> 和普通出海流量彻底隔离</li>
+                <li>不想再手改大段 Mihomo YAML</li>
+                <li>想保留图形界面使用方式，而不是完全切回命令行</li>
+            </ol>
+            <p>如果你只是临时测一个代理能不能用，那么 <code>Dialer-Proxy</code> 就够了。</p>
+            <p>如果你想真正把 Clash Verge 里的规则结构整理清楚，那么现在的 <code>ClashMate</code> 才是主入口。</p>
+
+            <h2>使用时要注意的几件事</h2>
+            <p>最后说几个这次工具升级后我刻意做得更严格的地方。</p>
+
+            <h3>1. 这套方案依赖 Mihomo</h3>
+            <p>这里用到了 <code>dialer-proxy</code>，所以目标就是 Mihomo 兼容内核。Clash Verge 本身没问题，但不要拿去假设所有老 Clash 内核都支持。</p>
+
+            <h3>2. Relay 填错时，现在会直接失败</h3>
+            <p>这次我把很多“静默生成错误配置”的路径都收掉了。</p>
+            <p>也就是说：</p>
+            <ol>
+                <li>relay 为空，不会再生成一个空的双跳配置</li>
+                <li>relay 文本改坏了，不会继续偷偷沿用上一次解析成功的节点</li>
+                <li>输入变了，旧输出会失效，避免你复制到过期 YAML</li>
+            </ol>
+
+            <h3>3. Extended 规则不要默认全开</h3>
+            <p><code>Extended AI Relay</code> 覆盖面更广，但它不是给所有人默认开启的。</p>
+            <p>如果你的目标只是稳定处理 <code>OpenAI</code> 和 <code>Anthropic</code>，从 <code>Core AI Relay</code> 开始就够了。</p>
+
+            <h3>4. 改完组名或目标后，要重新生成</h3>
+            <p>工具现在会尽量同步更新内部引用，但本质上你最终导入 Clash Verge 的仍然是一份 YAML 文件，所以改完结构后，记得重新生成再导入。</p>
+
+            <h2>结语</h2>
+            <p>对 Clash Verge 用户来说，这次工具升级最重要的点不是“页面变复杂了”，而是它终于把一个过去经常写散的配置问题收成了一个稳定模型：</p>
+            <ol>
+                <li>普通流量走普通分流</li>
+                <li>AI 流量走 <code>AI-Relay</code></li>
+                <li><code>AI-Relay</code> 再通过 <code>Target + Relay-Group</code> 完成二次跳转</li>
+            </ol>
+            <p>这样配置之后，Clash Verge 不再只是一个“切节点”的地方，而是真正变成了一个可控的规则分发入口。</p>
+
+            <p>如果你之前已经在用我那篇老的 <code>Clash配置</code> 方法，这篇文章可以理解成它的下一阶段：不是只解决“怎么配规则”，而是解决“怎么把 AI 相关流量单独抽出来，并且走一条稳定的双跳链路”。</p>
+
+            <a href="../../../index.html" class="back-link">Return_To_Blog_Index</a>
+        </main>
+        <footer>
+            <p>© 2026 Geektastic! Terminal Blog | Powered by Pure HTML</p>
+        </footer>
+    </div>
+    <script>
+    function copyCode(btn) {
+        const code = btn.nextElementSibling.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'COPIED!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = 'COPY';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+    </script>
+</body>
+</html>
