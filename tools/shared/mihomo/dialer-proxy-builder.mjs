@@ -1,5 +1,7 @@
 import { extendedAiRelay, renderRulePackLines } from "./ai-rule-packs.mjs";
 
+const STANDALONE_TERMINAL_RULES = ["MATCH,DIRECT"];
+
 function normalizeArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -84,6 +86,11 @@ export function buildDialerProxyConfig(input = {}) {
   const relayProxies = normalizeArray(input.relayProxies)
     .map(normalizeRelayProxy)
     .filter(proxy => proxy.name);
+
+  if (!relayProxies.length) {
+    throw new Error("Dialer-Proxy requires at least one relay proxy");
+  }
+
   const requestedRelayGroup = String(
     input.relayGroup ??
       input.targetProxy?.["dialer-proxy"] ??
@@ -96,7 +103,8 @@ export function buildDialerProxyConfig(input = {}) {
   const proxyNames = relayProxies.map(proxy => proxy.name);
   const rules = renderRulePackLines(extendedAiRelay, targetName)
     .map(normalizeRuleLine)
-    .filter(Boolean);
+    .filter(Boolean)
+    .concat(STANDALONE_TERMINAL_RULES);
 
   const config = {
     port: 1990,

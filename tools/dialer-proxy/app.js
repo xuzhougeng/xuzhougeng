@@ -190,6 +190,30 @@ function cloneRelayProxyMetadata(proxies) {
   return proxies.map(proxy => ({ ...proxy }));
 }
 
+function resolveRelayInputState(yamlText) {
+  const raw = String(yamlText ?? "");
+  if (!raw.trim()) {
+    return {
+      relayProxies: [],
+      relayProxyObjects: [],
+      relayYamlBlocks: [],
+    };
+  }
+
+  const relayProxies = parseYamlProxies(normalizeRelayYamlInput(raw));
+  if (!relayProxies.length) {
+    throw new Error("当前 Relay YAML 无法解析，请修正后重试");
+  }
+
+  return {
+    relayProxies,
+    relayProxyObjects: materializeRelayProxyObjects(raw) ?? cloneRelayProxyMetadata(relayProxies),
+    relayYamlBlocks: relayProxies
+      .map(proxy => String(proxy?.raw ?? "").trimEnd())
+      .filter(Boolean),
+  };
+}
+
 function serializeYamlScalar(value) {
   if (value === null) {
     return "null";
@@ -295,18 +319,6 @@ function serializeConfig(config) {
   return serializeYamlValue(config);
 }
 
-function getRelayYamlBlocksForOutput() {
-  if (state.relayProxies.length) {
-    return state.relayProxies
-      .map(proxy => String(proxy?.raw ?? "").trimEnd())
-      .filter(Boolean);
-  }
-
-  return parseYamlProxies(normalizeRelayYamlInput(EXAMPLE_RELAY_YAML))
-    .map(proxy => String(proxy?.raw ?? "").trimEnd())
-    .filter(Boolean);
-}
-
 function buildYamlWithRawRelayBlocks(config, relayYamlBlocks) {
   const targetProxy = config.proxies.at(-1);
   const sections = [
@@ -331,6 +343,10 @@ function buildYamlWithRawRelayBlocks(config, relayYamlBlocks) {
   sections.push(`rules:\n${serializeYamlValue(config.rules, "  ")}`);
 
   return sections.join("\n");
+}
+
+function invalidateGeneratedOutput() {
+  refs.yamlOutput.value = "";
 }
 
 function renderRelayProxies() {
@@ -369,6 +385,11 @@ function renderRelayProxies() {
         const idx = Number(item.dataset.index);
         state.relayProxies.splice(idx, 1);
         state.relayProxyObjects.splice(idx, 1);
+        refs.relayInput.value = state.relayProxies
+          .map(proxy => String(proxy?.raw ?? "").trimEnd())
+          .filter(Boolean)
+          .join("\n\n");
+        invalidateGeneratedOutput();
         renderRelayProxies();
       });
     });
@@ -382,21 +403,13 @@ function updateTargetFromInputs() {
   state.targetProxy.username = refs.targetUsername.value.trim();
   state.targetProxy.password = refs.targetPassword.value.trim();
   state.targetProxy.dialerProxy = refs.dialerProxy.value.trim() || "relay-group";
+  invalidateGeneratedOutput();
 }
 
-function getRelayProxiesForOutput() {
-  if (state.relayProxyObjects.length) {
-    return state.relayProxyObjects;
-  }
-
-  return materializeRelayProxyObjects(EXAMPLE_RELAY_YAML)
-    ?? parseYamlProxies(normalizeRelayYamlInput(EXAMPLE_RELAY_YAML));
-}
-
-function buildFullYaml() {
-  const relayProxies = getRelayProxiesForOutput();
+function buildFullYaml(relayState) {
+  const { relayProxyObjects, relayYamlBlocks } = relayState;
   const { config } = buildDialerProxyConfig({
-    relayProxies,
+    relayProxies: relayProxyObjects,
     targetProxy: {
       name: state.targetProxy.name,
       type: state.targetProxy.type,
@@ -409,7 +422,7 @@ function buildFullYaml() {
   });
 
   if (!yaml?.load) {
-    return buildYamlWithRawRelayBlocks(config, getRelayYamlBlocksForOutput());
+    return buildYamlWithRawRelayBlocks(config, relayYamlBlocks);
   }
 
   return serializeConfig(config);
@@ -418,25 +431,37 @@ function buildFullYaml() {
 function handleParseRelay() {
   const raw = refs.relayInput.value;
   if (!raw.trim()) {
+    state.relayProxies = [];
+    state.relayProxyObjects = [];
+    renderRelayProxies();
     refs.relaySummary.textContent = "输入为空";
     return;
   }
 
-  const parsed = parseYamlProxies(normalizeRelayYamlInput(raw));
-  if (!parsed.length) {
-    refs.relaySummary.textContent = "未识别到节点";
+  try {
+    const relayState = resolveRelayInputState(raw);
+    state.relayProxies = relayState.relayProxies;
+    state.relayProxyObjects = relayState.relayProxyObjects;
+    renderRelayProxies();
+  } catch (error) {
+    state.relayProxies = [];
+    state.relayProxyObjects = [];
+    renderRelayProxies();
+    refs.relaySummary.textContent = error.message;
     return;
   }
 
-  state.relayProxies = parsed;
-  state.relayProxyObjects = materializeRelayProxyObjects(raw) ?? cloneRelayProxyMetadata(parsed);
-  renderRelayProxies();
+  if (!state.relayProxies.length) {
+    refs.relaySummary.textContent = "未识别到节点";
+    return;
+  }
 }
 
 function handleClearRelay() {
   state.relayProxies = [];
   state.relayProxyObjects = [];
   refs.relayInput.value = "";
+  invalidateGeneratedOutput();
   renderRelayProxies();
 }
 
@@ -475,8 +500,18 @@ async function handleGenerate() {
     }
   }
 
-  const yaml = buildFullYaml();
-  refs.yamlOutput.value = yaml;
+  try {
+    const relayState = resolveRelayInputState(refs.relayInput.value);
+    state.relayProxies = relayState.relayProxies;
+    state.relayProxyObjects = relayState.relayProxyObjects;
+    renderRelayProxies();
+    refs.yamlOutput.value = buildFullYaml(relayState);
+  } catch (error) {
+    state.relayProxies = [];
+    state.relayProxyObjects = [];
+    renderRelayProxies();
+    refs.relaySummary.textContent = error.message;
+  }
 }
 
 function handleCopyYaml() {
@@ -540,7 +575,24 @@ function fallbackCopy(text) {
 
 function handleDownload() {
   updateTargetFromInputs();
-  const text = refs.yamlOutput.value || buildFullYaml();
+  let text = refs.yamlOutput.value;
+
+  if (!text) {
+    try {
+      const relayState = resolveRelayInputState(refs.relayInput.value);
+      state.relayProxies = relayState.relayProxies;
+      state.relayProxyObjects = relayState.relayProxyObjects;
+      renderRelayProxies();
+      text = buildFullYaml(relayState);
+    } catch (error) {
+      state.relayProxies = [];
+      state.relayProxyObjects = [];
+      renderRelayProxies();
+      refs.relaySummary.textContent = error.message;
+      return;
+    }
+  }
+
   const blob = new Blob([text], { type: "text/yaml" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -564,6 +616,7 @@ function handleLoadExample() {
   refs.dialerProxy.value = "relay-group";
 
   updateTargetFromInputs();
+  invalidateGeneratedOutput();
 
   refs.loadExampleBtn.textContent = "已加载";
   setTimeout(() => (refs.loadExampleBtn.textContent = "加载案例"), 1500);
@@ -576,6 +629,12 @@ function bindEvents() {
   refs.loadExampleBtn.addEventListener("click", handleLoadExample);
   refs.copyYamlBtn.addEventListener("click", handleCopyYaml);
   refs.downloadYamlBtn.addEventListener("click", handleDownload);
+  refs.relayInput.addEventListener("input", () => {
+    state.relayProxies = [];
+    state.relayProxyObjects = [];
+    invalidateGeneratedOutput();
+    renderRelayProxies();
+  });
 
   // 实时更新目标代理信息
   [
@@ -589,6 +648,7 @@ function bindEvents() {
   ].forEach(input => {
     if (input) {
       input.addEventListener("input", updateTargetFromInputs);
+      input.addEventListener("change", updateTargetFromInputs);
     }
   });
 

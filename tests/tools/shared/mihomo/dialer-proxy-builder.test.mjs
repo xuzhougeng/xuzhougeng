@@ -112,5 +112,27 @@ test("buildDialerProxyConfig emits target dialer-proxy, relay group, and shared 
   ]);
   assert.ok(config.rules.includes("DOMAIN-SUFFIX,openai.com,target-socks5"));
   assert.ok(config.rules.includes("DOMAIN-SUFFIX,claude.ai,target-socks5"));
+  assert.equal(config.rules.at(-1), "MATCH,DIRECT");
+  assert.equal(
+    config.rules.filter(rule => rule === "MATCH,DIRECT").length,
+    1
+  );
   assert.deepEqual(summary.enabledRulePacks, ["extendedAiRelay"]);
+});
+
+test("buildDialerProxyConfig rejects empty relay input", () => {
+  assert.throws(
+    () =>
+      buildDialerProxyConfig({
+        relayProxies: [],
+        targetProxy: {
+          name: "target-socks5",
+          type: "socks5",
+          server: "target.example.com",
+          port: "1080",
+          "dialer-proxy": "relay-group",
+        },
+      }),
+    /at least one relay proxy/i
+  );
 });

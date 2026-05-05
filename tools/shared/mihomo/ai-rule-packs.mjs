@@ -142,9 +142,6 @@ const EXTENDED_AI_RELAY_LINES = [
   "",
   "  # > Zed",
   "  - DOMAIN-SUFFIX,zed.dev,{target}",
-  "",
-  "  # > Final Rule",
-  "  - MATCH,DIRECT",
 ];
 
 export const coreAiRelay = {

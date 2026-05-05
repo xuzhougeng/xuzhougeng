@@ -618,6 +618,20 @@ function parseRelayYamlText(text) {
   return [];
 }
 
+function resolveRelayProxiesFromText(text) {
+  const rawText = String(text ?? "");
+  if (!rawText.trim()) {
+    return [];
+  }
+
+  const proxies = parseRelayYamlText(rawText);
+  if (!proxies.length) {
+    throw new Error("未解析到任何 Relay 节点");
+  }
+
+  return proxies.map(proxy => reconstructRelayProxy(proxy.raw));
+}
+
 function reconstructRelayProxy(raw) {
   const parsed = yaml.load(`proxies:\n${raw}`);
   const proxy = parsed?.proxies?.[0];
@@ -759,16 +773,13 @@ function handleRelayParse() {
   }
 
   try {
-    const proxies = parseRelayYamlText(uiState.relayYamlText);
-    if (!proxies.length) {
-      throw new Error("未解析到任何 Relay 节点");
-    }
-
-    state.relayProxies = proxies.map(proxy => reconstructRelayProxy(proxy.raw));
+    state.relayProxies = resolveRelayProxiesFromText(uiState.relayYamlText);
     renderRelaySection();
     setStatus("relayStatus", "success", `✓ 解析到 ${state.relayProxies.length} 个 Relay 节点`);
     resetOutput();
   } catch (error) {
+    state.relayProxies = [];
+    renderRelaySection();
     setStatus("relayStatus", "error", `✗ ${error.message}`);
   }
 }
@@ -790,6 +801,12 @@ function handleGenerate() {
   resetOutput();
 
   try {
+    uiState.relayYamlText = $("relayYamlInput").value;
+    const relayProxies = resolveRelayProxiesFromText(uiState.relayYamlText);
+    state.relayProxies = relayProxies;
+    renderRelaySection();
+    clearStatus("relayStatus");
+
     const preparedTargets = buildPreparedTargetProxies();
     const ignoredTargets = state.targetProxies.length - preparedTargets.length;
     const { selectedRulePacks, extraLines, enabledTargets } = materializeRulePacks();
@@ -801,7 +818,7 @@ function handleGenerate() {
       },
       ordinaryGroups: buildPreparedOrdinaryGroups(),
       upstreamProxies: state.upstreamProxies.map(proxy => structuredClone(proxy)),
-      relayProxies: state.relayProxies.map(proxy => structuredClone(proxy)),
+      relayProxies: relayProxies.map(proxy => structuredClone(proxy)),
       targetProxies: preparedTargets,
       selectedProviders: { ...state.selectedProviders },
       selectedRulePacks,
@@ -859,6 +876,9 @@ $("relayGroupType").addEventListener("change", event => {
 
 $("relayYamlInput").addEventListener("input", event => {
   uiState.relayYamlText = event.target.value;
+  state.relayProxies = [];
+  renderRelaySection();
+  clearStatus("relayStatus");
   resetOutput();
 });
 

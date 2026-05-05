@@ -151,9 +151,6 @@ const expectedExtendedLines = [
   "",
   "  # > Zed",
   "  - DOMAIN-SUFFIX,zed.dev,{target}",
-  "",
-  "  # > Final Rule",
-  "  - MATCH,DIRECT",
 ];
 
 test("coreAiRelay preserves the curated OpenAI and Anthropic source sequence", () => {
@@ -164,6 +161,13 @@ test("coreAiRelay preserves the curated OpenAI and Anthropic source sequence", (
 test("extendedAiRelay preserves the curated full source sequence", () => {
   assert.equal(extendedAiRelay.target, "AI-Relay");
   assert.deepEqual(extendedAiRelay.lines, expectedExtendedLines);
+});
+
+test("extendedAiRelay stays reusable and omits standalone terminal fallback rules", () => {
+  assert.equal(
+    extendedAiRelay.lines.some(line => line.includes("MATCH,DIRECT")),
+    false
+  );
 });
 
 test("renderRulePackLines replaces {target} across the ordered built-in packs", () => {
