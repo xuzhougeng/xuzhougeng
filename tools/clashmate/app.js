@@ -150,7 +150,7 @@ function collectBaseConfig() {
 }
 
 function showGeneratedSections() {
-  ["groupsSection", "relaySection", "targetsSection", "rulesSection", "outputSection"].forEach(id => {
+  ["groupsSection", "advancedSection", "rulesSection", "outputSection"].forEach(id => {
     $(id).hidden = false;
   });
 }

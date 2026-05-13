@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClashMate 使用指南：三步生成你的 Mihomo 配置 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        h1 {
+            font-size: 1.9em;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            margin: 0;
+            color: #00ffff;
+        }
+
+        .date {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .date::before {
+            content: "// ";
+        }
+
+        .content {
+            padding: 40px;
+            color: #eee;
+        }
+
+        h2 {
+            color: #00ffff;
+            font-size: 1.4em;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        h3 {
+            color: #00ff00;
+            font-size: 1.15em;
+            margin: 22px 0 8px 0;
+        }
+
+        p {
+            margin: 12px 0;
+            line-height: 1.8;
+        }
+
+        ul,
+        ol {
+            margin: 12px 0;
+            padding-left: 25px;
+        }
+
+        li {
+            margin: 6px 0;
+        }
+
+        a {
+            color: #00ff00;
+            text-decoration: none;
+            border-bottom: 1px dashed #00ff00;
+            transition: all 0.3s;
+        }
+
+        a:hover {
+            color: #00ffff;
+            border-bottom-color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            display: block;
+            overflow-x: auto;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #00ff00;
+            padding: 10px 12px;
+            text-align: left;
+            color: #eee;
+        }
+
+        table th {
+            background: #000;
+            color: #00ffff;
+        }
+
+        table tr:nth-child(even) td {
+            background: #1b1b1b;
+        }
+
+        code {
+            color: #00ff00;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.95em;
+        }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
+        pre {
+            padding-top: 35px;
+            margin: 0;
+            background: #000;
+            padding: 35px 20px 20px 20px;
+            border-radius: 4px;
+            border: 1px solid #00ff00;
+            overflow-x: auto;
+            color: #eee;
+        }
+
+        .callout {
+            margin: 18px 0;
+            padding: 12px 16px;
+            border-left: 3px solid #00ffff;
+            background: #1b1b1b;
+            color: #ddd;
+            font-size: 0.95em;
+        }
+
+        .callout strong {
+            color: #00ffff;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background: #000;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .back-link:hover {
+            background: #00ff00;
+            color: #1a1a1a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            padding: 20px 40px;
+            text-align: center;
+            background: #000;
+            border-top: 1px solid #00ff00;
+            color: #666;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>[ARTICLE] ClashMate 使用指南：三步生成你的 Mihomo 配置</h1>
+            <div class="date">2026-05-13</div>
+        </header>
+        <main class="content">
+            <p><code>ClashMate</code> 是一个浏览器端的 Mihomo / Clash 配置生成器。它的目标只有一个：让你用最少的操作，把订阅地址变成一份可以直接导入 <code>Clash Verge</code> 的 YAML 配置。</p>
+
+            <p>这篇文章只讲日常用法。整个流程就三步：<strong>获取节点 → 自定义分组 → 配置规则</strong>，最后点一下生成。</p>
+
+            <p>工具入口：<a href="https://xuzhougeng.top/tools/clashmate/" target="_blank">https://xuzhougeng.top/tools/clashmate/</a></p>
+
+            <h2>它能解决什么问题</h2>
+            <p>大多数人最初的 Clash 配置都是这样来的：</p>
+            <ol>
+                <li>从机场拿到一个订阅 URL</li>
+                <li>导入 Clash Verge，能用就行</li>
+            </ol>
+
+            <p>问题在于：默认配置往往只有一个 <code>Proxy</code> 组，你想把 GitHub 放进直连、把流媒体单独走美国节点、把广告类域名拦掉——这些都得手改 YAML。改一次还好，每次订阅刷新都得重做就很烦。</p>
+
+            <p><code>ClashMate</code> 干的就是这件事：把订阅里的节点拿出来重新组织成你想要的分组，再套上常用规则包（GitHub、AI、广告、社交等），生成一份能直接导入的配置。订阅换了再来一遍，一分钟搞定。</p>
+
+            <h2>三步上手</h2>
+
+            <h3>步骤 1 · 获取节点</h3>
+            <p>打开 <code>ClashMate</code>，在 <strong>第 1 步「获取节点」</strong> 里有两种方式喂入订阅：</p>
+            <ol>
+                <li>把订阅 URL 粘到输入框，点 <strong>获取</strong></li>
+                <li>或者把订阅 YAML 文件下载下来直接上传</li>
+            </ol>
+
+            <p>如果 URL 抓取失败（比如机场域名被本地拦了 CORS），用文件上传一定能成功。下面会立刻列出抓到的节点名。</p>
+
+            <div class="callout">
+                <strong>提示：</strong>这一步抓的是「上游节点」，也就是你机场提供的那些原始线路。它们会自动进入两个保留组 <code>Auto</code>（按延迟自动选）和 <code>Proxy</code>（手动选）。
+            </div>
+
+            <h3>步骤 2 · 自定义分组（普通代理组）</h3>
+            <p>抓到节点后，第 2 步「普通代理组」会出现。默认就两个组：</p>
+            <ul>
+                <li><code>Auto</code>：<code>url-test</code> 类型，按延迟自动挑节点</li>
+                <li><code>Proxy</code>：<code>select</code> 类型，你手动选当前用哪个节点</li>
+            </ul>
+
+            <p>这两个组够日常用了。如果你想做更精细的分流，比如：</p>
+            <ul>
+                <li>新建一个 <code>Streaming</code> 组，只勾美国和日本节点，专给流媒体用</li>
+                <li>新建一个 <code>Work</code> 组，只勾低延迟节点，专给办公场景用</li>
+            </ul>
+
+            <p>点 <strong>+ 新建分组</strong> 就能加，再勾选要放进去的节点。组类型可选：</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>类型</th>
+                        <th>含义</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>select</code></td><td>手动选节点</td></tr>
+                    <tr><td><code>url-test</code></td><td>按延迟自动选最快的</td></tr>
+                    <tr><td><code>fallback</code></td><td>按顺序选，失败再切下一个</td></tr>
+                    <tr><td><code>load-balance</code></td><td>负载均衡，请求分散到多个节点</td></tr>
+                </tbody>
+            </table>
+
+            <h3>步骤 3 · 配置规则</h3>
+            <p>第 3 步「规则分配」决定 <strong>什么流量走哪个组</strong>。这里有三块：</p>
+
+            <p><strong>① 内置 AI 规则包</strong></p>
+            <p>这是预置的两个规则包：</p>
+            <ul>
+                <li><code>AI 核心规则</code>：<code>OpenAI</code> / <code>Anthropic</code> / <code>ChatGPT</code> / <code>Claude</code> 这些核心域名</li>
+                <li><code>AI 扩展规则</code>：在核心规则之外还覆盖 <code>Copilot</code> / <code>Gemini</code> / <code>Perplexity</code> 等</li>
+            </ul>
+            <p>勾上它们，然后在右边选目标组（一般指到 <code>Proxy</code> 就行）。</p>
+
+            <p><strong>② Rule Providers</strong></p>
+            <p>这是按分类组织的远程规则源，覆盖了常用场景：</p>
+            <ul>
+                <li>科技公司域名（GitHub、Google、Microsoft）</li>
+                <li>流媒体（Netflix、YouTube）</li>
+                <li>国内直连白名单</li>
+                <li>广告 / 隐私拦截</li>
+                <li>等等</li>
+            </ul>
+            <p>每条规则都可以单独勾选并指定目标组：<code>Proxy</code> / <code>DIRECT</code> / <code>REJECT</code> / 你自己建的组。不知道选什么的时候保持默认即可——直连类默认 <code>DIRECT</code>，拦截类默认 <code>REJECT</code>，其余走 <code>Proxy</code>。</p>
+
+            <p><strong>③ 自定义规则</strong></p>
+            <p>底部的「自定义规则」框可以写你自己的 Mihomo 规则，一行一条，例如：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>DOMAIN-SUFFIX,internal.company.com,DIRECT
+DOMAIN-KEYWORD,steam,Proxy
+IP-CIDR,192.168.0.0/16,DIRECT,no-resolve</code></pre>
+            </div>
+
+            <h3>步骤 4 · 生成配置并导入 Clash Verge</h3>
+            <p>最后一步「生成配置」里点 <strong>生成</strong>，下方会出现一份 YAML。</p>
+            <ol>
+                <li>点 <strong>复制</strong> 把它整段复制走</li>
+                <li>或者点 <strong>下载</strong> 拿到 <code>config.yaml</code> 文件</li>
+            </ol>
+
+            <p>导入 Clash Verge 的最简单方式：</p>
+            <ol>
+                <li>打开 Clash Verge → 订阅</li>
+                <li>选「本地」类型，把刚刚下载的 <code>config.yaml</code> 拖进去</li>
+                <li>切换到该配置，确认是 <code>Rule</code> 模式</li>
+            </ol>
+
+            <p>这就完事了。订阅变了、想加新规则？回 <code>ClashMate</code> 重新生成一次就行。</p>
+
+            <h2>关于「高级功能」</h2>
+            <p>页面底部有一个折叠的「高级功能」区，里面是两个实验性功能：</p>
+            <ul>
+                <li><strong>Relay 双跳节点</strong>：导入第二跳中转节点，构造双层代理链路</li>
+                <li><strong>目标节点</strong>：定义最终出口节点，自动通过 <code>dialer-proxy</code> 接到 Relay 组上</li>
+            </ul>
+
+            <p>这两个功能是给需要做「AI 流量单独走二次代理」的高阶用户准备的，对日常 Clash Verge 用户来说<strong>完全不需要打开</strong>。如果你只是想替换默认配置、加些规则，跳过这一块。</p>
+
+            <p>对它们感兴趣的话，可以读一下另一篇详细介绍：<a href="../25/index.html">给 Clash Verge 用户的 AI 分流方案</a>。</p>
+
+            <h2>常见问题</h2>
+
+            <h3>抓取订阅失败怎么办</h3>
+            <p>多数情况下是浏览器跨域被拦了。<code>ClashMate</code> 会自动尝试两个 CORS 代理（<code>allorigins.win</code>、<code>corsproxy.io</code>），如果都不行，直接把订阅下载下来用「上传 YAML 文件」喂入即可。</p>
+
+            <h3>生成的配置导入后没反应</h3>
+            <p>先确认 Clash Verge 的「模式」是 <code>Rule</code>，不是 <code>Global</code> 或 <code>Direct</code>。在 <code>Global</code> 模式下规则不生效，所有流量都强制走当前选中的节点。</p>
+
+            <h3>每次订阅刷新都要重做一次？</h3>
+            <p>是的，目前没有自动同步功能。但实际操作只要：粘 URL → 生成 → 下载，整个过程不到一分钟。规则配置本身一次设置完，下次只要重复 1 → 4 即可。</p>
+
+            <h3>它会把我的订阅 URL 上传到哪里去吗</h3>
+            <p>不会。<code>ClashMate</code> 是纯前端工具，节点解析、分组编辑、配置生成全部在你浏览器里跑。订阅 URL 只在你点「获取」时通过 CORS 代理转发一次（避免浏览器跨域），代理服务由 <code>allorigins.win</code> / <code>corsproxy.io</code> 提供。如果介意，直接用「上传文件」方式，全程不联网。</p>
+
+            <h2>小结</h2>
+            <p>对 95% 的 Clash Verge 用户来说，<code>ClashMate</code> 的用法就是一句话：</p>
+            <div class="callout">
+                <strong>粘订阅 → 调分组 → 勾规则 → 下 YAML → 导 Verge。</strong>
+            </div>
+            <p>高级功能默认折叠，不需要的就不用管。需要的话再展开，参考双跳那篇文章配置即可。</p>
+
+            <a href="../../../index.html" class="back-link">Return_To_Blog_Index</a>
+        </main>
+        <footer>
+            <p>&copy; 2026 Geektastic! Terminal Blog | Powered by Pure HTML</p>
+        </footer>
+    </div>
+    <script>
+    function copyCode(btn) {
+        const code = btn.nextElementSibling.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'COPIED!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = 'COPY';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+    </script>
+</body>
+</html>

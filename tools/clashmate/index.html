@@ -12,7 +12,7 @@
   <div class="container">
     <header>
       <h1>ClashMate</h1>
-      <p class="tagline">获取节点 → 自定义分组 → 配置规则</p>
+      <p class="tagline">获取节点 → 自定义分组 → 配置规则 · <a href="/blog/2026/05/13/" target="_blank" rel="noopener" class="tagline-help">使用帮助</a></p>
     </header>
 
     <main>
@@ -48,61 +48,65 @@
         <div id="groupsContainer"></div>
       </section>
 
-      <!-- Step 3: Relay 节点 -->
-      <section class="card" id="relaySection" hidden>
-        <div class="card-header">
-          <span class="step">3</span>
-          <h2>Relay 双跳节点</h2>
-        </div>
-        <p class="hint">上游订阅节点会进入保留的 <code>Auto</code> / <code>Proxy</code> 组。这里导入第二跳 relay 节点并定义 Relay 组。</p>
-        <div class="config-grid">
-          <label>
-            <span>Relay 组名</span>
-            <input type="text" id="relayGroupName" value="Relay-Group" placeholder="Relay-Group">
-          </label>
-          <label>
-            <span>Relay 组类型</span>
-            <select id="relayGroupType">
-              <option value="select">select</option>
-              <option value="url-test">url-test</option>
-              <option value="fallback">fallback</option>
-              <option value="load-balance">load-balance</option>
-            </select>
-          </label>
-        </div>
-        <label class="stacked-field">
-          <span>Relay YAML</span>
-          <textarea id="relayYamlInput" rows="9" placeholder="粘贴包含 proxies: 的 Mihomo/Clash YAML，或直接粘贴代理列表"></textarea>
-        </label>
-        <div class="inline-actions">
-          <button id="parseRelayBtn" class="btn-primary">解析 Relay</button>
-          <button id="clearRelayBtn" class="btn-sm">清空 Relay</button>
-        </div>
-        <div id="relayStatus" class="status" hidden></div>
-        <div id="relayList" class="proxy-cards" hidden></div>
-      </section>
+      <!-- 高级功能：Relay 双跳节点 + 目标节点（默认折叠） -->
+      <details id="advancedSection" class="advanced-section" hidden>
+        <summary>
+          <span class="advanced-summary-title">高级功能</span>
+          <span class="advanced-summary-hint">Relay 双跳节点 · 目标节点（实验性，按需展开）</span>
+        </summary>
 
-      <!-- Step 4: 目标节点 -->
-      <section class="card" id="targetsSection" hidden>
-        <div class="card-header">
-          <span class="step">4</span>
-          <h2>目标节点</h2>
-          <button id="addTargetBtn" class="btn-sm">+ 新建目标节点</button>
-        </div>
-        <p class="hint">目标节点会自动绑定到 Relay 组作为 <code>dialer-proxy</code>，用于构建 <code>AI-Relay</code> 出口池。</p>
-        <div class="config-grid">
-          <label>
-            <span>目标组名</span>
-            <input type="text" id="aiRelayGroupName" value="AI-Relay" placeholder="AI-Relay">
+        <section class="card" id="relaySection">
+          <div class="card-header">
+            <h2>Relay 双跳节点</h2>
+          </div>
+          <p class="hint">上游订阅节点会进入保留的 <code>Auto</code> / <code>Proxy</code> 组。这里导入第二跳 relay 节点并定义 Relay 组。</p>
+          <div class="config-grid">
+            <label>
+              <span>Relay 组名</span>
+              <input type="text" id="relayGroupName" value="Relay-Group" placeholder="Relay-Group">
+            </label>
+            <label>
+              <span>Relay 组类型</span>
+              <select id="relayGroupType">
+                <option value="select">select</option>
+                <option value="url-test">url-test</option>
+                <option value="fallback">fallback</option>
+                <option value="load-balance">load-balance</option>
+              </select>
+            </label>
+          </div>
+          <label class="stacked-field">
+            <span>Relay YAML</span>
+            <textarea id="relayYamlInput" rows="9" placeholder="粘贴包含 proxies: 的 Mihomo/Clash YAML，或直接粘贴代理列表"></textarea>
           </label>
-        </div>
-        <div id="targetsContainer"></div>
-      </section>
+          <div class="inline-actions">
+            <button id="parseRelayBtn" class="btn-primary">解析 Relay</button>
+            <button id="clearRelayBtn" class="btn-sm">清空 Relay</button>
+          </div>
+          <div id="relayStatus" class="status" hidden></div>
+          <div id="relayList" class="proxy-cards" hidden></div>
+        </section>
 
-      <!-- Step 5: 规则 -->
+        <section class="card" id="targetsSection">
+          <div class="card-header">
+            <h2>目标节点</h2>
+            <button id="addTargetBtn" class="btn-sm">+ 新建目标节点</button>
+          </div>
+          <p class="hint">目标节点会自动绑定到 Relay 组作为 <code>dialer-proxy</code>，用于构建 <code>AI-Relay</code> 出口池。</p>
+          <div class="config-grid">
+            <label>
+              <span>目标组名</span>
+              <input type="text" id="aiRelayGroupName" value="AI-Relay" placeholder="AI-Relay">
+            </label>
+          </div>
+          <div id="targetsContainer"></div>
+        </section>
+      </details>
+
+      <!-- Step 3: 规则 -->
       <section class="card" id="rulesSection" hidden>
         <div class="card-header">
-          <span class="step">5</span>
+          <span class="step">3</span>
           <h2>规则分配</h2>
           <div class="header-actions">
             <button class="btn-sm" id="selectAllProviders">全选 Providers</button>
@@ -129,10 +133,10 @@
         </label>
       </section>
 
-      <!-- Step 6: 生成 -->
+      <!-- Step 4: 生成 -->
       <section class="card" id="outputSection" hidden>
         <div class="card-header">
-          <span class="step">6</span>
+          <span class="step">4</span>
           <h2>生成配置</h2>
           <div class="header-actions">
             <button id="generateBtn" class="btn-primary">生成</button>

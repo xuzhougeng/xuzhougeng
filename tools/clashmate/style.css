@@ -51,6 +51,83 @@ header h1 {
   margin-top: 4px;
 }
 
+.tagline-help {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent);
+  padding-bottom: 1px;
+  margin-left: 4px;
+}
+
+.tagline-help:hover {
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+/* 高级功能折叠区 */
+.advanced-section {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 0;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.advanced-section > summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  padding: 14px 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.advanced-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-section > summary::before {
+  content: "▸";
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+
+.advanced-section[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.advanced-summary-title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.advanced-summary-hint {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.advanced-section[open] > summary {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.advanced-section > .card {
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.advanced-section > .card:last-of-type {
+  border-bottom: none;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
