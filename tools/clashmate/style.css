@@ -494,6 +494,65 @@ header h1 {
   gap: 6px;
 }
 
+.relay-source-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.relay-source-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.relay-source-header .inline-actions {
+  margin: 0;
+}
+
+.relay-source-panel .empty-state {
+  width: 100%;
+}
+
+.flow-preview {
+  display: grid;
+  gap: 14px;
+}
+
+.flow-lane {
+  display: grid;
+  gap: 8px;
+}
+
+.flow-lane strong {
+  font-size: 0.9rem;
+}
+
+.flow-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.flow-step {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.flow-arrow {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
 .proxy-checkbox {
   display: flex;
   align-items: center;

@@ -59,7 +59,7 @@
           <div class="card-header">
             <h2>Relay 双跳节点</h2>
           </div>
-          <p class="hint">上游订阅节点会进入保留的 <code>Auto</code> / <code>Proxy</code> 组。这里导入第二跳 relay 节点并定义 Relay 组。</p>
+          <p class="hint">从已上传节点中选择 Relay 第一跳。需要使用上传列表之外的节点时，再追加额外 Relay YAML。</p>
           <div class="config-grid">
             <label>
               <span>Relay 组名</span>
@@ -75,16 +75,25 @@
               </select>
             </label>
           </div>
+          <div class="relay-source-panel">
+            <div class="relay-source-header">
+              <span id="relaySelectionSummary">已选 0 / 0 个 Relay 节点</span>
+              <div class="inline-actions">
+                <button id="relaySelectAllBtn" class="btn-sm">全选</button>
+                <button id="relayClearSelectionBtn" class="btn-sm">清空选择</button>
+              </div>
+            </div>
+            <div id="relaySourceList" class="group-proxies"></div>
+          </div>
           <label class="stacked-field">
-            <span>Relay YAML</span>
-            <textarea id="relayYamlInput" rows="9" placeholder="粘贴包含 proxies: 的 Mihomo/Clash YAML，或直接粘贴代理列表"></textarea>
+            <span>额外 Relay YAML（可选）</span>
+            <textarea id="relayYamlInput" rows="9" placeholder="只在需要追加上传列表之外的节点时粘贴包含 proxies: 的 Mihomo/Clash YAML，或直接粘贴代理列表"></textarea>
           </label>
           <div class="inline-actions">
-            <button id="parseRelayBtn" class="btn-primary">解析 Relay</button>
-            <button id="clearRelayBtn" class="btn-sm">清空 Relay</button>
+            <button id="parseRelayBtn" class="btn-primary">解析额外 Relay</button>
+            <button id="clearRelayBtn" class="btn-sm">清空额外 Relay</button>
           </div>
           <div id="relayStatus" class="status" hidden></div>
-          <div id="relayList" class="proxy-cards" hidden></div>
         </section>
 
         <section class="card" id="targetsSection">
@@ -100,6 +109,26 @@
             </label>
           </div>
           <div id="targetsContainer"></div>
+        </section>
+
+        <section class="card" id="flowPreviewSection">
+          <div class="card-header">
+            <h2>请求链路预览</h2>
+          </div>
+          <div class="flow-preview">
+            <div class="flow-lane">
+              <strong>普通链路</strong>
+              <div id="ordinaryFlowPreview" class="flow-chain"></div>
+            </div>
+            <div class="flow-lane">
+              <strong>AI 双跳链路</strong>
+              <div id="aiFlowPreview" class="flow-chain"></div>
+            </div>
+            <div class="flow-lane">
+              <strong>目标节点拨号方式</strong>
+              <div id="dialerFlowPreview" class="flow-chain"></div>
+            </div>
+          </div>
         </section>
       </details>
 

@@ -2,6 +2,7 @@ import { RULES_DEF } from "../shared/mihomo/provider-catalog.mjs";
 import { coreAiRelay, extendedAiRelay, renderRulePackLines } from "../shared/mihomo/ai-rule-packs.mjs";
 import { parseYamlProxies, buildTargetProxyNode } from "../shared/mihomo/relay-parser.mjs";
 import {
+  buildRelayFlowPreview,
   buildRuleTargetOptions,
   createDefaultClashmateState,
   createDefaultTargetProxyDraft,
@@ -74,6 +75,59 @@ function indentBlock(text, indentSize = 2) {
 
 function getUpstreamProxyNames() {
   return state.upstreamProxies.map(proxy => String(proxy?.name ?? "").trim()).filter(Boolean);
+}
+
+function getExtraRelayProxyNames() {
+  return state.relayProxies.map(proxy => String(proxy?.name ?? "").trim()).filter(Boolean);
+}
+
+function getRelayCandidateNames() {
+  const seen = new Set();
+  const names = [];
+
+  for (const proxy of [...state.upstreamProxies, ...state.relayProxies]) {
+    const name = String(proxy?.name ?? "").trim();
+    if (!name || seen.has(name)) {
+      continue;
+    }
+
+    seen.add(name);
+    names.push(name);
+  }
+
+  return names;
+}
+
+function setRelayProxyNames(proxyNames) {
+  const allowed = new Set(getRelayCandidateNames());
+  const seen = new Set();
+  state.relayProxyNames = (Array.isArray(proxyNames) ? proxyNames : [])
+    .map(proxyName => String(proxyName ?? "").trim())
+    .filter(proxyName => {
+      if (!proxyName || !allowed.has(proxyName) || seen.has(proxyName)) {
+        return false;
+      }
+
+      seen.add(proxyName);
+      return true;
+    });
+}
+
+function replaceExtraRelayProxies(relayProxies, { selectNew = true } = {}) {
+  const previousExtraNames = new Set(getExtraRelayProxyNames());
+  const selectedNames = new Set(
+    state.relayProxyNames.filter(proxyName => !previousExtraNames.has(proxyName))
+  );
+
+  state.relayProxies = Array.isArray(relayProxies)
+    ? relayProxies.map(proxy => structuredClone(proxy))
+    : [];
+
+  if (selectNew) {
+    getExtraRelayProxyNames().forEach(proxyName => selectedNames.add(proxyName));
+  }
+
+  setRelayProxyNames(getRelayCandidateNames().filter(proxyName => selectedNames.has(proxyName)));
 }
 
 function createDefaultOrdinaryGroups(proxyNames = []) {
@@ -164,6 +218,7 @@ function initializeStateFromConfig(config) {
   nextState.originalConfig = structuredClone(config);
   nextState.upstreamProxies = upstreamProxies;
   nextState.ordinaryGroups = createDefaultOrdinaryGroups(upstreamProxyNames);
+  nextState.relayProxyNames = [...upstreamProxyNames];
   nextState.targetProxies = [createDefaultTargetProxyDraft(nextState.relayGroup)];
 
   Object.assign(state, nextState);
@@ -369,28 +424,49 @@ function renderRelaySection() {
   $("relayGroupType").value = state.relayGroupType;
   $("relayYamlInput").value = uiState.relayYamlText;
 
-  const relayList = $("relayList");
-  if (!state.relayProxies.length) {
-    relayList.hidden = true;
-    relayList.innerHTML = "";
+  setRelayProxyNames(state.relayProxyNames);
+
+  const relayCandidateNames = getRelayCandidateNames();
+  const selectedNames = new Set(state.relayProxyNames);
+  const extraRelayNames = new Set(getExtraRelayProxyNames());
+  $("relaySelectionSummary").textContent = `已选 ${selectedNames.size} / ${relayCandidateNames.length} 个 Relay 节点`;
+
+  const relaySourceList = $("relaySourceList");
+  if (!relayCandidateNames.length) {
+    relaySourceList.innerHTML = `<div class="empty-state">上传 YAML 后会在这里选择 Relay 第一跳节点。</div>`;
     return;
   }
 
-  relayList.hidden = false;
-  relayList.innerHTML = state.relayProxies
+  relaySourceList.innerHTML = relayCandidateNames
     .map(
-      proxy => `
-        <article class="proxy-card">
-          <strong>${escapeHtml(proxy.name ?? "(未命名)")}</strong>
-          <div class="proxy-card-meta">
-            <span>${escapeHtml(proxy.type ?? "unknown")}</span>
-            <span>${escapeHtml(proxy.server ?? "")}</span>
-            <span>${escapeHtml(proxy.port ?? "")}</span>
-          </div>
-        </article>
+      proxyName => `
+        <label class="proxy-checkbox ${selectedNames.has(proxyName) ? "selected" : ""}">
+          <input type="checkbox" value="${escapeHtml(proxyName)}" ${selectedNames.has(proxyName) ? "checked" : ""}>
+          ${escapeHtml(proxyName)}${extraRelayNames.has(proxyName) ? " · 额外" : ""}
+        </label>
       `
     )
     .join("");
+
+  relaySourceList.querySelectorAll(".proxy-checkbox").forEach(label => {
+    const checkbox = label.querySelector("input");
+    label.addEventListener("click", event => {
+      event.preventDefault();
+      const proxyName = checkbox.value;
+      const nextSelectedNames = new Set(state.relayProxyNames);
+
+      if (nextSelectedNames.has(proxyName)) {
+        nextSelectedNames.delete(proxyName);
+      } else {
+        nextSelectedNames.add(proxyName);
+      }
+
+      setRelayProxyNames(relayCandidateNames.filter(name => nextSelectedNames.has(name)));
+      renderRelaySection();
+      renderFlowPreview();
+      resetOutput();
+    });
+  });
 }
 
 function renderTargetProxies() {
@@ -455,6 +531,7 @@ function renderTargetProxies() {
       input.addEventListener("input", event => {
         const field = event.target.dataset.targetField;
         state.targetProxies[index][field] = event.target.value;
+        renderFlowPreview();
         resetOutput();
       });
     });
@@ -462,6 +539,7 @@ function renderTargetProxies() {
     card.querySelector(`[data-target-delete="${index}"]`).addEventListener("click", () => {
       state.targetProxies.splice(index, 1);
       renderTargetProxies();
+      renderFlowPreview();
       resetOutput();
     });
 
@@ -469,6 +547,25 @@ function renderTargetProxies() {
       state.targetProxies[index]["dialer-proxy"] = state.relayGroup;
     }
   });
+}
+
+function renderFlowPreview() {
+  const preview = buildRelayFlowPreview(state);
+  const renderChain = steps =>
+    steps
+      .map((step, index) => {
+        const stepMarkup = `<span class="flow-step">${escapeHtml(step)}</span>`;
+        if (index === steps.length - 1) {
+          return stepMarkup;
+        }
+
+        return `${stepMarkup}<span class="flow-arrow">→</span>`;
+      })
+      .join("");
+
+  $("ordinaryFlowPreview").innerHTML = renderChain(preview.ordinary);
+  $("aiFlowPreview").innerHTML = renderChain(preview.ai);
+  $("dialerFlowPreview").innerHTML = renderChain(preview.dialer);
 }
 
 function renderRulePacks() {
@@ -584,6 +681,7 @@ function renderAll() {
   renderOrdinaryGroups();
   renderRelaySection();
   renderTargetProxies();
+  renderFlowPreview();
   renderRulePacks();
   renderProviders();
 }
@@ -765,30 +863,34 @@ function handleRelayParse() {
   uiState.relayYamlText = $("relayYamlInput").value;
 
   if (!uiState.relayYamlText.trim()) {
-    state.relayProxies = [];
+    replaceExtraRelayProxies([], { selectNew: false });
     clearStatus("relayStatus");
     renderRelaySection();
+    renderFlowPreview();
     resetOutput();
     return;
   }
 
   try {
-    state.relayProxies = resolveRelayProxiesFromText(uiState.relayYamlText);
+    replaceExtraRelayProxies(resolveRelayProxiesFromText(uiState.relayYamlText));
     renderRelaySection();
-    setStatus("relayStatus", "success", `✓ 解析到 ${state.relayProxies.length} 个 Relay 节点`);
+    renderFlowPreview();
+    setStatus("relayStatus", "success", `✓ 追加 ${state.relayProxies.length} 个额外 Relay 节点`);
     resetOutput();
   } catch (error) {
-    state.relayProxies = [];
+    replaceExtraRelayProxies([], { selectNew: false });
     renderRelaySection();
+    renderFlowPreview();
     setStatus("relayStatus", "error", `✗ ${error.message}`);
   }
 }
 
 function handleRelayClear() {
   uiState.relayYamlText = "";
-  state.relayProxies = [];
+  replaceExtraRelayProxies([], { selectNew: false });
   $("relayYamlInput").value = "";
   renderRelaySection();
+  renderFlowPreview();
   clearStatus("relayStatus");
   resetOutput();
 }
@@ -802,9 +904,15 @@ function handleGenerate() {
 
   try {
     uiState.relayYamlText = $("relayYamlInput").value;
-    const relayProxies = resolveRelayProxiesFromText(uiState.relayYamlText);
-    state.relayProxies = relayProxies;
-    renderRelaySection();
+    if (uiState.relayYamlText.trim()) {
+      replaceExtraRelayProxies(resolveRelayProxiesFromText(uiState.relayYamlText));
+      renderRelaySection();
+      renderFlowPreview();
+    } else {
+      replaceExtraRelayProxies([], { selectNew: false });
+      renderRelaySection();
+      renderFlowPreview();
+    }
     clearStatus("relayStatus");
 
     const preparedTargets = buildPreparedTargetProxies();
@@ -818,7 +926,8 @@ function handleGenerate() {
       },
       ordinaryGroups: buildPreparedOrdinaryGroups(),
       upstreamProxies: state.upstreamProxies.map(proxy => structuredClone(proxy)),
-      relayProxies: relayProxies.map(proxy => structuredClone(proxy)),
+      relayProxies: state.relayProxies.map(proxy => structuredClone(proxy)),
+      relayProxyNames: [...state.relayProxyNames],
       targetProxies: preparedTargets,
       selectedProviders: { ...state.selectedProviders },
       selectedRulePacks,
@@ -864,6 +973,7 @@ $("relayGroupName").addEventListener("input", event => {
   state.relayGroup = nextName;
   syncRelayGroupReferences(oldName, nextName);
   renderTargetProxies();
+  renderFlowPreview();
   renderRulePacks();
   renderProviders();
   resetOutput();
@@ -876,9 +986,24 @@ $("relayGroupType").addEventListener("change", event => {
 
 $("relayYamlInput").addEventListener("input", event => {
   uiState.relayYamlText = event.target.value;
-  state.relayProxies = [];
+  replaceExtraRelayProxies([], { selectNew: false });
   renderRelaySection();
+  renderFlowPreview();
   clearStatus("relayStatus");
+  resetOutput();
+});
+
+$("relaySelectAllBtn").addEventListener("click", () => {
+  setRelayProxyNames(getRelayCandidateNames());
+  renderRelaySection();
+  renderFlowPreview();
+  resetOutput();
+});
+
+$("relayClearSelectionBtn").addEventListener("click", () => {
+  state.relayProxyNames = [];
+  renderRelaySection();
+  renderFlowPreview();
   resetOutput();
 });
 
@@ -890,6 +1015,7 @@ $("aiRelayGroupName").addEventListener("input", event => {
   const oldName = state.aiRelayGroup;
   state.aiRelayGroup = nextName;
   syncAiRelayReferences(oldName, nextName);
+  renderFlowPreview();
   renderRulePacks();
   renderProviders();
   resetOutput();
@@ -898,6 +1024,7 @@ $("aiRelayGroupName").addEventListener("input", event => {
 $("addTargetBtn").addEventListener("click", () => {
   state.targetProxies.push(createDefaultTargetProxyDraft(state.relayGroup));
   renderTargetProxies();
+  renderFlowPreview();
   resetOutput();
 });
 

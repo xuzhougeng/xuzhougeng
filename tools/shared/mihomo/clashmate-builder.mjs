@@ -30,6 +30,23 @@ function normalizeProxyName(proxy) {
   return String(proxy?.name ?? "").trim();
 }
 
+function normalizeProxyNames(values) {
+  const seen = new Set();
+  const names = [];
+
+  for (const value of normalizeArray(values)) {
+    const name = String(value ?? "").trim();
+    if (!name || seen.has(name)) {
+      continue;
+    }
+
+    seen.add(name);
+    names.push(name);
+  }
+
+  return names;
+}
+
 function normalizeRuleLine(line) {
   const trimmed = String(line ?? "").trim();
   if (!trimmed) {
@@ -171,7 +188,10 @@ function validateRelayGraph(state) {
   const relayProxies = normalizeArray(normalizedState.relayProxies);
   const targetProxies = normalizeArray(normalizedState.targetProxies);
   const upstreamNames = upstreamProxies.map(normalizeProxyName).filter(Boolean);
-  const relayNames = relayProxies.map(normalizeProxyName).filter(Boolean);
+  const extraRelayNames = relayProxies.map(normalizeProxyName).filter(Boolean);
+  const relayNames = Object.hasOwn(normalizedState, "relayProxyNames")
+    ? normalizeProxyNames(normalizedState.relayProxyNames)
+    : normalizeProxyNames(extraRelayNames);
   const targetNames = targetProxies.map(normalizeProxyName).filter(Boolean);
   const { enabledRulePacks, lines: builtInLines } = buildBuiltInRuleLines(state);
   const customRules = normalizeArray(normalizedState.customRules).map(rule => String(rule).trim()).filter(Boolean);
@@ -223,6 +243,13 @@ function validateRelayGraph(state) {
 
   if (relayGroupReferenced && !relayNames.length) {
     throw new Error(`${relayGroup} requires at least one relay proxy`);
+  }
+
+  const relayCandidateNames = new Set([...upstreamNames, ...extraRelayNames]);
+  for (const relayName of relayNames) {
+    if (!relayCandidateNames.has(relayName)) {
+      throw new Error(`unknown relay proxy "${relayName}" selected for ${relayGroup}`);
+    }
   }
 
   if (aiRelayReferenced && !targetNames.length) {
@@ -297,9 +324,15 @@ export function buildClashmateConfig(state) {
   const relayProxies = normalizeArray(normalizedState.relayProxies);
   const targetProxies = normalizeArray(normalizedState.targetProxies);
   const baseConfig = cloneBaseConfig(normalizedState.originalConfig);
+  const selectedRelayNames = new Set(validated.relayNames);
+  const upstreamNameSet = new Set(validated.upstreamNames);
+  const selectedExtraRelayProxies = relayProxies.filter(proxy => {
+    const name = normalizeProxyName(proxy);
+    return selectedRelayNames.has(name) && !upstreamNameSet.has(name);
+  });
   const proxies = [
     ...upstreamProxies.map(proxy => ({ ...proxy, name: normalizeProxyName(proxy) })),
-    ...relayProxies.map(proxy => ({ ...proxy, name: normalizeProxyName(proxy) })),
+    ...selectedExtraRelayProxies.map(proxy => ({ ...proxy, name: normalizeProxyName(proxy) })),
     ...targetProxies.map(proxy => normalizeTargetProxy(proxy, validated.relayGroup)),
   ];
   const rules = [

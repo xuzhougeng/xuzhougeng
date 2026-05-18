@@ -33,6 +33,7 @@ function createBaseState() {
     { name: "relay-a", type: "ss", server: "relay-a.example.com", port: "443" },
     { name: "relay-b", type: "ss", server: "relay-b.example.com", port: "443" },
   ];
+  state.relayProxyNames = ["relay-a", "relay-b"];
   state.targetProxies = [
     {
       name: "target-us",
@@ -140,10 +141,52 @@ test("buildClashmateConfig orders rules as custom, built-in AI lines, provider l
 test("buildClashmateConfig fails when AI-Relay is enabled but Relay-Group has no relay members", () => {
   const state = createBaseState();
   state.relayProxies = [];
+  state.relayProxyNames = [];
 
   assert.throws(
     () => buildClashmateConfig(state),
     /Relay-Group requires at least one relay proxy/i
+  );
+});
+
+test("buildClashmateConfig can use selected uploaded nodes as Relay-Group members", () => {
+  const state = createBaseState();
+  state.relayProxies = [];
+  state.relayProxyNames = ["upstream-jp"];
+
+  const { config, summary } = buildClashmateConfig(state);
+  const relayGroup = config["proxy-groups"].find(group => group.name === "Relay-Group");
+
+  assert.deepEqual(
+    config.proxies.map(proxy => proxy.name),
+    ["upstream-hk", "upstream-jp", "target-us"]
+  );
+  assert.deepEqual(relayGroup.proxies, ["upstream-jp"]);
+  assert.deepEqual(summary.proxyPools.relay, ["upstream-jp"]);
+});
+
+test("buildClashmateConfig only emits selected extra relay proxies", () => {
+  const state = createBaseState();
+  state.relayProxyNames = ["relay-a"];
+
+  const { config } = buildClashmateConfig(state);
+  const relayGroup = config["proxy-groups"].find(group => group.name === "Relay-Group");
+
+  assert.deepEqual(
+    config.proxies.map(proxy => proxy.name),
+    ["upstream-hk", "upstream-jp", "relay-a", "target-us"]
+  );
+  assert.deepEqual(relayGroup.proxies, ["relay-a"]);
+});
+
+test("buildClashmateConfig rejects Relay-Group members that are not uploaded or extra relay nodes", () => {
+  const state = createBaseState();
+  state.relayProxies = [];
+  state.relayProxyNames = ["missing-relay"];
+
+  assert.throws(
+    () => buildClashmateConfig(state),
+    /unknown relay proxy.*missing-relay/i
   );
 });
 
@@ -209,6 +252,7 @@ test("buildClashmateConfig detects AI-Relay references when rule options follow 
   const state = createDefaultClashmateState();
   state.upstreamProxies = [{ name: "upstream-hk", type: "ss", server: "upstream.example.com", port: "443" }];
   state.relayProxies = [{ name: "relay-a", type: "ss", server: "relay.example.com", port: "443" }];
+  state.relayProxyNames = ["relay-a"];
   state.selectedRulePacks = {
     coreAiRelay: false,
     extendedAiRelay: false,

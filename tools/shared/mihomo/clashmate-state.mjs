@@ -19,6 +19,7 @@ export function createDefaultClashmateState() {
     originalConfig: "",
     upstreamProxies: [],
     relayProxies: [],
+    relayProxyNames: [],
     targetProxies: [],
     ordinaryGroups: RESERVED_ORDINARY_GROUPS.map(name => createOrdinaryGroup(name)),
     relayGroup: RESERVED_RELAY_GROUP,
@@ -49,6 +50,40 @@ export function buildRuleTargetOptions({ ordinaryGroups = [], aiRelayGroup = RES
   }
 
   return options;
+}
+
+function normalizeEntryNames(entries = []) {
+  return (Array.isArray(entries) ? entries : [])
+    .map(entry => String((typeof entry === "string" ? entry : entry?.name) ?? "").trim())
+    .filter(Boolean);
+}
+
+export function buildRelayFlowPreview({
+  ordinaryGroups = [],
+  upstreamProxies = [],
+  relayProxyNames = [],
+  targetProxies = [],
+  relayGroup = RESERVED_RELAY_GROUP,
+  aiRelayGroup = RESERVED_AI_RELAY_GROUP,
+} = {}) {
+  const ordinaryGroupNames = normalizeEntryNames(ordinaryGroups);
+  const upstreamNames = normalizeEntryNames(upstreamProxies);
+  const relayNames = normalizeEntryNames(relayProxyNames);
+  const targetNames = normalizeEntryNames(targetProxies);
+  const proxyGroup = ordinaryGroupNames.includes("Proxy")
+    ? "Proxy"
+    : ordinaryGroupNames[0] || "Proxy";
+  const upstreamName = upstreamNames[0] || "上传节点";
+  const targetName = targetNames[0] || "目标节点（待填写）";
+  const relayName = relayNames[0] || "Relay 节点（待选择）";
+  const normalizedRelayGroup = String(relayGroup ?? "").trim() || RESERVED_RELAY_GROUP;
+  const normalizedAiRelayGroup = String(aiRelayGroup ?? "").trim() || RESERVED_AI_RELAY_GROUP;
+
+  return {
+    ordinary: ["普通请求", proxyGroup, upstreamName, "目标网站"],
+    ai: ["AI 请求", normalizedAiRelayGroup, targetName, "目标网站"],
+    dialer: [targetName, `dialer-proxy: ${normalizedRelayGroup}`, relayName],
+  };
 }
 
 export function createDefaultTargetProxyDraft(relayGroup = RESERVED_RELAY_GROUP) {
