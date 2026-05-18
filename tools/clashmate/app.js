@@ -48,6 +48,28 @@ function isAiRelayRouteAvailable() {
   return state.relayProxyNames.length > 0 && buildPreparedTargetProxies().length > 0;
 }
 
+function getAiRelayRouteStatus() {
+  const relayCount = state.relayProxyNames.length;
+  const targetCount = buildPreparedTargetProxies().length;
+  const available = relayCount > 0 && targetCount > 0;
+  const missing = [];
+
+  if (!relayCount) {
+    missing.push("选择至少 1 个 Relay 节点");
+  }
+
+  if (!targetCount) {
+    missing.push("填写至少 1 个完整目标节点");
+  }
+
+  return {
+    available,
+    relayCount,
+    targetCount,
+    missing,
+  };
+}
+
 function defaultProviderTarget(rule, options = buildAllRuleTargetOptions()) {
   return resolveProviderTarget(rule, "", options, {
     aiRelayAvailable: isAiRelayRouteAvailable(),
@@ -553,6 +575,17 @@ function renderTargetProxies() {
 
 function renderFlowPreview() {
   const preview = buildRelayFlowPreview(state);
+  const routeStatus = getAiRelayRouteStatus();
+  const routeStatusClassName = `route-status ${routeStatus.available ? "enabled" : "disabled"}`;
+  const routeStatusMarkup = routeStatus.available
+    ? `
+        <strong>AI 双跳已启用</strong>
+        <span>已选择 ${routeStatus.relayCount} 个 Relay 节点，${routeStatus.targetCount} 个完整目标节点。AI 规则命中 ${escapeHtml(state.aiRelayGroup)} 后，会经目标节点的 dialer-proxy 走 ${escapeHtml(state.relayGroup)}。</span>
+      `
+    : `
+        <strong>AI 双跳未启用</strong>
+        <span>${escapeHtml(routeStatus.missing.join("，"))}。此时 AI Suite 可作为普通 Provider 使用，默认走 Proxy；仅勾选内置 AI 规则不代表双跳已经生效。</span>
+      `;
   const renderChain = steps =>
     steps
       .map((step, index) => {
@@ -568,6 +601,10 @@ function renderFlowPreview() {
   $("ordinaryFlowPreview").innerHTML = renderChain(preview.ordinary);
   $("aiFlowPreview").innerHTML = renderChain(preview.ai);
   $("dialerFlowPreview").innerHTML = renderChain(preview.dialer);
+  document.querySelectorAll("[data-ai-relay-route-status]").forEach(element => {
+    element.className = routeStatusClassName;
+    element.innerHTML = routeStatusMarkup;
+  });
 }
 
 function renderRulePacks() {

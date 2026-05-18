@@ -318,7 +318,7 @@
                 <li><code>AI 核心规则</code>：<code>OpenAI</code> / <code>Anthropic</code> / <code>ChatGPT</code> / <code>Claude</code> 这些核心域名</li>
                 <li><code>AI 扩展规则</code>：在核心规则之外还覆盖 <code>Copilot</code> / <code>Gemini</code> / <code>Perplexity</code> 等</li>
             </ul>
-            <p>勾上它们，然后在右边选目标组（一般指到 <code>Proxy</code> 就行）。</p>
+            <p>这两个内置 AI 规则包是给 <code>AI-Relay</code> 双跳链路准备的，会固定指向 <code>AI-Relay</code>。如果你只是普通分流，没有配置 Relay 和 Target，优先使用下面 Rule Providers 里的 <code>AI Suite</code>，让它走普通 <code>Proxy</code>。</p>
 
             <p><strong>② Rule Providers</strong></p>
             <p>这是按分类组织的远程规则源，覆盖了常用场景：</p>
@@ -329,7 +329,7 @@
                 <li>广告 / 隐私拦截</li>
                 <li>等等</li>
             </ul>
-            <p>每条规则都可以单独勾选并指定目标组：<code>Proxy</code> / <code>DIRECT</code> / <code>REJECT</code> / 你自己建的组。不知道选什么的时候保持默认即可——直连类默认 <code>DIRECT</code>，拦截类默认 <code>REJECT</code>，其余走 <code>Proxy</code>。</p>
+            <p>每条规则都可以单独勾选并指定目标组：<code>Proxy</code> / <code>DIRECT</code> / <code>REJECT</code> / 你自己建的组。不知道选什么的时候保持默认即可——直连类默认 <code>DIRECT</code>，拦截类默认 <code>REJECT</code>，其余走 <code>Proxy</code>。其中 <code>AI Suite</code> 比较特殊：没有配置双跳时默认走 <code>Proxy</code>；一旦存在可用的 <code>AI-Relay</code> 双跳链路，它会自动并且只能指向 <code>AI-Relay</code>。</p>
 
             <p><strong>③ 自定义规则</strong></p>
             <p>底部的「自定义规则」框可以写你自己的 Mihomo 规则，一行一条，例如：</p>

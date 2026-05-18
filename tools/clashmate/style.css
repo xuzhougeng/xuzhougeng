@@ -523,6 +523,39 @@ header h1 {
   gap: 14px;
 }
 
+.route-status {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  margin-bottom: 14px;
+}
+
+.route-status strong {
+  font-size: 0.9rem;
+}
+
+.route-status span {
+  color: var(--text-dim);
+  font-size: 0.83rem;
+  line-height: 1.45;
+}
+
+.route-status.enabled {
+  border-color: var(--success);
+  background: var(--success-light);
+}
+
+.route-status.enabled strong {
+  color: var(--success);
+}
+
+.route-status.disabled {
+  border-color: var(--border);
+}
+
 .flow-lane {
   display: grid;
   gap: 8px;

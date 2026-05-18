@@ -65,6 +65,8 @@ AI 流量
 4. 然后定义一个 target 节点，并通过 `dialer-proxy` 指向 `Relay-Group`
 5. 最后让 `OpenAI` / `Anthropic` 之类规则命中 `AI-Relay`
 
+这里要特别注意：`AI-Relay` 只在你真的配置了 relay 和 target 之后才有意义。如果你只是普通分流，不做二次跳转，`AI Suite` 这个 Provider 仍然可以正常使用，只是默认走普通 `Proxy`。
+
 这样做的好处是，AI 流量和普通流量彻底分开了。你不用再把所有问题都归结为“这个美国节点好不好用”，而是能明确区分：
 
 1. 普通规则有没有命中
@@ -139,7 +141,7 @@ AI 流量
 
 ### 5. 启用 AI 规则包
 
-我建议第一步只开 `Core AI Relay`。
+如果你的目标是 AI 流量走二次跳转，我建议第一步只开 `AI 核心规则`。
 
 这个规则包主要覆盖：
 
@@ -148,7 +150,17 @@ AI 流量
 3. `Anthropic`
 4. `Claude`
 
-`Extended AI Relay` 也可以开，但它会覆盖更多 AI 相关站点和服务，第一次使用没必要一上来全开。
+`AI 扩展规则` 也可以开，但它只负责扩展更多 AI 相关站点和服务，例如 `Gemini`、`Copilot`、`Perplexity`、`Grok` 等。它现在不会再重复包含核心规则，所以同时开启核心和扩展时，不会再天然产生一批重复的 `ChatGPT` / `OpenAI` / `Claude` 规则。
+
+这里还有一个容易混淆的点：`Rule Providers` 里的 `AI Suite` 不是 `AI-Relay` 本身，它只是一个远程 AI 规则集合。
+
+现在工具的处理方式是：
+
+1. 如果没有配置可用的 relay + target，`AI Suite` 默认仍然走普通 `Proxy`
+2. 如果已经配置了可用的 AI 双跳链路，`AI Suite` 会自动指向 `AI-Relay`
+3. 这种情况下，`AI Suite` 的目标会被锁定，避免 AI Provider 又被手动改回 `Auto` / `Proxy`
+
+所以普通用户可以继续把 `AI Suite` 当作常规规则包使用；只有当你启用了中转方案时，它才会自动并且只能走 `AI-Relay`。
 
 ### 6. 生成 YAML 并导入 Clash Verge
 
@@ -160,6 +172,18 @@ AI 流量
 2. 保持 `Rule` 模式
 
 工具输出的已经是 Mihomo 配置，不需要你再手工拼 `dialer-proxy` 或者自己维护那一大串 AI 域名规则。
+
+生成后建议看一下摘要里的 `AI 实际命中预览`。它会按最终 YAML 的 `rules` 顺序模拟第一条命中，例如：
+
+```text
+chatgpt.com        -> AI-Relay  OK
+openai.com         -> AI-Relay  OK
+anthropic.com      -> AI-Relay  OK
+claude.ai          -> AI-Relay  OK
+gemini.google.com  -> AI-Relay  OK
+```
+
+如果你看到 `chatgpt.com -> Auto` 这种结果，就说明前面有更高优先级的规则抢先命中了。Mihomo 的规则是从上往下匹配，第一条命中就生效，所以这类提示要优先处理。
 
 ## 这篇文章更适合哪类人
 
@@ -192,13 +216,29 @@ AI 流量
 2. relay 文本改坏了，不会继续偷偷沿用上一次解析成功的节点
 3. 输入变了，旧输出会失效，避免你复制到过期 YAML
 
-### 3. Extended 规则不要默认全开
+### 3. AI 扩展规则不要默认全开
 
-`Extended AI Relay` 覆盖面更广，但它不是给所有人默认开启的。
+`AI 扩展规则` 覆盖面更广，但它不是给所有人默认开启的。
 
-如果你的目标只是稳定处理 `OpenAI` 和 `Anthropic`，从 `Core AI Relay` 开始就够了。
+如果你的目标只是稳定处理 `OpenAI` 和 `Anthropic`，从 `AI 核心规则` 开始就够了。
 
-### 4. 改完组名或目标后，要重新生成
+### 4. 不要把同一个 AI 域名写到多个不同目标
+
+比如前面已经有：
+
+```text
+DOMAIN-SUFFIX,chatgpt.com,Auto
+```
+
+后面再生成：
+
+```text
+DOMAIN-SUFFIX,chatgpt.com,AI-Relay
+```
+
+实际生效的一定是前面的 `Auto`。工具现在会在生成摘要里提示这类冲突，并告诉你当前实际会走哪个目标。
+
+### 5. 改完组名或目标后，要重新生成
 
 工具现在会尽量同步更新内部引用，但本质上你最终导入 `Clash Verge` 的仍然是一份 YAML 文件，所以改完结构后，记得重新生成再导入。
 
