@@ -1,4 +1,4 @@
-import { RULES_DEF } from "../shared/mihomo/provider-catalog.mjs";
+import { resolveProviderTarget, RULES_DEF } from "../shared/mihomo/provider-catalog.mjs";
 import { coreAiRelay, extendedAiRelay, renderRulePackLines } from "../shared/mihomo/ai-rule-packs.mjs";
 import { parseYamlProxies, buildTargetProxyNode } from "../shared/mihomo/relay-parser.mjs";
 import {
@@ -44,16 +44,15 @@ function escapeHtml(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 
-function defaultProviderTarget(rule) {
-  if (rule.defaultAction === "REJECT") {
-    return "REJECT";
-  }
+function isAiRelayRouteAvailable() {
+  return state.relayProxyNames.length > 0 && buildPreparedTargetProxies().length > 0;
+}
 
-  if (rule.defaultAction === "DIRECT") {
-    return "DIRECT";
-  }
-
-  return "Proxy";
+function defaultProviderTarget(rule, options = buildAllRuleTargetOptions()) {
+  return resolveProviderTarget(rule, "", options, {
+    aiRelayAvailable: isAiRelayRouteAvailable(),
+    aiRelayGroup: state.aiRelayGroup,
+  });
 }
 
 function normalizeRuleLine(line) {
@@ -464,6 +463,7 @@ function renderRelaySection() {
       setRelayProxyNames(relayCandidateNames.filter(name => nextSelectedNames.has(name)));
       renderRelaySection();
       renderFlowPreview();
+      renderProviders();
       resetOutput();
     });
   });
@@ -532,6 +532,7 @@ function renderTargetProxies() {
         const field = event.target.dataset.targetField;
         state.targetProxies[index][field] = event.target.value;
         renderFlowPreview();
+        renderProviders();
         resetOutput();
       });
     });
@@ -540,6 +541,7 @@ function renderTargetProxies() {
       state.targetProxies.splice(index, 1);
       renderTargetProxies();
       renderFlowPreview();
+      renderProviders();
       resetOutput();
     });
 
@@ -569,18 +571,11 @@ function renderFlowPreview() {
 }
 
 function renderRulePacks() {
-  const options = buildAllRuleTargetOptions();
-  const optionsMarkup = target =>
-    options
-      .map(option => `<option value="${escapeHtml(option)}" ${option === target ? "selected" : ""}>${escapeHtml(option)}</option>`)
-      .join("");
-
   const container = $("builtInRulePacks");
   container.innerHTML = Object.entries(RULE_PACKS)
     .map(([packName, metadata]) => {
       const enabled = Boolean(state.selectedRulePacks[packName]);
-      const selectedTarget = options.includes(uiState.packTargets[packName]) ? uiState.packTargets[packName] : state.aiRelayGroup;
-      uiState.packTargets[packName] = selectedTarget;
+      uiState.packTargets[packName] = state.aiRelayGroup;
 
       return `
         <div class="rule-pack-row">
@@ -591,9 +586,7 @@ function renderRulePacks() {
               <small>${escapeHtml(metadata.description)}</small>
             </span>
           </label>
-          <select data-pack-target="${packName}">
-            ${optionsMarkup(selectedTarget)}
-          </select>
+          <span class="rule-pack-target">${escapeHtml(state.aiRelayGroup)}</span>
         </div>
       `;
     })
@@ -601,15 +594,9 @@ function renderRulePacks() {
 
   Object.keys(RULE_PACKS).forEach(packName => {
     const toggle = container.querySelector(`[data-pack-toggle="${packName}"]`);
-    const select = container.querySelector(`[data-pack-target="${packName}"]`);
 
     toggle.addEventListener("change", event => {
       state.selectedRulePacks[packName] = event.target.checked;
-      resetOutput();
-    });
-
-    select.addEventListener("change", event => {
-      uiState.packTargets[packName] = event.target.value;
       resetOutput();
     });
   });
@@ -617,6 +604,11 @@ function renderRulePacks() {
 
 function renderProviders() {
   const options = buildAllRuleTargetOptions();
+  const aiRelayAvailable = isAiRelayRouteAvailable();
+  const providerTargetContext = {
+    aiRelayAvailable,
+    aiRelayGroup: state.aiRelayGroup,
+  };
   const optionMarkup = selected =>
     options
       .map(option => `<option value="${escapeHtml(option)}" ${option === selected ? "selected" : ""}>${escapeHtml(option)}</option>`)
@@ -627,9 +619,13 @@ function renderProviders() {
     html += `<div class="rule-category"><h3>${escapeHtml(category)}</h3>`;
     rules.forEach(rule => {
       const enabled = Object.hasOwn(state.selectedProviders, rule.name);
-      const selectedTarget = options.includes(state.selectedProviders[rule.name])
-        ? state.selectedProviders[rule.name]
-        : defaultProviderTarget(rule);
+      const selectedTarget = resolveProviderTarget(
+        rule,
+        state.selectedProviders[rule.name],
+        options,
+        providerTargetContext
+      );
+      const targetLocked = rule.name === "AI Suite" && aiRelayAvailable;
 
       if (enabled) {
         state.selectedProviders[rule.name] = selectedTarget;
@@ -641,7 +637,7 @@ function renderProviders() {
             <input type="checkbox" data-provider-check="${escapeHtml(rule.name)}" ${enabled ? "checked" : ""}>
             ${escapeHtml(rule.name)}
           </label>
-          <select data-provider-target="${escapeHtml(rule.name)}">
+          <select data-provider-target="${escapeHtml(rule.name)}" ${targetLocked ? "disabled" : ""}>
             ${optionMarkup(selectedTarget)}
           </select>
         </div>
@@ -764,7 +760,7 @@ function buildPreparedOrdinaryGroups() {
 
 function materializeRulePacks() {
   const selectedRulePacks = Object.fromEntries(Object.keys(RULE_PACKS).map(packName => [packName, false]));
-  const extraLines = [];
+  const extraRulePackLines = [];
   const enabledTargets = [];
 
   Object.entries(RULE_PACKS).forEach(([packName, metadata]) => {
@@ -772,7 +768,8 @@ function materializeRulePacks() {
       return;
     }
 
-    const target = uiState.packTargets[packName] || state.aiRelayGroup;
+    const target = state.aiRelayGroup;
+    uiState.packTargets[packName] = target;
     enabledTargets.push({ packName, target });
 
     if (target === state.aiRelayGroup) {
@@ -783,12 +780,12 @@ function materializeRulePacks() {
     renderRulePackLines(metadata.pack, target).forEach(line => {
       const normalized = normalizeRuleLine(line);
       if (normalized) {
-        extraLines.push(normalized);
+        extraRulePackLines.push(normalized);
       }
     });
   });
 
-  return { selectedRulePacks, extraLines, enabledTargets };
+  return { selectedRulePacks, extraRulePackLines, enabledTargets };
 }
 
 function renderSummary(summary, context) {
@@ -799,6 +796,19 @@ function renderSummary(summary, context) {
   const providerSummary = providerTargets.length
     ? providerTargets.map(([name, target]) => `${name} -> ${target}`).join(", ")
     : "无";
+  const warningLines = summary.warnings?.length
+    ? ["", "规则警告:", ...summary.warnings.map(warning => `- ${warning}`)]
+    : [];
+  const hitPreviewLines = summary.aiRuleHitPreview?.length
+    ? [
+        "",
+        "AI 实际命中预览:",
+        ...summary.aiRuleHitPreview.map(row => {
+          const status = row.ok ? "OK" : `WARN 应为 ${row.expectedTarget}`;
+          return `${row.domain.padEnd(22)} -> ${(row.target || "未命中").padEnd(10)} ${status}`;
+        }),
+      ]
+    : [];
 
   $("summaryOutput").hidden = false;
   $("summaryOutput").textContent = [
@@ -811,8 +821,11 @@ function renderSummary(summary, context) {
     `内置规则包: ${builtInPacks}`,
     `Providers: ${providerSummary}`,
     `自定义规则: ${summary.customRuleCount}`,
+    summary.extraRulePackCount > 0 ? `内部规则包附加规则: ${summary.extraRulePackCount}` : null,
     `总规则数: ${summary.ruleCount}`,
     context.ignoredTargets > 0 ? `已忽略未填写完整的目标节点: ${context.ignoredTargets}` : null,
+    ...warningLines,
+    ...hitPreviewLines,
   ]
     .filter(Boolean)
     .join("\n");
@@ -875,12 +888,14 @@ function handleRelayParse() {
     replaceExtraRelayProxies(resolveRelayProxiesFromText(uiState.relayYamlText));
     renderRelaySection();
     renderFlowPreview();
+    renderProviders();
     setStatus("relayStatus", "success", `✓ 追加 ${state.relayProxies.length} 个额外 Relay 节点`);
     resetOutput();
   } catch (error) {
     replaceExtraRelayProxies([], { selectNew: false });
     renderRelaySection();
     renderFlowPreview();
+    renderProviders();
     setStatus("relayStatus", "error", `✗ ${error.message}`);
   }
 }
@@ -891,6 +906,7 @@ function handleRelayClear() {
   $("relayYamlInput").value = "";
   renderRelaySection();
   renderFlowPreview();
+  renderProviders();
   clearStatus("relayStatus");
   resetOutput();
 }
@@ -913,11 +929,12 @@ function handleGenerate() {
       renderRelaySection();
       renderFlowPreview();
     }
+    renderProviders();
     clearStatus("relayStatus");
 
     const preparedTargets = buildPreparedTargetProxies();
     const ignoredTargets = state.targetProxies.length - preparedTargets.length;
-    const { selectedRulePacks, extraLines, enabledTargets } = materializeRulePacks();
+    const { selectedRulePacks, extraRulePackLines, enabledTargets } = materializeRulePacks();
     const buildState = {
       ...state,
       originalConfig: {
@@ -931,7 +948,8 @@ function handleGenerate() {
       targetProxies: preparedTargets,
       selectedProviders: { ...state.selectedProviders },
       selectedRulePacks,
-      customRules: [...state.customRules, ...extraLines],
+      customRules: [...state.customRules],
+      extraRulePackLines,
     };
 
     const { config, summary } = buildClashmateConfig(buildState);
@@ -989,6 +1007,7 @@ $("relayYamlInput").addEventListener("input", event => {
   replaceExtraRelayProxies([], { selectNew: false });
   renderRelaySection();
   renderFlowPreview();
+  renderProviders();
   clearStatus("relayStatus");
   resetOutput();
 });
@@ -997,6 +1016,7 @@ $("relaySelectAllBtn").addEventListener("click", () => {
   setRelayProxyNames(getRelayCandidateNames());
   renderRelaySection();
   renderFlowPreview();
+  renderProviders();
   resetOutput();
 });
 
@@ -1004,6 +1024,7 @@ $("relayClearSelectionBtn").addEventListener("click", () => {
   state.relayProxyNames = [];
   renderRelaySection();
   renderFlowPreview();
+  renderProviders();
   resetOutput();
 });
 
@@ -1025,6 +1046,7 @@ $("addTargetBtn").addEventListener("click", () => {
   state.targetProxies.push(createDefaultTargetProxyDraft(state.relayGroup));
   renderTargetProxies();
   renderFlowPreview();
+  renderProviders();
   resetOutput();
 });
 

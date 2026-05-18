@@ -1,4 +1,4 @@
-import { extendedAiRelay, renderRulePackLines } from "./ai-rule-packs.mjs";
+import { coreAiRelay, extendedAiRelay, renderRulePackLines } from "./ai-rule-packs.mjs";
 
 const STANDALONE_TERMINAL_RULES = ["MATCH,DIRECT"];
 
@@ -101,7 +101,9 @@ export function buildDialerProxyConfig(input = {}) {
   const targetProxy = normalizeTargetProxy(input.targetProxy, relayGroup);
   const targetName = targetProxy.name;
   const proxyNames = relayProxies.map(proxy => proxy.name);
-  const rules = renderRulePackLines(extendedAiRelay, targetName)
+  const enabledRulePacks = [coreAiRelay, extendedAiRelay];
+  const rules = enabledRulePacks
+    .flatMap(rulePack => renderRulePackLines(rulePack, targetName))
     .map(normalizeRuleLine)
     .filter(Boolean)
     .concat(STANDALONE_TERMINAL_RULES);
@@ -135,7 +137,7 @@ export function buildDialerProxyConfig(input = {}) {
       relayGroup,
       relayProxyNames: proxyNames,
       targetProxyName: targetName,
-      enabledRulePacks: [extendedAiRelay.name],
+      enabledRulePacks: enabledRulePacks.map(rulePack => rulePack.name),
       ruleCount: rules.length,
     },
   };

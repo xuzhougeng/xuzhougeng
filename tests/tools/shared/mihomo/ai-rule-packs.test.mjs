@@ -35,8 +35,6 @@ const expectedExtendedLines = [
   "  - DOMAIN-SUFFIX,augment.com,{target}",
   "  - DOMAIN-SUFFIX,augmentcode.com,{target}",
   "",
-  ...expectedCoreLines,
-  "",
   "  # > Cerebras",
   "  - DOMAIN-SUFFIX,cerebras.ai,{target}",
   "",

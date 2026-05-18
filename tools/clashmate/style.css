@@ -679,13 +679,16 @@ header h1 {
   margin-top: 2px;
 }
 
-.rule-pack-row select {
-  padding: 6px 10px;
+.rule-pack-target {
+  align-self: center;
+  justify-self: end;
+  padding: 4px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 0.85rem;
   background: var(--surface);
-  align-self: center;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-family: var(--mono);
 }
 
 .empty-state {

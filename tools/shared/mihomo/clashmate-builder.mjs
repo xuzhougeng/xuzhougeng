@@ -7,8 +7,16 @@ const RULE_PACKS = {
   extendedAiRelay,
 };
 const TESTABLE_GROUP_TYPES = new Set(["url-test", "fallback"]);
+const DOMAIN_RULE_TYPES = new Set(["DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD"]);
 const LOAD_BALANCE_GROUP_TYPE = "load-balance";
 const RELAY_TEST_URL = "http://www.gstatic.com/generate_204";
+const AI_PREVIEW_DOMAIN_CANDIDATES = [
+  "chatgpt.com",
+  "openai.com",
+  "anthropic.com",
+  "claude.ai",
+  "gemini.google.com",
+];
 
 function normalizeArray(value) {
   return Array.isArray(value) ? value : [];
@@ -107,6 +115,162 @@ function buildProviderRuleLines(selectedProviders) {
   );
 }
 
+function parseRuleLine(rule) {
+  const normalized = normalizeRuleLine(rule);
+  if (!normalized) {
+    return null;
+  }
+
+  const parts = normalized.split(",").map(part => part.trim());
+  const type = parts[0]?.toUpperCase();
+  const targetIndex = type === "MATCH" || type === "FINAL" ? 1 : 2;
+  const target = parts[targetIndex] ?? "";
+
+  if (!type || !target) {
+    return null;
+  }
+
+  return {
+    raw: normalized,
+    type,
+    value: parts[1] ?? "",
+    target,
+  };
+}
+
+function buildRuleIdentity(parsedRule) {
+  if (!DOMAIN_RULE_TYPES.has(parsedRule?.type) || !parsedRule.value) {
+    return null;
+  }
+
+  return `${parsedRule.type},${parsedRule.value}`;
+}
+
+function detectRuleTargetConflicts(rules) {
+  const firstSeen = new Map();
+  const conflictsByKey = new Map();
+
+  rules.forEach((rule, index) => {
+    const parsedRule = parseRuleLine(rule);
+    const ruleKey = buildRuleIdentity(parsedRule);
+    if (!ruleKey) {
+      return;
+    }
+
+    if (!firstSeen.has(ruleKey)) {
+      firstSeen.set(ruleKey, {
+        ...parsedRule,
+        index,
+        targetSet: new Set([parsedRule.target]),
+      });
+      return;
+    }
+
+    const first = firstSeen.get(ruleKey);
+    if (first.targetSet.has(parsedRule.target)) {
+      return;
+    }
+
+    first.targetSet.add(parsedRule.target);
+
+    if (!conflictsByKey.has(ruleKey)) {
+      conflictsByKey.set(ruleKey, {
+        ruleKey,
+        firstRule: first.raw,
+        firstTarget: first.target,
+        firstIndex: first.index,
+        conflictingRules: [],
+        conflictingTargets: [],
+        effectiveTarget: first.target,
+      });
+    }
+
+    const conflict = conflictsByKey.get(ruleKey);
+    conflict.conflictingRules.push(parsedRule.raw);
+    conflict.conflictingTargets.push(parsedRule.target);
+  });
+
+  return [...conflictsByKey.values()];
+}
+
+function ruleMatchesDomain(parsedRule, domain) {
+  const normalizedDomain = String(domain ?? "").toLowerCase();
+  const value = String(parsedRule?.value ?? "").toLowerCase();
+  if (!normalizedDomain || !value) {
+    return false;
+  }
+
+  if (parsedRule.type === "DOMAIN") {
+    return normalizedDomain === value;
+  }
+
+  if (parsedRule.type === "DOMAIN-SUFFIX") {
+    return normalizedDomain === value || normalizedDomain.endsWith(`.${value}`);
+  }
+
+  if (parsedRule.type === "DOMAIN-KEYWORD") {
+    return normalizedDomain.includes(value);
+  }
+
+  return false;
+}
+
+function findFirstDomainMatch(rules, domain) {
+  for (const rule of rules) {
+    const parsedRule = parseRuleLine(rule);
+    if (!parsedRule) {
+      continue;
+    }
+
+    if (parsedRule.type === "MATCH" || parsedRule.type === "FINAL") {
+      return parsedRule;
+    }
+
+    if (ruleMatchesDomain(parsedRule, domain)) {
+      return parsedRule;
+    }
+  }
+
+  return null;
+}
+
+function collectAiPreviewDomains(builtInLines, aiRelayGroup) {
+  const builtInRules = builtInLines
+    .map(parseRuleLine)
+    .filter(rule => rule && rule.target === aiRelayGroup);
+
+  return AI_PREVIEW_DOMAIN_CANDIDATES.filter(domain =>
+    builtInRules.some(rule => ruleMatchesDomain(rule, domain))
+  );
+}
+
+function buildAiRuleHitPreview(rules, builtInLines, aiRelayGroup) {
+  return collectAiPreviewDomains(builtInLines, aiRelayGroup).map(domain => {
+    const matchedRule = findFirstDomainMatch(rules, domain);
+    const target = matchedRule?.target ?? "";
+
+    return {
+      domain,
+      target,
+      expectedTarget: aiRelayGroup,
+      ok: target === aiRelayGroup,
+      matchedRule: matchedRule?.raw ?? "",
+    };
+  });
+}
+
+function buildRuleWarnings(ruleConflicts, aiRuleHitPreview) {
+  const conflictWarnings = ruleConflicts.map(conflict => {
+    const targets = [conflict.firstTarget, ...conflict.conflictingTargets].join(" 和 ");
+    return `检测到冲突规则：${conflict.ruleKey} 同时指向 ${targets}。由于规则自上而下匹配，当前实际会走 ${conflict.effectiveTarget}。`;
+  });
+  const previewWarnings = aiRuleHitPreview
+    .filter(row => !row.ok)
+    .map(row => `AI 规则实际命中异常：${row.domain} 当前走 ${row.target || "未命中"}，应为 ${row.expectedTarget}。`);
+
+  return [...conflictWarnings, ...previewWarnings];
+}
+
 function ruleReferencesGroup(rule, groupName) {
   return String(rule ?? "")
     .split(",")
@@ -195,6 +359,9 @@ function validateRelayGraph(state) {
   const targetNames = targetProxies.map(normalizeProxyName).filter(Boolean);
   const { enabledRulePacks, lines: builtInLines } = buildBuiltInRuleLines(state);
   const customRules = normalizeArray(normalizedState.customRules).map(rule => String(rule).trim()).filter(Boolean);
+  const extraRulePackLines = normalizeArray(normalizedState.extraRulePackLines)
+    .map(normalizeRuleLine)
+    .filter(Boolean);
   const ordinaryGroupNames = ordinaryGroups.map(group => group.name);
   const allowedProviderTargets = new Set(
     buildRuleTargetOptions({
@@ -207,9 +374,11 @@ function validateRelayGraph(state) {
   const aiRelayReferenced =
     enabledRulePacks.length > 0 ||
     customRules.some(rule => ruleReferencesGroup(rule, aiRelayGroup)) ||
+    extraRulePackLines.some(rule => ruleReferencesGroup(rule, aiRelayGroup)) ||
     providerRuleLines.some(rule => ruleReferencesGroup(rule, aiRelayGroup));
   const directRelayRuleReference =
     customRules.some(rule => ruleReferencesGroup(rule, relayGroup)) ||
+    extraRulePackLines.some(rule => ruleReferencesGroup(rule, relayGroup)) ||
     providerRuleLines.some(rule => ruleReferencesGroup(rule, relayGroup));
   const relayGroupReferenced =
     targetNames.length > 0 ||
@@ -277,6 +446,7 @@ function validateRelayGraph(state) {
     providerRuleLines,
     enabledRulePacks,
     builtInLines,
+    extraRulePackLines,
   };
 }
 
@@ -338,10 +508,14 @@ export function buildClashmateConfig(state) {
   const rules = [
     ...validated.customRules,
     ...validated.builtInLines,
+    ...validated.extraRulePackLines,
     ...validated.providerRuleLines,
     "GEOIP,CN,DIRECT",
     `MATCH,${validated.ordinaryGroupNames[0]}`,
   ];
+  const ruleConflicts = detectRuleTargetConflicts(rules);
+  const aiRuleHitPreview = buildAiRuleHitPreview(rules, validated.builtInLines, validated.aiRelayGroup);
+  const warnings = buildRuleWarnings(ruleConflicts, aiRuleHitPreview);
 
   const config = {
     ...baseConfig,
@@ -367,8 +541,12 @@ export function buildClashmateConfig(state) {
       enabledRulePacks: validated.enabledRulePacks,
       providerTargets: validated.normalizedProviders,
       customRuleCount: validated.customRules.length,
+      extraRulePackCount: validated.extraRulePackLines.length,
       ruleCount: rules.length,
       builtInRuleCount: validated.builtInLines.length,
+      ruleConflicts,
+      aiRuleHitPreview,
+      warnings,
     },
   };
 }

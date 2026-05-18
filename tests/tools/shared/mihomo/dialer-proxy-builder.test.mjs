@@ -117,7 +117,7 @@ test("buildDialerProxyConfig emits target dialer-proxy, relay group, and shared 
     config.rules.filter(rule => rule === "MATCH,DIRECT").length,
     1
   );
-  assert.deepEqual(summary.enabledRulePacks, ["extendedAiRelay"]);
+  assert.deepEqual(summary.enabledRulePacks, ["coreAiRelay", "extendedAiRelay"]);
 });
 
 test("buildDialerProxyConfig rejects empty relay input", () => {

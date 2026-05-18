@@ -81,3 +81,37 @@ export const PROVIDER_URLS = {
   Scholar: "https://raw.dler.io/dler-io/Rules/main/Clash/Provider/Scholar.yaml",
   miHoYo: "https://raw.dler.io/dler-io/Rules/main/Clash/Provider/miHoYo.yaml",
 };
+
+function normalizeTarget(value) {
+  return String(value ?? "").trim();
+}
+
+function defaultProviderTarget(rule) {
+  return normalizeTarget(rule?.defaultAction) || "Proxy";
+}
+
+export function resolveProviderTarget(
+  rule,
+  requestedTarget,
+  targetOptions = [],
+  { aiRelayAvailable = false, aiRelayGroup = "AI-Relay" } = {}
+) {
+  const normalizedAiRelayGroup = normalizeTarget(aiRelayGroup) || "AI-Relay";
+  const options = new Set((Array.isArray(targetOptions) ? targetOptions : []).map(normalizeTarget).filter(Boolean));
+
+  if (rule?.name === "AI Suite" && aiRelayAvailable) {
+    return normalizedAiRelayGroup;
+  }
+
+  const requested = normalizeTarget(requestedTarget);
+  if (requested && requested !== normalizedAiRelayGroup && options.has(requested)) {
+    return requested;
+  }
+
+  const fallback = defaultProviderTarget(rule);
+  if (options.has(fallback)) {
+    return fallback;
+  }
+
+  return fallback;
+}

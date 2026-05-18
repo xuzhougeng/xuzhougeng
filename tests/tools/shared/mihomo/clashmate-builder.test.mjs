@@ -138,6 +138,60 @@ test("buildClashmateConfig orders rules as custom, built-in AI lines, provider l
   assert.deepEqual(Object.keys(config["rule-providers"]).sort(), ["AI Suite", "AdBlock"].sort());
 });
 
+test("buildClashmateConfig keeps internal non-AI rule-pack lines behind built-in AI rules", () => {
+  const state = createBaseState();
+  state.extraRulePackLines = ["DOMAIN-SUFFIX,chatgpt.com,Auto"];
+
+  const { config, summary } = buildClashmateConfig(state);
+  const aiRelayIndex = config.rules.indexOf("DOMAIN-SUFFIX,chatgpt.com,AI-Relay");
+  const extraRulePackIndex = config.rules.indexOf("DOMAIN-SUFFIX,chatgpt.com,Auto");
+  const providerIndex = config.rules.indexOf("RULE-SET,AdBlock,REJECT");
+
+  assert.ok(aiRelayIndex >= 0);
+  assert.ok(extraRulePackIndex > aiRelayIndex);
+  assert.ok(providerIndex > extraRulePackIndex);
+  assert.equal(summary.extraRulePackCount, 1);
+});
+
+test("buildClashmateConfig reports conflicting rule targets and first-match AI preview", () => {
+  const state = createBaseState();
+  state.customRules = ["DOMAIN-SUFFIX,chatgpt.com,Auto"];
+
+  const { summary } = buildClashmateConfig(state);
+
+  assert.deepEqual(
+    summary.ruleConflicts.map(conflict => ({
+      ruleKey: conflict.ruleKey,
+      firstTarget: conflict.firstTarget,
+      conflictingTargets: conflict.conflictingTargets,
+      effectiveTarget: conflict.effectiveTarget,
+    })),
+    [
+      {
+        ruleKey: "DOMAIN-SUFFIX,chatgpt.com",
+        firstTarget: "Auto",
+        conflictingTargets: ["AI-Relay"],
+        effectiveTarget: "Auto",
+      },
+    ]
+  );
+  assert.match(summary.warnings.join("\n"), /DOMAIN-SUFFIX,chatgpt\.com.*Auto.*AI-Relay/);
+
+  const chatgptPreview = summary.aiRuleHitPreview.find(row => row.domain === "chatgpt.com");
+  assert.deepEqual(
+    {
+      target: chatgptPreview.target,
+      expectedTarget: chatgptPreview.expectedTarget,
+      ok: chatgptPreview.ok,
+    },
+    {
+      target: "Auto",
+      expectedTarget: "AI-Relay",
+      ok: false,
+    }
+  );
+});
+
 test("buildClashmateConfig fails when AI-Relay is enabled but Relay-Group has no relay members", () => {
   const state = createBaseState();
   state.relayProxies = [];

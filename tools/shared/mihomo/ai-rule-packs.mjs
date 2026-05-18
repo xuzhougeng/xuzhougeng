@@ -21,12 +21,10 @@ const CORE_AI_RELAY_LINES = [
   "  - DOMAIN-SUFFIX,claudeusercontent.com,{target}",
 ];
 
-const EXTENDED_AI_RELAY_LINES = [
+const EXTRA_AI_RELAY_LINES = [
   "  # > Augment",
   "  - DOMAIN-SUFFIX,augment.com,{target}",
   "  - DOMAIN-SUFFIX,augmentcode.com,{target}",
-  "",
-  ...CORE_AI_RELAY_LINES,
   "",
   "  # > Cerebras",
   "  - DOMAIN-SUFFIX,cerebras.ai,{target}",
@@ -143,6 +141,8 @@ const EXTENDED_AI_RELAY_LINES = [
   "  # > Zed",
   "  - DOMAIN-SUFFIX,zed.dev,{target}",
 ];
+
+const EXTENDED_AI_RELAY_LINES = EXTRA_AI_RELAY_LINES;
 
 export const coreAiRelay = {
   name: "coreAiRelay",
