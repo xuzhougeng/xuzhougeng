@@ -1,4 +1,4 @@
-import { parseYamlProxies } from "../shared/mihomo/relay-parser.mjs";
+import { normalizeYamlProxiesInput, parseYamlProxies } from "../shared/mihomo/relay-parser.mjs";
 import { buildDialerProxyConfig } from "../shared/mihomo/dialer-proxy-builder.mjs";
 
 const yaml = globalThis.jsyaml;
@@ -142,32 +142,13 @@ function escapeHtml(str = "") {
     .replace(/"/g, "&quot;");
 }
 
-function normalizeRelayYamlInput(yamlText) {
-  const raw = String(yamlText ?? "");
-  const trimmed = raw.trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
-  if (/^proxies:\s*(?:$|\r?\n)/.test(trimmed)) {
-    return raw;
-  }
-
-  if (/^-\s*(?:name:|\{)/.test(trimmed)) {
-    return `proxies:\n${raw}`;
-  }
-
-  return raw;
-}
-
 function materializeRelayProxyObjects(yamlText) {
   if (!yaml?.load) {
     return null;
   }
 
   try {
-    const document = yaml.load(normalizeRelayYamlInput(yamlText));
+    const document = yaml.load(normalizeYamlProxiesInput(yamlText));
     const proxies = Array.isArray(document?.proxies)
       ? document.proxies
       : Array.isArray(document)
@@ -200,7 +181,7 @@ function resolveRelayInputState(yamlText) {
     };
   }
 
-  const relayProxies = parseYamlProxies(normalizeRelayYamlInput(raw));
+  const relayProxies = parseYamlProxies(raw);
   if (!relayProxies.length) {
     throw new Error("当前 Relay YAML 无法解析，请修正后重试");
   }

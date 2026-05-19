@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildTargetProxyNode, parseYamlProxies } from "../../../../tools/shared/mihomo/relay-parser.mjs";
+import {
+  buildTargetProxyNode,
+  normalizeYamlProxiesInput,
+  parseYamlProxies,
+} from "../../../../tools/shared/mihomo/relay-parser.mjs";
 
 test("parseYamlProxies extracts relay names, metadata, and raw blocks from YAML", () => {
   const yamlText = `proxies:
@@ -179,6 +183,79 @@ test("parseYamlProxies extracts fields from inline proxy entries", () => {
       },
     ]
   );
+});
+
+test("parseYamlProxies extracts block proxy entries whose dash is on its own line", () => {
+  const yamlText = `proxies:
+  -
+    name: 'HK package expires: 2027-02-04'
+    type: trojan
+    server: 106.53.115.49
+    port: 4016
+    password: secret
+    sni: baidu.com
+    skip-cert-verify: true
+    udp: true
+  -
+    name: 'HK subscription fetched: 2026-05-08 08:18'
+    type: trojan
+    server: 106.53.115.49
+    port: 4016
+    password: secret
+    sni: baidu.com
+    skip-cert-verify: true
+    udp: true
+`;
+
+  const proxies = parseYamlProxies(yamlText);
+
+  assert.deepEqual(
+    proxies.map(proxy => ({
+      name: proxy.name,
+      type: proxy.type,
+      server: proxy.server,
+      port: proxy.port,
+    })),
+    [
+      {
+        name: "HK package expires: 2027-02-04",
+        type: "trojan",
+        server: "106.53.115.49",
+        port: "4016",
+      },
+      {
+        name: "HK subscription fetched: 2026-05-08 08:18",
+        type: "trojan",
+        server: "106.53.115.49",
+        port: "4016",
+      },
+    ]
+  );
+  assert.equal(
+    proxies[0].raw,
+    `  -
+    name: 'HK package expires: 2027-02-04'
+    type: trojan
+    server: 106.53.115.49
+    port: 4016
+    password: secret
+    sni: baidu.com
+    skip-cert-verify: true
+    udp: true
+`
+  );
+});
+
+test("normalizeYamlProxiesInput wraps bare block proxy lists", () => {
+  const yamlText = `-
+  name: relay-hk-01
+  type: trojan
+  server: 106.53.115.49
+  port: 4016
+`;
+
+  assert.equal(normalizeYamlProxiesInput(yamlText), `proxies:\n${yamlText}`);
+  assert.deepEqual(parseYamlProxies(yamlText).map(proxy => proxy.name), ["relay-hk-01"]);
 });
 
 test("buildTargetProxyNode attaches dialer-proxy and trims optional credentials", () => {

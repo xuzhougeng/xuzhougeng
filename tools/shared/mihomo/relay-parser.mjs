@@ -7,6 +7,64 @@ function extractInlineValue(body, key) {
   return match[1].trim().replace(/^["']|["']$/g, "");
 }
 
+function extractYamlLineValue(trimmed, key) {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = trimmed.match(new RegExp(`^${escapedKey}:\\s*(.*)$`));
+  if (!match) return undefined;
+
+  const value = match[1].trim();
+  if (
+    value.length >= 2 &&
+    ((value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'")))
+  ) {
+    return value.slice(1, -1);
+  }
+
+  return value;
+}
+
+function applyProxyField(proxy, trimmed) {
+  const name = extractYamlLineValue(trimmed, "name");
+  if (name !== undefined) {
+    proxy.name = name.trim();
+    return;
+  }
+
+  const type = extractYamlLineValue(trimmed, "type");
+  if (type !== undefined) {
+    proxy.type = type.trim();
+    return;
+  }
+
+  const server = extractYamlLineValue(trimmed, "server");
+  if (server !== undefined) {
+    proxy.server = server.trim();
+    return;
+  }
+
+  const port = extractYamlLineValue(trimmed, "port");
+  if (port !== undefined) {
+    proxy.port = port.trim();
+  }
+}
+
+function getIndent(line) {
+  return line.match(/^\s*/)?.[0].length ?? 0;
+}
+
+function isProxyListItemStart(trimmed) {
+  return /^-\s*(?:$|name:|\{)/.test(trimmed);
+}
+
+function isTopLevelSectionLine(line, trimmed) {
+  return (
+    !line.startsWith(" ") &&
+    !trimmed.startsWith("-") &&
+    /^[^#\s][^:]*:\s*$|^[^#\s][^:]*:\s*.+$/.test(line)
+  );
+}
+
 function createProxyFromLine(line, trimmed) {
   const proxy = { raw: `${line}\n` };
 
@@ -19,18 +77,35 @@ function createProxyFromLine(line, trimmed) {
     return proxy;
   }
 
-  const nameMatch = trimmed.match(/^-\s*name:\s*["']?([^"'\n]+)["']?/);
-  if (nameMatch) {
-    proxy.name = nameMatch[1].trim();
-  }
+  applyProxyField(proxy, trimmed.replace(/^-\s*/, ""));
   return proxy;
 }
 
+export function normalizeYamlProxiesInput(yamlText) {
+  const raw = String(yamlText ?? "");
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (/^proxies:\s*(?:$|\r?\n)/.test(trimmed)) {
+    return raw;
+  }
+
+  if (/^-\s*(?:$|\r?\n|name:|\{)/.test(trimmed)) {
+    return `proxies:\n${raw}`;
+  }
+
+  return raw;
+}
+
 export function parseYamlProxies(yamlText) {
-  const lines = yamlText.split(/\r?\n/);
+  const lines = normalizeYamlProxiesInput(yamlText).split(/\r?\n/);
   const proxies = [];
   let currentProxy = null;
   let inProxiesSection = false;
+  let proxyListIndent = null;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -44,50 +119,41 @@ export function parseYamlProxies(yamlText) {
 
     if (line === "proxies:" || trimmed === "proxies:" && !line.startsWith(" ")) {
       inProxiesSection = true;
+      proxyListIndent = null;
       continue;
     }
 
-    if (inProxiesSection && !line.startsWith(" ") && /^[^#\s][^:]*:\s*$|^[^#\s][^:]*:\s*.+$/.test(line)) {
+    if (inProxiesSection && isTopLevelSectionLine(line, trimmed)) {
       if (currentProxy?.name) {
         proxies.push(currentProxy);
       }
       currentProxy = null;
       inProxiesSection = false;
+      proxyListIndent = null;
       continue;
     }
 
-    if (
-      inProxiesSection &&
-      (trimmed.startsWith("- name:") || trimmed.startsWith("-name:") || /^-\s*\{/.test(trimmed))
-    ) {
-      if (currentProxy?.name) {
-        proxies.push(currentProxy);
+    if (inProxiesSection && isProxyListItemStart(trimmed)) {
+      const lineIndent = getIndent(line);
+      const startsProxy =
+        proxyListIndent === null ||
+        lineIndent <= proxyListIndent ||
+        currentProxy === null;
+
+      if (startsProxy) {
+        if (currentProxy?.name) {
+          proxies.push(currentProxy);
+        }
+        currentProxy = createProxyFromLine(line, trimmed);
+        proxyListIndent = lineIndent;
+        continue;
       }
-      currentProxy = createProxyFromLine(line, trimmed);
-      continue;
     }
 
     if (currentProxy) {
       currentProxy.raw += `${line}\n`;
-
-      if (trimmed.startsWith("type:")) {
-        const typeMatch = trimmed.match(/type:\s*["']?(\S+)["']?/);
-        if (typeMatch) currentProxy.type = typeMatch[1];
-      } else if (trimmed.startsWith("server:")) {
-        const serverMatch = trimmed.match(/server:\s*["']?([^"'\n]+)["']?/);
-        if (serverMatch) currentProxy.server = serverMatch[1].trim();
-      } else if (trimmed.startsWith("port:")) {
-        const portMatch = trimmed.match(/port:\s*(\d+)/);
-        if (portMatch) currentProxy.port = portMatch[1];
-      }
+      applyProxyField(currentProxy, trimmed);
       continue;
-    }
-
-    if (inProxiesSection && (trimmed.startsWith("-") || /^\s{2,}-/.test(line))) {
-      if (currentProxy?.name) {
-        proxies.push(currentProxy);
-      }
-      currentProxy = createProxyFromLine(line, trimmed);
     }
   }
 
