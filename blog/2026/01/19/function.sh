@@ -125,9 +125,52 @@ claude() {
   command claude "$@"
 }
 
+_select_fastest_relay_print_hints() {
+  local proxies_json="$1"
+  local selector_groups dialer_proxies suggested suggested_group suggested_proxy suggested_command
+
+  selector_groups=$(echo "$proxies_json" | jq -r '.proxies | to_entries[] | select((.value.all? | type) == "array") | "  - \(.key)"')
+  if [ -n "$selector_groups" ]; then
+    echo "available selector groups:" >&2
+    echo "$selector_groups" >&2
+  fi
+
+  dialer_proxies=$(echo "$proxies_json" | jq -r '.proxies | to_entries[] | select((.value["dialer-proxy"]? // "") != "") | "  - \(.key) -> \(.value["dialer-proxy"])"')
+  if [ -n "$dialer_proxies" ]; then
+    echo "proxies with dialer-proxy:" >&2
+    echo "$dialer_proxies" >&2
+  fi
+
+  suggested=$(echo "$proxies_json" | jq -r '.proxies | to_entries[] | select((.value["dialer-proxy"]? // "") != "") | "\(.value["dialer-proxy"])	\(.key)"' | head -n1)
+  if [ -n "$suggested" ]; then
+    suggested_group="${suggested%%	*}"
+    suggested_proxy="${suggested#*	}"
+    suggested_command=$(jq -nr \
+      --arg group "$suggested_group" \
+      --arg proxy "$suggested_proxy" \
+      '"SELECT_FASTEST_RELAY_GROUP=\($group | @sh) SELECT_FASTEST_RELAY_TEST_PROXY=\($proxy | @sh) select_fastest_relay"')
+    echo "hint: try: $suggested_command" >&2
+  fi
+}
+
 select_fastest_relay() {
-  local api="http://127.0.0.1:1993"
-  local group="relay-group"
+  local api="${SELECT_FASTEST_RELAY_API:-${MIHOMO_API:-http://127.0.0.1:1993}}"
+  local group="${SELECT_FASTEST_RELAY_GROUP:-relay-group}"
+  local test_proxy="${SELECT_FASTEST_RELAY_TEST_PROXY:-target-socks5}"
+  local test_url="http://www.gstatic.com/generate_204"
+  local timeout="5000"
+  local api_timeout="7"
+  local settle_seconds="0.2"
+
+  if [ "$#" -ge 1 ] && [ -n "$1" ]; then
+    group="$1"
+  fi
+  if [ "$#" -ge 2 ] && [ -n "$2" ]; then
+    test_proxy="$2"
+  fi
+  if [ "$#" -ge 3 ] && [ -n "$3" ]; then
+    api="$3"
+  fi
 
   if ! command -v curl >/dev/null 2>&1; then
     echo "error: curl not found" >&2
@@ -138,21 +181,64 @@ select_fastest_relay() {
     return 1
   fi
 
-  echo "[...] testing relay latency..."
+  echo "[...] testing relay latency through $test_proxy..."
 
-  curl -s -X GET "$api/group/$group/delay?timeout=5000&url=http://www.gstatic.com/generate_204" > /dev/null
-  sleep 3
+  local result nodes current best_node best_delay encoded_group encoded_test_proxy payload delay proxies_result dialer_proxy
+  encoded_group=$(printf '%s' "$group" | jq -sRr @uri)
+  encoded_test_proxy=$(printf '%s' "$test_proxy" | jq -sRr @uri)
 
-  local result nodes best_node best_delay encoded delay
-  result=$(curl -s "$api/proxies/$group")
-  nodes=$(echo "$result" | jq -r '.all[]')
+  if ! proxies_result=$(curl -s --noproxy '*' --max-time "$api_timeout" "$api/proxies"); then
+    echo "error: cannot read mihomo API: $api" >&2
+    echo "hint: check external-controller, or set SELECT_FASTEST_RELAY_API=http://127.0.0.1:9090" >&2
+    return 1
+  fi
+  if ! echo "$proxies_result" | jq -e '.proxies | type == "object"' >/dev/null 2>&1; then
+    echo "error: unexpected mihomo API response from $api/proxies" >&2
+    echo "$proxies_result" >&2
+    return 1
+  fi
+
+  if ! echo "$proxies_result" | jq -e --arg name "$group" '.proxies[$name].all | type == "array" and length > 0' >/dev/null 2>&1; then
+    echo "error: proxy group not found or has no nodes: $group" >&2
+    _select_fastest_relay_print_hints "$proxies_result"
+    return 1
+  fi
+
+  if ! echo "$proxies_result" | jq -e --arg name "$test_proxy" '.proxies[$name]' >/dev/null 2>&1; then
+    echo "error: test proxy not found: $test_proxy" >&2
+    _select_fastest_relay_print_hints "$proxies_result"
+    return 1
+  fi
+
+  dialer_proxy=$(echo "$proxies_result" | jq -r --arg name "$test_proxy" '.proxies[$name]["dialer-proxy"] // empty')
+  if [ "$dialer_proxy" != "$group" ]; then
+    echo "error: $test_proxy dialer-proxy mismatch" >&2
+    echo "  expected: $group" >&2
+    echo "  actual: ${dialer_proxy:-empty}" >&2
+    echo "hint: full-chain latency requires the test proxy to use the selected relay group as dialer-proxy" >&2
+    _select_fastest_relay_print_hints "$proxies_result"
+    return 1
+  fi
+
+  result=$(echo "$proxies_result" | jq -c --arg name "$group" '.proxies[$name]')
+  nodes=$(echo "$result" | jq -r '.all[]?')
+  current=$(echo "$result" | jq -r '.now // empty')
 
   best_node=""
   best_delay=99999
 
   while IFS= read -r node; do
-    encoded=$(printf '%s' "$node" | jq -sRr @uri)
-    delay=$(curl -s "$api/proxies/$encoded" | jq -r '.history[-1].delay // 0')
+    if [ -z "$node" ]; then
+      continue
+    fi
+
+    payload=$(jq -n --arg name "$node" '{name: $name}')
+    curl -s --noproxy '*' --max-time "$api_timeout" -X PUT "$api/proxies/$encoded_group" \
+      -H "Content-Type: application/json" \
+      -d "$payload" > /dev/null
+    sleep "$settle_seconds"
+
+    delay=$(curl -s --noproxy '*' --max-time "$api_timeout" "$api/proxies/$encoded_test_proxy/delay?timeout=$timeout&url=$test_url" | jq -r '.delay // 0')
 
     if ! echo "$delay" | grep -qE '^[0-9]+$' || [ "$delay" -le 0 ] || [ "$delay" -ge 99999 ]; then
       echo "  $node: timeout/unavailable"
@@ -168,16 +254,22 @@ select_fastest_relay() {
   done <<< "$nodes"
 
   if [ -z "$best_node" ]; then
+    if [ -n "$current" ]; then
+      payload=$(jq -n --arg name "$current" '{name: $name}')
+      curl -s --noproxy '*' --max-time "$api_timeout" -X PUT "$api/proxies/$encoded_group" \
+        -H "Content-Type: application/json" \
+        -d "$payload" > /dev/null
+    fi
     echo "[x] no available nodes"
+    echo "hint: tested $group nodes through $test_proxy, but every delay result was timeout/unavailable" >&2
     return 1
   fi
 
   echo
   echo "[ok] fastest node: $best_node (${best_delay}ms)"
 
-  local payload
   payload=$(jq -n --arg name "$best_node" '{name: $name}')
-  curl -s -X PUT "$api/proxies/$group" \
+  curl -s --noproxy '*' --max-time "$api_timeout" -X PUT "$api/proxies/$encoded_group" \
     -H "Content-Type: application/json" \
     -d "$payload" > /dev/null
 
