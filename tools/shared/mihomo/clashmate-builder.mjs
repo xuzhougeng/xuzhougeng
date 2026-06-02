@@ -357,7 +357,7 @@ function validateRelayGraph(state) {
     ? normalizeProxyNames(normalizedState.relayProxyNames)
     : normalizeProxyNames(extraRelayNames);
   const targetNames = targetProxies.map(normalizeProxyName).filter(Boolean);
-  const { enabledRulePacks, lines: builtInLines } = buildBuiltInRuleLines(state);
+  const { enabledRulePacks: builtInRulePacks, lines: builtInRuleLines } = buildBuiltInRuleLines(state);
   const customRules = normalizeArray(normalizedState.customRules).map(rule => String(rule).trim()).filter(Boolean);
   const extraRulePackLines = normalizeArray(normalizedState.extraRulePackLines)
     .map(normalizeRuleLine)
@@ -371,20 +371,33 @@ function validateRelayGraph(state) {
   );
   const normalizedProviders = normalizeSelectedProviders(normalizedState.selectedProviders, allowedProviderTargets);
   const providerRuleLines = buildProviderRuleLines(normalizedProviders);
-  const aiRelayReferenced =
-    enabledRulePacks.length > 0 ||
+  const hasTargets = targetNames.length > 0;
+  // Built-in AI rule packs are a "soft" reference: enabling them alone must not force
+  // the user to configure a target proxy. A rule the user explicitly authored against
+  // the AI-Relay group is a "hard" reference and still requires a target exit.
+  const aiRelayManuallyReferenced =
     customRules.some(rule => ruleReferencesGroup(rule, aiRelayGroup)) ||
     extraRulePackLines.some(rule => ruleReferencesGroup(rule, aiRelayGroup)) ||
     providerRuleLines.some(rule => ruleReferencesGroup(rule, aiRelayGroup));
+  const aiRelayActive = hasTargets || aiRelayManuallyReferenced;
+  // When AI-Relay is inactive, drop the built-in AI pack lines so they never point at a
+  // group that will not be emitted, and note the skip instead of silently swallowing it.
+  const builtInLines = aiRelayActive ? builtInRuleLines : [];
+  const enabledRulePacks = aiRelayActive ? builtInRulePacks : [];
+  const builderWarnings = [];
+  if (!aiRelayActive && builtInRulePacks.length > 0) {
+    builderWarnings.push(`内置 AI 规则包已跳过：未配置目标节点，未生成 ${aiRelayGroup} 出口池。`);
+  }
   const directRelayRuleReference =
     customRules.some(rule => ruleReferencesGroup(rule, relayGroup)) ||
     extraRulePackLines.some(rule => ruleReferencesGroup(rule, relayGroup)) ||
     providerRuleLines.some(rule => ruleReferencesGroup(rule, relayGroup));
   const relayGroupReferenced =
-    targetNames.length > 0 ||
+    hasTargets ||
     targetProxies.some(proxy => normalizeProxyName({ name: proxy?.["dialer-proxy"] ?? proxy?.dialerProxy }) === relayGroup) ||
     directRelayRuleReference ||
-    aiRelayReferenced;
+    aiRelayActive;
+  const relayGroupActive = relayGroupReferenced || relayNames.length > 0;
 
   if (!ordinaryGroupNames.length || ordinaryGroupNames[0] !== "Auto" || !ordinaryGroupNames.includes("Proxy")) {
     throw new Error("ordinaryGroups must include reserved groups Auto and Proxy");
@@ -421,7 +434,7 @@ function validateRelayGraph(state) {
     }
   }
 
-  if (aiRelayReferenced && !targetNames.length) {
+  if (aiRelayManuallyReferenced && !hasTargets) {
     throw new Error(`${aiRelayGroup} requires at least one target proxy`);
   }
 
@@ -447,33 +460,54 @@ function validateRelayGraph(state) {
     enabledRulePacks,
     builtInLines,
     extraRulePackLines,
+    aiRelayActive,
+    relayGroupActive,
+    builderWarnings,
   };
 }
 
-function buildProxyGroups({ ordinaryGroups, relayGroup, relayGroupType, aiRelayGroup, upstreamNames, relayNames, targetNames }) {
-  return [
-    ...ordinaryGroups.map(group =>
-      decorateProxyGroup({
-        name: group.name,
-        type: group.type,
-        proxies: group.proxies.length
-          ? group.proxies
-          : group.name === "Auto" || group.name === "Proxy"
-            ? upstreamNames
-            : [],
-      })
-    ),
+function buildProxyGroups({
+  ordinaryGroups,
+  relayGroup,
+  relayGroupType,
+  aiRelayGroup,
+  upstreamNames,
+  relayNames,
+  targetNames,
+  relayGroupActive,
+  aiRelayActive,
+}) {
+  const groups = ordinaryGroups.map(group =>
     decorateProxyGroup({
-      name: relayGroup,
-      type: relayGroupType,
-      proxies: relayNames,
-    }),
-    {
+      name: group.name,
+      type: group.type,
+      proxies: group.proxies.length
+        ? group.proxies
+        : group.name === "Auto" || group.name === "Proxy"
+          ? upstreamNames
+          : [],
+    })
+  );
+
+  if (relayGroupActive) {
+    groups.push(
+      decorateProxyGroup({
+        name: relayGroup,
+        type: relayGroupType,
+        proxies: relayNames,
+      })
+    );
+  }
+
+  if (aiRelayActive) {
+    groups.push({
       name: aiRelayGroup,
       type: "select",
       proxies: targetNames,
-    },
-  ];
+    });
+  }
+
+  return groups;
 }
 
 function normalizeTargetProxy(proxy, relayGroup) {
@@ -515,7 +549,7 @@ export function buildClashmateConfig(state) {
   ];
   const ruleConflicts = detectRuleTargetConflicts(rules);
   const aiRuleHitPreview = buildAiRuleHitPreview(rules, validated.builtInLines, validated.aiRelayGroup);
-  const warnings = buildRuleWarnings(ruleConflicts, aiRuleHitPreview);
+  const warnings = [...validated.builderWarnings, ...buildRuleWarnings(ruleConflicts, aiRuleHitPreview)];
 
   const config = {
     ...baseConfig,

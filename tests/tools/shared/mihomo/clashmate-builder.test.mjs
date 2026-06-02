@@ -367,3 +367,36 @@ test("buildClashmateConfig rejects collisions between ordinary, relay, and AI gr
     /duplicate group name.*Streaming/i
   );
 });
+
+test("buildClashmateConfig skips AI-Relay and Relay-Group when no targets are configured", () => {
+  const state = createDefaultClashmateState();
+  state.upstreamProxies = [{ name: "upstream-hk", type: "ss", server: "upstream.example.com", port: "443" }];
+  // Default state enables coreAiRelay (a soft reference). With no target proxies and no
+  // hand-written AI-Relay rules, the AI two-hop apparatus must be skipped, not required.
+
+  const { config, summary } = buildClashmateConfig(state);
+
+  assert.deepEqual(
+    config["proxy-groups"].map(group => group.name),
+    ["Auto", "Proxy"]
+  );
+  assert.equal(config.rules.some(rule => rule.includes("AI-Relay")), false);
+  assert.deepEqual(summary.proxyPools.target, []);
+  assert.deepEqual(summary.enabledRulePacks, []);
+  assert.match(summary.warnings.join("\n"), /内置 AI 规则包已跳过/);
+});
+
+test("buildClashmateConfig keeps AI-Relay when targets are present even with default soft packs", () => {
+  const state = createDefaultClashmateState();
+  state.upstreamProxies = [{ name: "upstream-hk", type: "ss", server: "upstream.example.com", port: "443" }];
+  state.relayProxyNames = ["upstream-hk"];
+  state.targetProxies = [
+    { name: "target-us", type: "socks5", server: "target.example.com", port: "1080", "dialer-proxy": "Relay-Group" },
+  ];
+
+  const { config, summary } = buildClashmateConfig(state);
+
+  assert.equal(config["proxy-groups"].some(group => group.name === "AI-Relay"), true);
+  assert.equal(config["proxy-groups"].some(group => group.name === "Relay-Group"), true);
+  assert.equal(summary.warnings.some(warning => /内置 AI 规则包已跳过/.test(warning)), false);
+});
