@@ -68,6 +68,10 @@ blog/
 
 | 日期 | 标题 |
 |------|------|
+| 2026-06-03 | 让 Claude Code / Codex 用上 Git Worktree |
+| 2026-05-25 | 给 Clash Verge 用户的 AI 分流方案：ClashMate 二次跳转 |
+| 2026-05-13 | ClashMate 使用指南：三步生成 Mihomo 配置 |
+| 2026-01-19 | 相对安全的Claude Code/Codex/Gemini的使用方法 |
 | 2025-12-10 | Clash配置 |
 | 2025-12-09 | 科研人员科学上网指南 |
 | 2025-12-08 | Git极简教程 |

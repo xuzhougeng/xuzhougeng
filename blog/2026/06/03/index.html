@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>让 Claude Code / Codex 用上 Git Worktree：并行开发的正确姿势 - Geektastic!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            line-height: 1.8;
+            color: #00ff00;
+            background: #1a1a1a;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.4), 0 0 50px rgba(0, 255, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid #00ff00;
+        }
+
+        header {
+            background: #000;
+            color: #00ff00;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.5);
+            position: relative;
+        }
+
+        header::before {
+            content: ">>>";
+            position: absolute;
+            left: 20px;
+            top: 30px;
+            font-weight: 700;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        h1 {
+            font-size: 2em;
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+            margin: 0;
+            color: #00ffff;
+        }
+
+        .date {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        .date::before {
+            content: "// ";
+        }
+
+        .content {
+            padding: 40px;
+            color: #eee;
+        }
+
+        h2 {
+            color: #00ffff;
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        h3 {
+            color: #00ff00;
+            font-size: 1.2em;
+            margin: 25px 0 10px 0;
+        }
+
+        p {
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+
+        ul,
+        ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        a {
+            color: #00ff00;
+            text-decoration: none;
+            border-bottom: 1px dashed #00ff00;
+            transition: all 0.3s;
+        }
+
+        a:hover {
+            color: #00ffff;
+            border-bottom-color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            display: block;
+            overflow-x: auto;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #00ff00;
+            padding: 10px 12px;
+            text-align: left;
+            color: #eee;
+        }
+
+        table th {
+            background: #000;
+            color: #00ffff;
+        }
+
+        table tr:nth-child(even) td {
+            background: #1b1b1b;
+        }
+
+        code {
+            color: #00ff00;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.95em;
+        }
+
+        blockquote {
+            margin: 20px 0;
+            padding: 12px 20px;
+            border-left: 3px solid #00ff00;
+            background: #1b1b1b;
+            color: #aaa;
+        }
+
+        blockquote p {
+            margin: 0;
+        }
+
+        .code-block {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.75em;
+            font-weight: 700;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+
+        .code-block:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: #1a1a1a;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+        }
+
+        .copy-btn.copied {
+            background: #00ffff;
+            color: #1a1a1a;
+        }
+
+        pre {
+            padding-top: 35px;
+            margin: 0;
+            background: #000;
+            padding: 35px 20px 20px 20px;
+            border-radius: 4px;
+            border: 1px solid #00ff00;
+            overflow-x: auto;
+            color: #eee;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            padding: 12px 24px;
+            background: #000;
+            color: #00ff00;
+            text-decoration: none;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .back-link:hover {
+            background: #00ff00;
+            color: #1a1a1a;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            padding: 20px 40px;
+            text-align: center;
+            background: #000;
+            border-top: 1px solid #00ff00;
+            color: #666;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>[ARTICLE] 让 Claude Code / Codex 用上 Git Worktree：并行开发的正确姿势</h1>
+            <div class="date">2026-06-03</div>
+        </header>
+        <main class="content">
+            <p>当你开始频繁地让 AI 帮你写代码，很快会撞到一个尴尬的限制：<strong>一个工作目录，同一时间只能 checkout 一个分支</strong>。</p>
+
+            <p>于是常见的场景就变成了——你让 AI 在 <code>feat-a</code> 分支上改东西，改到一半你又想起来 <code>feat-b</code> 还有个 bug 要修，只能先 <code>git stash</code>、切分支、再切回来。如果你想同时跑两个 AI 会话各干各的，那基本是不可能的：它们会在同一个目录里互相踩脚。</p>
+
+            <p><code>git worktree</code> 就是为了解决这个问题而生的，而它恰好和「AI 编程」这件事天然契合。</p>
+
+            <h2>什么是 Git Worktree</h2>
+            <p>一句话：<strong>一个仓库，多个工作目录</strong>。</p>
+
+            <p>平时我们用 git，是「一个 <code>.git</code> 仓库 + 一个工作目录」。<code>git worktree</code> 允许你从同一个仓库里 checkout 出<strong>多个</strong>工作目录，每个目录可以停在不同的分支上，但它们共享同一份 <code>.git</code> 数据（提交历史、对象、远程配置都是同一套）。</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>my-repo/                      &lt;- 主工作树 (main)
+my-repo/.worktrees/
+  ├── codex-feat-a/           &lt;- worktree (codex/feat-a)
+  ├── codex-feat-b/           &lt;- worktree (codex/feat-b)
+  └── codex-fix-login/        &lt;- worktree (codex/fix-login)</code></pre>
+            </div>
+
+            <p>它和「克隆多份仓库」相比，优势很明显：</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>对比项</th>
+                        <th>多次 clone</th>
+                        <th>git worktree</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>磁盘占用</td>
+                        <td>每份都是完整副本</td>
+                        <td>共享 <code>.git</code>，只多出工作文件</td>
+                    </tr>
+                    <tr>
+                        <td>提交/分支</td>
+                        <td>各自独立，要手动同步</td>
+                        <td>共享同一套历史和分支</td>
+                    </tr>
+                    <tr>
+                        <td>远程配置</td>
+                        <td>每份都要配</td>
+                        <td>配一次，全部可用</td>
+                    </tr>
+                    <tr>
+                        <td>适合场景</td>
+                        <td>完全隔离的两个项目</td>
+                        <td>同一项目的并行任务</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>对 AI 编程来说，这意味着：你可以为每一个「任务」开一个独立的 worktree，让一个 AI 会话在里面专心干活，互不干扰。任务做完了，连同分支一起删掉即可，主目录始终保持干净。</p>
+
+            <h2>Claude Code 这边：基本开箱即用</h2>
+            <p>Claude Code 对 worktree 有比较完善的内置支持。它把 worktree 当成一种「隔离工作区」的能力：</p>
+            <ul>
+                <li>当你让它<strong>并行派发多个子任务</strong>时，每个子任务可以跑在各自的 worktree 里，彼此的改动不会冲突；</li>
+                <li>当你要它<strong>执行一份实现计划</strong>时，可以直接让它「在一个独立 worktree 里跑」，全程不污染你当前的工作目录；</li>
+                <li>这些能力通过内置的工作流（skill）暴露出来，你不需要手动敲一堆 <code>git worktree add</code>。</li>
+            </ul>
+            <p>换句话说，在 Claude Code 里你大多数时候只要表达意图——「用一个独立 worktree 来做这件事」——剩下的创建、进入、收尾它会帮你处理。</p>
+
+            <h2>Codex 这边：需要自己包一层</h2>
+            <p>Codex CLI 目前没有把 worktree 封装成顺手的命令。你当然可以手动敲：</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>git worktree add ../.worktrees/my-task -b codex/my-task main
+cd ../.worktrees/my-task
+codex</code></pre>
+            </div>
+
+            <p>但这套流程每次都要重复：算路径、起分支名、<code>cd</code> 进去、启动 codex；删的时候还要先 <code>worktree remove</code> 再 <code>branch -D</code>，稍不留神就会把没合并的提交删掉，或者误删了 <code>main</code>。</p>
+
+            <p>所以更省心的做法，是用三个 shell 函数把它包起来：</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cw     创建 worktree，自动进入并启动 codex
+cwrm   删除 codex worktree 和对应的本地分支
+cwls   查看当前仓库的 worktree 列表</code></pre>
+            </div>
+
+            <p>下面这一版<strong>同时支持 bash / zsh</strong>，直接放进 <code>~/.zshrc</code> 或 <code>~/.bashrc</code> 即可。</p>
+
+            <h2>三个函数能做什么</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>命令</th>
+                        <th>作用</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>cw</code></td>
+                        <td>基于某个基准分支创建一个 <code>codex/</code> 开头的 worktree，自动 <code>cd</code> 进去并启动 <code>codex</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>cwrm</code></td>
+                        <td>安全地删除一个 codex worktree 及其本地分支（带未提交检查、可达性检查、二次确认）</td>
+                    </tr>
+                    <tr>
+                        <td><code>cwls</code></td>
+                        <td>列出当前仓库的所有 worktree</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>它在设计上刻意做了几层「防呆」：</p>
+            <ol>
+                <li><strong>只允许创建/删除 <code>codex/</code> 开头的分支</strong>——避免手滑误删 <code>main</code>、<code>feat/*</code>、<code>dev</code> 这类正常开发分支；</li>
+                <li><strong>删除前检查未提交改动</strong>——有改动时默认拒绝，提示你先 commit 或 stash，除非显式 <code>--force</code>；</li>
+                <li><strong>删除前检查分支是否「可达」</strong>——如果分支上有还没合并、也没推送到任何地方的提交，默认拒绝删除，防止你丢掉工作成果；</li>
+                <li><strong>从任意 worktree 子目录都能操作</strong>——函数会自动找到主工作树（admin worktree）来执行 <code>git</code> 命令。</li>
+            </ol>
+
+            <h2>完整代码</h2>
+            <p>把下面这段完整粘贴进 <code>~/.zshrc</code> 或 <code>~/.bashrc</code>：</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># ============================================================
+# Codex Worktree Helpers
+#
+# Usage:
+#   cw
+#   cw main codex/my-feature
+#   cw origin/main codex/some-task
+#
+#   cwrm
+#   cwrm codex/my-feature
+#   cwrm --force codex/my-feature
+#   cwrm --yes --force codex/my-feature
+#
+#   cwls
+#
+# Optional:
+#   export CW_START_CODEX=0
+#   export CW_WORKTREE_ROOT=/some/path
+# ============================================================
+
+_cw_git_root() {
+  git rev-parse --show-toplevel 2&gt;/dev/null
+}
+
+_cw_main_worktree() {
+  local root="$1"
+
+  git -C "$root" worktree list --porcelain 2&gt;/dev/null | awk '
+    /^worktree / {
+      print substr($0, 10)
+      exit
+    }
+  '
+}
+
+_cw_worktree_for_branch() {
+  local admin="$1"
+  local branch="$2"
+
+  git -C "$admin" worktree list --porcelain 2&gt;/dev/null | awk -v br="refs/heads/$branch" '
+    /^worktree / {
+      p = substr($0, 10)
+    }
+    /^branch / {
+      b = substr($0, 8)
+      if (b == br) {
+        print p
+        exit
+      }
+    }
+  '
+}
+
+_cw_branch_exists() {
+  local admin="$1"
+  local branch="$2"
+
+  git -C "$admin" show-ref --verify --quiet "refs/heads/$branch"
+}
+
+_cw_branch_reachable_elsewhere() {
+  local admin="$1"
+  local branch="$2"
+  local self_ref="refs/heads/$branch"
+  local found
+
+  found=$(
+    git -C "$admin" for-each-ref \
+      --format='%(refname)' \
+      --contains "$self_ref" \
+      refs/heads refs/remotes 2&gt;/dev/null | awk -v self="$self_ref" '
+        $0 == self {
+          next
+        }
+        $0 ~ /^refs\/remotes\/[^\/]+\/HEAD$/ {
+          next
+        }
+        {
+          print
+          exit
+        }
+      '
+  )
+
+  [ -n "$found" ]
+}
+
+cwls() {
+  local root
+  root=$(_cw_git_root) || {
+    echo "Not inside a git repository."
+    return 1
+  }
+
+  local admin
+  admin=$(_cw_main_worktree "$root")
+
+  if [ -z "$admin" ]; then
+    admin="$root"
+  fi
+
+  git -C "$admin" worktree list
+}
+
+cw() {
+  local base="${1:-main}"
+  local name="$2"
+
+  local root
+  root=$(_cw_git_root) || {
+    echo "Not inside a git repository."
+    return 1
+  }
+
+  local admin
+  admin=$(_cw_main_worktree "$root")
+
+  if [ -z "$admin" ]; then
+    admin="$root"
+  fi
+
+  local repo
+  repo=$(basename "$admin")
+
+  if [ -z "$name" ]; then
+    name="codex/$(date +%Y%m%d-%H%M%S)"
+  fi
+
+  case "$name" in
+    codex/*)
+      ;;
+    *)
+      echo "Refusing to create non-codex branch: $name"
+      echo "Use a branch name starting with codex/, for example:"
+      echo "  cw main codex/my-task"
+      return 1
+      ;;
+  esac
+
+  local safe_name
+  safe_name=$(printf "%s" "$name" | sed 's#[/ ]#-#g')
+
+  local wt_parent
+  wt_parent="${CW_WORKTREE_ROOT:-$(dirname "$admin")/.worktrees/$repo}"
+
+  local wt_dir="$wt_parent/$safe_name"
+
+  mkdir -p "$wt_parent" || return 1
+
+  echo "Repo:      $admin"
+  echo "Base:      $base"
+  echo "Branch:    $name"
+  echo "Worktree:  $wt_dir"
+  echo
+
+  local existing_wt
+  existing_wt=$(_cw_worktree_for_branch "$admin" "$name")
+
+  if [ -n "$existing_wt" ] &amp;&amp; [ -d "$existing_wt" ]; then
+    echo "Worktree already exists:"
+    echo "  $existing_wt"
+    echo
+    cd "$existing_wt" || return 1
+
+    if [ "${CW_START_CODEX:-1}" = "1" ]; then
+      echo "Starting Codex..."
+      echo
+      command -v codex &gt;/dev/null 2&gt;&amp;1 || {
+        echo "codex command not found."
+        return 127
+      }
+      codex
+    fi
+
+    return 0
+  fi
+
+  if [ -e "$wt_dir" ]; then
+    echo "Target path already exists:"
+    echo "  $wt_dir"
+    return 1
+  fi
+
+  if git -C "$admin" remote get-url origin &gt;/dev/null 2&gt;&amp;1; then
+    git -C "$admin" fetch origin --prune
+  fi
+
+  local start_point="$base"
+
+  if git -C "$admin" rev-parse --verify --quiet "$base^{commit}" &gt;/dev/null; then
+    start_point="$base"
+  elif git -C "$admin" rev-parse --verify --quiet "origin/$base^{commit}" &gt;/dev/null; then
+    start_point="origin/$base"
+  fi
+
+  if _cw_branch_exists "$admin" "$name"; then
+    git -C "$admin" worktree add "$wt_dir" "$name" || return 1
+  else
+    git -C "$admin" worktree add -b "$name" "$wt_dir" "$start_point" || return 1
+  fi
+
+  cd "$wt_dir" || return 1
+
+  echo
+  echo "Now in: $(pwd)"
+  echo
+
+  if [ "${CW_START_CODEX:-1}" = "1" ]; then
+    echo "Starting Codex..."
+    echo
+
+    command -v codex &gt;/dev/null 2&gt;&amp;1 || {
+      echo "codex command not found."
+      return 127
+    }
+
+    codex
+  fi
+}
+
+cwrm() {
+  local force=0
+  local yes=0
+  local target=""
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -f|--force)
+        force=1
+        ;;
+      -y|--yes)
+        yes=1
+        ;;
+      -h|--help)
+        echo "Usage:"
+        echo "  cwrm"
+        echo "  cwrm codex/branch-name"
+        echo "  cwrm /path/to/worktree"
+        echo "  cwrm --force codex/branch-name"
+        echo "  cwrm --yes --force codex/branch-name"
+        return 0
+        ;;
+      *)
+        target="$1"
+        ;;
+    esac
+    shift
+  done
+
+  local root=""
+
+  if [ -n "$target" ] &amp;&amp; [ -d "$target" ]; then
+    root=$(cd "$target" &amp;&amp; git rev-parse --show-toplevel 2&gt;/dev/null) || {
+      echo "Target path is not a git worktree:"
+      echo "  $target"
+      return 1
+    }
+  else
+    root=$(_cw_git_root) || {
+      echo "Not inside a git repository."
+      return 1
+    }
+  fi
+
+  local admin
+  admin=$(_cw_main_worktree "$root")
+
+  if [ -z "$admin" ]; then
+    admin="$root"
+  fi
+
+  local wt=""
+  local branch=""
+
+  if [ -z "$target" ]; then
+    wt="$root"
+    branch=$(git -C "$wt" branch --show-current)
+  elif [ -d "$target" ]; then
+    wt=$(cd "$target" &amp;&amp; git rev-parse --show-toplevel 2&gt;/dev/null) || {
+      echo "Target path is not a git worktree:"
+      echo "  $target"
+      return 1
+    }
+    branch=$(git -C "$wt" branch --show-current)
+  else
+    branch="$target"
+    wt=$(_cw_worktree_for_branch "$admin" "$branch")
+  fi
+
+  if [ -z "$branch" ]; then
+    echo "Cannot detect branch. Detached HEAD worktrees are not supported by cwrm."
+    return 1
+  fi
+
+  case "$branch" in
+    codex/*)
+      ;;
+    *)
+      echo "Refusing to delete non-codex branch:"
+      echo "  $branch"
+      echo
+      echo "This function only deletes branches starting with codex/."
+      return 1
+      ;;
+  esac
+
+  if ! _cw_branch_exists "$admin" "$branch"; then
+    echo "Local branch does not exist:"
+    echo "  $branch"
+    return 1
+  fi
+
+  if [ -n "$wt" ] &amp;&amp; [ -d "$wt" ]; then
+    if [ "$force" -ne 1 ] &amp;&amp; [ -n "$(git -C "$wt" status --porcelain)" ]; then
+      echo "Worktree has uncommitted changes:"
+      git -C "$wt" status --short
+      echo
+      echo "Commit or stash them first, or use:"
+      echo "  cwrm --force $branch"
+      return 1
+    fi
+  fi
+
+  if [ "$force" -ne 1 ]; then
+    if ! _cw_branch_reachable_elsewhere "$admin" "$branch"; then
+      echo "Branch tip is not reachable from another local or remote ref:"
+      echo "  $branch"
+      echo
+      echo "This usually means the branch has commits that are not merged or preserved elsewhere."
+      echo "To delete anyway, use:"
+      echo "  cwrm --force $branch"
+      return 1
+    fi
+  fi
+
+  echo "Repo:      $admin"
+  echo "Worktree:  ${wt:-&lt;none found&gt;}"
+  echo "Branch:    $branch"
+  echo "Force:     $force"
+  echo
+
+  if [ "$yes" -ne 1 ]; then
+    printf "Remove this worktree and delete the local branch? [y/N] "
+    IFS= read -r ans
+
+    case "$ans" in
+      y|Y|yes|YES)
+        ;;
+      *)
+        echo "Canceled."
+        return 1
+        ;;
+    esac
+  fi
+
+  if [ -n "$wt" ] &amp;&amp; [ -d "$wt" ]; then
+    local here
+    here=$(pwd -P)
+
+    local wt_real
+    wt_real=$(cd "$wt" &amp;&amp; pwd -P)
+
+    case "$here/" in
+      "$wt_real"/*)
+        cd "$(dirname "$wt_real")" || return 1
+        ;;
+    esac
+
+    if [ "$force" -eq 1 ]; then
+      git -C "$admin" worktree remove --force "$wt_real" || return 1
+    else
+      git -C "$admin" worktree remove "$wt_real" || return 1
+    fi
+  fi
+
+  git -C "$admin" branch -D "$branch" || return 1
+  git -C "$admin" worktree prune
+
+  echo
+  echo "Removed:"
+  echo "  branch:   $branch"
+
+  if [ -n "$wt" ]; then
+    echo "  worktree: $wt"
+  fi
+}</code></pre>
+            </div>
+
+            <blockquote>
+                <p>也可以直接下载本文附带的 <a href="function.sh">function.sh</a>，然后在配置文件里 <code>source /path/to/function.sh</code>。</p>
+            </blockquote>
+
+            <h2>安装与加载</h2>
+            <p>粘贴（或 <code>source</code>）之后，重新加载你的 shell 配置：</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>source ~/.zshrc</code></pre>
+            </div>
+
+            <p>或者：</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>source ~/.bashrc</code></pre>
+            </div>
+
+            <p>两个可选的环境变量：</p>
+
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code># 创建 worktree 后不自动启动 codex（只创建并 cd 进去）
+export CW_START_CODEX=0
+
+# 自定义 worktree 的存放根目录（默认在仓库同级的 .worktrees/&lt;repo&gt;/ 下）
+export CW_WORKTREE_ROOT=/some/path</code></pre>
+            </div>
+
+            <h2>使用示例</h2>
+
+            <h3>创建 worktree</h3>
+            <p>不带参数时，默认基于 <code>main</code> 创建一个时间戳命名的分支：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cw</code></pre>
+            </div>
+            <p>指定基准分支和分支名：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cw main codex/my-feature</code></pre>
+            </div>
+            <p>基准也可以是远程分支，函数会先 <code>fetch</code> 再创建：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cw origin/main codex/some-task</code></pre>
+            </div>
+            <p>创建成功后，你会直接落在新 worktree 目录里，并自动进入 codex 会话。</p>
+
+            <h3>查看 worktree 列表</h3>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cwls</code></pre>
+            </div>
+
+            <h3>删除 worktree 和分支</h3>
+            <p>在某个 worktree 里直接删它自己：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cwrm</code></pre>
+            </div>
+            <p>按分支名删除：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cwrm codex/my-feature</code></pre>
+            </div>
+            <p>如果分支里有未提交改动、或者有还没合并出去的提交，默认会被拦下来。确认不要这些内容时，加 <code>--force</code>：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cwrm --force codex/my-feature</code></pre>
+            </div>
+            <p>不想要交互确认（比如写在脚本里）时，加 <code>--yes</code>：</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                <pre><code>cwrm --yes --force codex/my-feature</code></pre>
+            </div>
+
+            <h2>几个值得注意的设计细节</h2>
+
+            <h3>为什么只让删 codex/ 分支？</h3>
+            <p>因为这套函数的定位就是「管理 AI 临时分支」。把 <code>main</code>、<code>dev</code>、<code>feat/*</code> 这些真正的开发分支挡在门外，是为了让 <code>cwrm --force</code> 这种带破坏性的操作有一个明确的边界——你不可能用它把主分支误删掉。</p>
+
+            <h3>「可达性检查」具体在防什么？</h3>
+            <p><code>cwrm</code> 在非 <code>--force</code> 模式下，会用 <code>git for-each-ref --contains</code> 检查这个分支的最新提交，是否还能从<strong>另一个本地或远程引用</strong>到达。如果不能，说明这些提交只活在这一个分支上，删了就真的没了。这时它会拒绝，并提示你用 <code>--force</code>。这一层专门用来兜住「AI 刚跑完一堆改动、还没来得及合并就被删」的情况。</p>
+
+            <h3>从子目录也能用</h3>
+            <p>worktree 的 <code>git</code> 操作需要落在主工作树上执行，函数里的 <code>_cw_main_worktree</code> 会通过 <code>git worktree list --porcelain</code> 找到那个「admin」目录，所以你在任何一个 worktree 的任意子目录里调用 <code>cw</code> / <code>cwrm</code> / <code>cwls</code> 都能正常工作。</p>
+
+            <h2>小结</h2>
+            <ul>
+                <li><strong>worktree = 一个仓库、多个工作目录</strong>，天然适合「让多个 AI 会话并行干活」的场景；</li>
+                <li><strong>Claude Code</strong> 这边基本开箱即用，你只要表达「用独立 worktree 做这件事」即可；</li>
+                <li><strong>Codex</strong> 这边没有现成命令，用 <code>cw</code> / <code>cwrm</code> / <code>cwls</code> 三个函数补齐，并在删除路径上加了未提交检查、可达性检查和 <code>codex/</code> 前缀限制，让日常并行开发既顺手又不容易翻车。</li>
+            </ul>
+            <p>把它扔进 shell 配置，下次想让 codex 单独跑一条线时，一个 <code>cw</code> 就出发了。</p>
+
+            <a href="../../../index.html" class="back-link">Return_To_Blog_Index</a>
+        </main>
+        <footer>
+            <p>© 2026 Geektastic! Terminal Blog | Powered by Pure HTML</p>
+        </footer>
+    </div>
+    <script>
+    function copyCode(btn) {
+        const code = btn.nextElementSibling.querySelector('code').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = 'COPIED!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = 'COPY';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+    </script>
+</body>
+</html>
