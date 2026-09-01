@@ -1,0 +1,53 @@
+# Zhou-Geng Xu (徐洲更)
+
+Zhou-Geng Xu (Chinese: 徐洲更; also Zhougeng Xu; GitHub: xuzhougeng) is a postdoctoral fellow in Jia-Wei Wang's lab at the CAS Center for Excellence in Molecular Plant Sciences (CEMPS). He received a B.S. in Agronomy from Zhejiang A&F University (2012–2016) and a Ph.D. in Genetics from CEMPS / the University of Chinese Academy of Sciences (2016–2023). He has been a postdoctoral fellow at CEMPS since July 2023.
+
+Research focus: plant single-cell sequencing and cross-species cell-atlas construction (scRNA-seq / snRNA-seq, ATAC-seq). Publications include Cell, Nature Communications, Nature Plants, Nature Methods, and Science. Related work was selected among the 2024 Top 10 Advances in Life Sciences in China.
+
+Support: CAS Special Research Assistant Program; National Funded Postdoctoral Researcher Program (Category B); 2025 Postdoctoral Research Performance Evaluation Grant (First Tier).
+
+ORCID: https://orcid.org/0000-0001-7682-3482
+Email: xuzhougeng@163.com
+Homepage: https://xuzhougeng.top/
+English CV: https://xuzhougeng.top/en/
+Google Scholar: https://scholar.google.com/citations?user=i4IkI30AAAAJ
+GitHub: https://github.com/xuzhougeng
+Blog: http://xuzhougeng.com/
+
+## Skills
+
+- Plant single-cell omics: scRNA-seq / snRNA-seq, ATAC-seq, cross-species cell atlases
+- Comparative genomics and gene-regulatory-network analysis
+- Linux scientific computing: servers, Shell, R, Python
+- Research software: desktop and web tool development
+- Connecting large language models to literature, analysis, and research workflows
+
+## AI for Science tools (by xuzhougeng)
+
+- Wisp Science — open-source, local-first desktop AI research workbench: https://github.com/xuzhougeng/wisp-science
+- CiteBox — AI literature manager and reading assistant: https://github.com/xuzhougeng/citebox
+- WispTerm — AI-driven command-line terminal: https://github.com/xuzhougeng/wispterm
+
+## Science communication
+
+Since 2016 he has written bioinformatics tutorials covering Linux, transcriptomics, genome assembly, comparative genomics, and single-cell analysis. The blog 徐洲更的第二大脑 (xuzhougeng.com) has more than 290 posts and over 2 million reads. The early series Introduction to Transcriptomics has been widely republished in China. Zhihu column: hoptop的生信笔记 (2,000+ followers). Bilibili courses: about 100,000 views.
+
+## Selected publications (as listed on the CV)
+
+2026
+- Zhou-Geng Xu, G. Qin. LLM-assisted development of Rust for high-performance bioinformatics software: practices, workflows, and boundaries. Genomics Communications 3, e018 (2026). https://doi.org/10.48130/gcomm-0026-0018
+- Song Wang, Li-Ying Ma, Zhou-Geng Xu, et al. Molecular mechanism underlying regulation of chalcone synthase by chalcone isomerase-like protein. Nature Communications 17, 3992 (2026). https://doi.org/10.1038/s41467-026-70563-4
+- Xiang-Ru Meng et al. Unravelling the predominant genetic paths for asexual reproduction in Kalanchoe. Nature Plants 12, 369–385 (2026). https://doi.org/10.1038/s41477-025-02214-3
+
+2025
+- Xin Ming et al. FX-Cell: a method for single-cell RNA sequencing on difficult-to-digest and cryopreserved plant samples. Nature Methods, 2025. https://doi.org/10.1038/s41592-025-02900-2
+- Shipeng Guo et al. GPSAdb 2.0. Nucleic Acids Research, 2025. https://doi.org/10.1093/nar/gkaf1077
+- Xiaofan Lu et al. FigureYa. iMetaMed. https://doi.org/10.1002/imm3.70005
+- Hao-Chen Xue, Zhou-Geng Xu, Yu-Jie Liu, et al. A Unified Cell Atlas of Vascular Plants Reveals Cell-Type Foundational Genes and Accelerates Gene Discovery. Cell, 2025. https://doi.org/10.1016/j.cell.2025.07.036
+
+2024
+- Dong Zhai et al. Reciprocal Conversion between Annual and Polycarpic Perennial Flowering Behavior in the Brassicaceae. Cell, 2024. https://doi.org/10.1016/j.cell.2024.04.047
+- Chuan-Miao Zhou et al. The Structure of B-ARR Reveals the Molecular Basis of Transcriptional Activation by Cytokinin. PNAS, 2024. https://doi.org/10.1073/pnas.2319335121
+- Haibao Tang et al. JCVI: A Versatile Toolkit for Comparative Genomics Analysis. iMeta. https://doi.org/10.1002/imt2.211
+
+2019–2023 papers, including the 2019 Molecular Plant Arabidopsis root scRNA-seq paper (Zhang, Xu, Shang, Wang), are listed in full on https://xuzhougeng.top/ and https://xuzhougeng.top/en/.

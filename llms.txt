@@ -1,0 +1,31 @@
+# Zhou-Geng Xu (徐洲更)
+
+> Postdoctoral fellow in Jia-Wei Wang's lab at the CAS Center for Excellence in Molecular Plant Sciences (CEMPS). Plant single-cell sequencing and cross-species cell atlases.
+
+Zhou-Geng Xu is the same person as 徐洲更, Zhougeng Xu, and the GitHub user xuzhougeng. ORCID: https://orcid.org/0000-0001-7682-3482
+
+## CV
+
+- [Chinese CV](https://xuzhougeng.top/): 徐洲更个人简历
+- [English CV](https://xuzhougeng.top/en/): Zhou-Geng Xu CV
+- [Full text for LLMs](https://xuzhougeng.top/llms-full.txt)
+
+## Identity
+
+- [ORCID](https://orcid.org/0000-0001-7682-3482)
+- [GitHub](https://github.com/xuzhougeng)
+- [Google Scholar](https://scholar.google.com/citations?user=i4IkI30AAAAJ)
+- [Blog 徐洲更的第二大脑](http://xuzhougeng.com/)
+- [Zhihu](https://www.zhihu.com/people/xu-zhou-geng)
+- [Bilibili](https://space.bilibili.com/249108235/)
+
+## Software
+
+- [Wisp Science](https://github.com/xuzhougeng/wisp-science): local-first desktop AI research workbench
+- [CiteBox](https://github.com/xuzhougeng/citebox): AI literature manager
+- [WispTerm](https://github.com/xuzhougeng/wispterm): AI-driven terminal
+
+## Optional
+
+- [Blog on this site](https://xuzhougeng.top/blog/)
+- [Tools](https://xuzhougeng.top/tools/)
