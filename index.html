@@ -109,17 +109,29 @@
         <li><a href="game/">Game</a></li>
       </ul>
     </nav>
-    <main class="container">
+    <main class="container" data-export-name="徐洲更-简历">
     <header>
-      <img src="https://avatars.githubusercontent.com/u/19432485?v=4" alt="徐洲更的头像" class="avatar" width="120" height="120">
+      <img src="https://avatars.githubusercontent.com/u/19432485?v=4" alt="徐洲更的头像" class="avatar" width="120" height="120" crossorigin="anonymous">
       <div class="header-content">
         <div class="header-top">
           <h1>徐洲更</h1>
-          <nav class="lang-switch" aria-label="语言">
-            <a href="./" hreflang="zh-CN" lang="zh-CN" aria-current="page">中文</a>
-            <span class="lang-sep" aria-hidden="true">/</span>
-            <a href="en/" hreflang="en" lang="en">English</a>
-          </nav>
+          <div class="resume-tools">
+            <nav class="lang-switch" data-lang="zh" aria-label="语言">
+              <a href="./" hreflang="zh-CN" lang="zh-CN" aria-current="page">中文</a>
+              <a href="en/" hreflang="en" lang="en">EN</a>
+            </nav>
+            <div class="export">
+              <button type="button" class="export-toggle" aria-expanded="false" aria-haspopup="menu" aria-label="下载简历">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+              </button>
+              <div class="export-menu" role="menu" hidden>
+                <button type="button" role="menuitem" data-export="pdf"><span class="fmt">PDF</span><span class="hint">适合投递</span></button>
+                <button type="button" role="menuitem" data-export="png"><span class="fmt">PNG</span><span class="hint">适合分享</span></button>
+                <button type="button" role="menuitem" data-export="svg"><span class="fmt">SVG</span><span class="hint">矢量图</span></button>
+                <p class="export-status" role="status" hidden></p>
+              </div>
+            </div>
+          </div>
         </div>
         <p class="aka">Zhou-Geng Xu · Zhougeng Xu · xuzhougeng</p>
         <p class="summary">中国科学院分子植物科学卓越创新中心（CEMPS）博士后（王佳伟研究组）</p>
@@ -263,5 +275,6 @@
     </footer>
     </main>
   </div>
+  <script type="module" src="resume.js"></script>
 </body>
 </html>

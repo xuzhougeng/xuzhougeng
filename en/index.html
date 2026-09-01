@@ -109,17 +109,29 @@
         <li><a href="../game/">Game</a></li>
       </ul>
     </nav>
-    <main class="container">
+    <main class="container" data-export-name="Zhou-Geng-Xu-CV">
     <header>
-      <img src="https://avatars.githubusercontent.com/u/19432485?v=4" alt="Portrait of Zhou-Geng Xu" class="avatar" width="120" height="120">
+      <img src="https://avatars.githubusercontent.com/u/19432485?v=4" alt="Portrait of Zhou-Geng Xu" class="avatar" width="120" height="120" crossorigin="anonymous">
       <div class="header-content">
         <div class="header-top">
           <h1>Zhou-Geng Xu</h1>
-          <nav class="lang-switch" aria-label="Language">
-            <a href="../" hreflang="zh-CN" lang="zh-CN">中文</a>
-            <span class="lang-sep" aria-hidden="true">/</span>
-            <a href="./" hreflang="en" lang="en" aria-current="page">English</a>
-          </nav>
+          <div class="resume-tools">
+            <nav class="lang-switch" data-lang="en" aria-label="Language">
+              <a href="../" hreflang="zh-CN" lang="zh-CN">中文</a>
+              <a href="./" hreflang="en" lang="en" aria-current="page">EN</a>
+            </nav>
+            <div class="export">
+              <button type="button" class="export-toggle" aria-expanded="false" aria-haspopup="menu" aria-label="Download CV">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+              </button>
+              <div class="export-menu" role="menu" hidden>
+                <button type="button" role="menuitem" data-export="pdf"><span class="fmt">PDF</span><span class="hint">applications</span></button>
+                <button type="button" role="menuitem" data-export="png"><span class="fmt">PNG</span><span class="hint">sharing</span></button>
+                <button type="button" role="menuitem" data-export="svg"><span class="fmt">SVG</span><span class="hint">vector</span></button>
+                <p class="export-status" role="status" hidden></p>
+              </div>
+            </div>
+          </div>
         </div>
         <p class="aka"><span translate="no">徐洲更</span> · Zhougeng Xu · xuzhougeng</p>
         <p class="summary">Postdoctoral Fellow, CAS Center for Excellence in Molecular Plant Sciences (CEMPS), Jia-Wei Wang Lab</p>
@@ -263,5 +275,6 @@
     </footer>
     </main>
   </div>
+  <script type="module" src="../resume.js"></script>
 </body>
 </html>
